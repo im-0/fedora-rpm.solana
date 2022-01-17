@@ -1,0 +1,144 @@
+From 13b98a2068faee8f1132616aade3071e893adc4f Mon Sep 17 00:00:00 2001
+From: Ivan Mironov <mironov.ivan@gmail.com>
+Date: Thu, 18 Feb 2021 17:17:32 +0500
+Subject: [PATCH 3/3] Replace bundled C/C++ libraries with system provided
+
+---
+ Cargo.lock                  | 23 +++++++----------------
+ account-decoder/Cargo.toml  |  2 +-
+ remote-wallet/Cargo.toml    |  2 +-
+ runtime/Cargo.toml          |  2 +-
+ storage-bigtable/Cargo.toml | 10 +---------
+ 5 files changed, 11 insertions(+), 28 deletions(-)
+
+diff --git a/Cargo.lock b/Cargo.lock
+index d0f18b591eca..d8d48a45994f 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -2711,15 +2711,6 @@ version = "0.1.2"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "77af24da69f9d9341038eba93a073b1fdaaa1b788221b00a69bce9e762cb32de"
+ 
+-[[package]]
+-name = "openssl-src"
+-version = "111.16.0+1.1.1l"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "7ab2173f69416cf3ec12debb5823d244127d23a9b127d5a5189aa97c5fa2859f"
+-dependencies = [
+- "cc",
+-]
+-
+ [[package]]
+ name = "openssl-sys"
+ version = "0.9.67"
+@@ -2729,7 +2720,6 @@ dependencies = [
+  "autocfg 1.0.0",
+  "cc",
+  "libc",
+- "openssl-src",
+  "pkg-config",
+  "vcpkg",
+ ]
+@@ -7226,18 +7216,18 @@ dependencies = [
+ 
+ [[package]]
+ name = "zstd"
+-version = "0.5.3+zstd.1.4.5"
++version = "0.5.4+zstd.1.4.7"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "01b32eaf771efa709e8308605bbf9319bf485dc1503179ec0469b611937c0cd8"
++checksum = "69996ebdb1ba8b1517f61387a883857818a66c8a295f487b1ffd8fd9d2c82910"
+ dependencies = [
+  "zstd-safe",
+ ]
+ 
+ [[package]]
+ name = "zstd-safe"
+-version = "2.0.5+zstd.1.4.5"
++version = "2.0.6+zstd.1.4.7"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "1cfb642e0d27f64729a639c52db457e0ae906e7bc6f5fe8f5c453230400f1055"
++checksum = "98aa931fb69ecee256d44589d19754e61851ae4769bf963b385119b1cc37a49e"
+ dependencies = [
+  "libc",
+  "zstd-sys",
+@@ -7245,12 +7235,13 @@ dependencies = [
+ 
+ [[package]]
+ name = "zstd-sys"
+-version = "1.4.17+zstd.1.4.5"
++version = "1.4.18+zstd.1.4.7"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "b89249644df056b522696b1bb9e7c18c87e8ffa3e2f0dc3b0155875d6498f01b"
++checksum = "a1e6e8778706838f43f771d80d37787cb2fe06dafe89dd3aebaf6721b9eaec81"
+ dependencies = [
+  "cc",
+  "glob",
+  "itertools 0.9.0",
+  "libc",
++ "pkg-config",
+ ]
+diff --git a/account-decoder/Cargo.toml b/account-decoder/Cargo.toml
+index 7b6626c9871f..c5ba135f4842 100644
+--- a/account-decoder/Cargo.toml
++++ b/account-decoder/Cargo.toml
+@@ -24,7 +24,7 @@ solana-sdk = { path = "../sdk", version = "=1.8.12" }
+ solana-vote-program = { path = "../programs/vote", version = "=1.8.12" }
+ spl-token = { version = "=3.2.0", features = ["no-entrypoint"] }
+ thiserror = "1.0"
+-zstd = "0.5.1"
++zstd = { version = "0.5.4", features = ["pkg-config"] }
+ 
+ [package.metadata.docs.rs]
+ targets = ["x86_64-unknown-linux-gnu"]
+diff --git a/remote-wallet/Cargo.toml b/remote-wallet/Cargo.toml
+index 1d9fe42ad46d..3fe05a4108e5 100644
+--- a/remote-wallet/Cargo.toml
++++ b/remote-wallet/Cargo.toml
+@@ -25,7 +25,7 @@ thiserror = "1.0"
+ uriparse = "0.6.3"
+ 
+ [features]
+-default = ["linux-static-hidraw"]
++default = ["linux-shared-hidraw"]
+ linux-static-libusb = ["hidapi/linux-static-libusb"]
+ linux-static-hidraw = ["hidapi/linux-static-hidraw"]
+ linux-shared-libusb = ["hidapi/linux-shared-libusb"]
+diff --git a/runtime/Cargo.toml b/runtime/Cargo.toml
+index e99975683aaf..87cb9300c410 100644
+--- a/runtime/Cargo.toml
++++ b/runtime/Cargo.toml
+@@ -53,7 +53,7 @@ symlink = "0.1.0"
+ tar = "0.4.37"
+ tempfile = "3.1.0"
+ thiserror = "1.0"
+-zstd = "0.5.1"
++zstd = { version = "0.5.4", features = ["pkg-config"] }
+ 
+ [lib]
+ crate-type = ["lib"]
+diff --git a/storage-bigtable/Cargo.toml b/storage-bigtable/Cargo.toml
+index 83a4fa310751..0970bd48ad6a 100644
+--- a/storage-bigtable/Cargo.toml
++++ b/storage-bigtable/Cargo.toml
+@@ -31,16 +31,8 @@ solana-transaction-status = { path = "../transaction-status", version = "=1.8.12
+ thiserror = "1.0"
+ futures = "0.3.8"
+ tonic = { version = "0.5.0", features = ["tls", "transport"] }
+-zstd = "0.5.1"
++zstd = { version = "0.5.4", features = ["pkg-config"] }
+ 
+-# openssl is a dependency of the goauth and smpl_jwt crates, but explicitly
+-# declare it here as well to activate the "vendored" feature that builds OpenSSL
+-# statically...
+-[target."cfg(not(windows))".dependencies]
+-openssl = { version = "0.10", features = ["vendored"] }
+-# ...except on Windows to avoid having to deal with getting CI past a build-time
+-# Perl dependency
+-[target."cfg(windows)".dependencies]
+ openssl = { version = "0.10", features = [] }
+ 
+ [lib]
+-- 
+2.33.1
+
