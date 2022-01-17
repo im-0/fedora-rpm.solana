@@ -1,0 +1,14 @@
+/var/log/solana/__SUFFIX__/validator.log {
+    rotate 14
+    daily
+    missingok
+    compress
+    delaycompress
+    compresscmd /usr/bin/zstd
+    uncompresscmd /usr/bin/unzstd
+    compressext .zst
+    compressoptions -10
+    postrotate
+        systemctl kill --signal USR1 solana-validator-__SUFFIX__.service 2>/dev/null || true
+    endscript
+}
