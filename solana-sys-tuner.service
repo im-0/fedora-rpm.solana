@@ -1,6 +1,8 @@
 [Unit]
 Description=Solana cluster system tuner daemon (__SUFFIX__)
 
+Before=solana-validator-__SUFFIX__.service
+
 [Install]
 WantedBy=multi-user.target
 
@@ -12,6 +14,8 @@ User=root
 Group=root
 
 ExecStart=/opt/solana/__SUFFIX__/bin/solana-sys-tuner --user solana-__SUFFIX__
+# Wait a bit so sys-tuner applies all settings before validator is started.
+ExecStartPost=/usr/bin/sleep 2
 
 Restart=always
 RestartSec=1
