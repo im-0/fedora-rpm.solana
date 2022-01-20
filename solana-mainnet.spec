@@ -40,7 +40,7 @@ Source6:    solana-sys-tuner.service
 Source7:    solana-watchtower.service
 Source8:    solana-watchtower
 Source9:    solana-validator.logrotate
-Source10:   solana-validator.wrapper
+Source10:   jemalloc-wrapper
 
 Source100:  filter-cargo-checksum
 
@@ -244,8 +244,8 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
         >solana-validator.logrotate
 sed 's,__SUFFIX__,%{solana_suffix},g' \
         <%{SOURCE10} \
-        >solana-validator.wrapper
-chmod a+x solana-validator.wrapper
+        >jemalloc-wrapper
+chmod a+x jemalloc-wrapper
 
 ./target/release/solana completion --shell bash >solana.bash-completion
 
@@ -274,7 +274,8 @@ mv solana-watchtower \
         %{buildroot}%{_sysconfdir}/sysconfig/solana-watchtower-%{solana_suffix}
 mv solana-validator.logrotate \
         %{buildroot}%{_sysconfdir}/logrotate.d/solana-validator-%{solana_suffix}
-mv solana-validator.wrapper \
+
+mv jemalloc-wrapper \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/solana-validator
 
 # Use binaries optimized for newer CPUs for running validator and local benchmarks.
