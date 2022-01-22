@@ -16,8 +16,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      1
-# git 42c3fbc19890afb919d01b147f2be3f90a97a3ac
-Version:    1.8.13
+# git 9c01d90c709cc2208dbbfedb12705bbaee320c91
+Version:    1.8.14
 Release:    100%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -41,6 +41,7 @@ Source7:    solana-watchtower.service
 Source8:    solana-watchtower
 Source9:    solana-validator.logrotate
 Source10:   jemalloc-wrapper
+Source11:   0001-Use-different-socket-path-for-sys-tuner-built-for-te.patch
 
 Source100:  filter-cargo-checksum
 
@@ -158,6 +159,10 @@ Solana tests and benchmarks (%{solana_suffix} version).
 %prep
 %autosetup -N -b0 -n solana-%{version}
 %autosetup -N -b1 -n solana-%{version}
+
+sed 's,__SUFFIX__,%{solana_suffix},g' \
+        <%{SOURCE11} \
+        | patch -p1
 
 %patch1001 -p1
 cp Cargo.toml Cargo.toml.no-lto
@@ -429,6 +434,9 @@ exit 0
 
 
 %changelog
+* Sat Jan 22 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.8.14-100
+- Update to 1.8.14
+
 * Fri Jan 21 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.8.13-100
 - Update to 1.8.13
 
