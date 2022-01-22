@@ -16,9 +16,9 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      0
-# git 8ce65878dad79d0aa48909bc36c1da74ea977baa
-Version:    1.9.4
-Release:    2%{?dist}
+# git 39a4cc95dc5cd14cea01a8e335ce0d298fb2b156
+Version:    1.9.5
+Release:    1%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -41,6 +41,7 @@ Source7:    solana-watchtower.service
 Source8:    solana-watchtower
 Source9:    solana-validator.logrotate
 Source10:   jemalloc-wrapper
+Source11:   0001-Use-different-socket-path-for-sys-tuner-built-for-te.patch
 
 Source100:  filter-cargo-checksum
 
@@ -158,6 +159,10 @@ Solana tests and benchmarks (%{solana_suffix} version).
 %prep
 %autosetup -N -b0 -n solana-%{version}
 %autosetup -N -b1 -n solana-%{version}
+
+sed 's,__SUFFIX__,%{solana_suffix},g' \
+        <%{SOURCE11} \
+        | patch -p1
 
 %patch1001 -p1
 cp Cargo.toml Cargo.toml.no-lto
@@ -439,6 +444,9 @@ exit 0
 
 
 %changelog
+* Sat Jan 22 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.9.5-1
+- Update to 1.9.5
+
 * Wed Jan 19 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.9.4-2
 - Make sure that sys-tuner start before validator
 
