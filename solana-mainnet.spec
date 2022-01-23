@@ -18,7 +18,7 @@ Name:       solana-%{solana_suffix}
 Epoch:      1
 # git 9c01d90c709cc2208dbbfedb12705bbaee320c91
 Version:    1.8.14
-Release:    100%{?dist}
+Release:    101%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -265,6 +265,9 @@ mkdir -p %{buildroot}%{solana_etc}
 mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 mkdir -p %{buildroot}%{_sysconfdir}/logrotate.d
 
+ln -s ../bin/perf-libs \
+        %{buildroot}/opt/solana/%{solana_suffix}/libexec/perf-libs
+
 mv activate \
         %{buildroot}/opt/solana/%{solana_suffix}/
 mv solana-validator.service \
@@ -315,7 +318,9 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 %files common
 %dir /opt/solana
 %dir /opt/solana/%{solana_suffix}
+%dir /opt/solana/%{solana_suffix}/libexec
 /opt/solana/%{solana_suffix}/activate
+/opt/solana/%{solana_suffix}/libexec/perf-libs
 
 
 %files cli
@@ -434,6 +439,9 @@ exit 0
 
 
 %changelog
+* Sun Jan 23 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.8.14-101
+- Create symlink to perf-libs dir, so validator will be able to locate optimized libs
+
 * Sat Jan 22 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.8.14-100
 - Update to 1.8.14
 
