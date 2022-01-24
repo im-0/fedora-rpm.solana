@@ -18,7 +18,7 @@ Name:       solana-%{solana_suffix}
 Epoch:      0
 # git 39a4cc95dc5cd14cea01a8e335ce0d298fb2b156
 Version:    1.9.5
-Release:    2%{?dist}
+Release:    3%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -258,6 +258,7 @@ chmod a+x jemalloc-wrapper
 
 %install
 mkdir -p %{buildroot}/opt/solana/%{solana_suffix}/bin/deps
+mkdir -p %{buildroot}/opt/solana/%{solana_suffix}/bin/perf-libs
 mkdir -p %{buildroot}/opt/solana/%{solana_suffix}/libexec
 mkdir -p %{buildroot}/%{_unitdir}
 mkdir -p %{buildroot}%{solana_home}
@@ -266,6 +267,8 @@ mkdir -p %{buildroot}%{solana_etc}
 mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 mkdir -p %{buildroot}%{_sysconfdir}/logrotate.d
 
+ln -s ../bin/deps \
+        %{buildroot}/opt/solana/%{solana_suffix}/libexec/deps
 ln -s ../bin/perf-libs \
         %{buildroot}/opt/solana/%{solana_suffix}/libexec/perf-libs
 
@@ -324,8 +327,12 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 %files common
 %dir /opt/solana
 %dir /opt/solana/%{solana_suffix}
+%dir /opt/solana/%{solana_suffix}/bin
+%dir /opt/solana/%{solana_suffix}/bin/deps
+%dir /opt/solana/%{solana_suffix}/bin/perf-libs
 %dir /opt/solana/%{solana_suffix}/libexec
 /opt/solana/%{solana_suffix}/activate
+/opt/solana/%{solana_suffix}/libexec/deps
 /opt/solana/%{solana_suffix}/libexec/perf-libs
 
 
@@ -449,6 +456,9 @@ exit 0
 
 
 %changelog
+* Mon Jan 24 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.9.5-3
+- Create symlink to deps dir
+
 * Sun Jan 23 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.9.5-2
 - Create symlink to perf-libs dir, so validator will be able to locate optimized libs
 
