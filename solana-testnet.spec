@@ -16,9 +16,9 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      0
-# git 39a4cc95dc5cd14cea01a8e335ce0d298fb2b156
-Version:    1.9.5
-Release:    3%{?dist}
+# git 781609b27a9d42f59f50c9850abc42bcda025cfc
+Version:    1.9.6
+Release:    1%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -456,6 +456,9 @@ exit 0
 
 
 %changelog
+* Sat Feb 12 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.9.6-1
+- Update to 1.9.6
+
 * Mon Jan 24 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.9.5-3
 - Create symlink to deps dir
 
