@@ -16,8 +16,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      0
-# git 781609b27a9d42f59f50c9850abc42bcda025cfc
-Version:    1.9.6
+# git 08cc140d4a733d183130a3e6cde9a6135860fcb3
+Version:    1.9.7
 Release:    1%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -215,7 +215,6 @@ export RUSTFLAGS='-C target-cpu=%{validator_target_cpu}'
         --package solana-bench-streamer \
         --package solana-merkle-root-bench \
         --package solana-poh-bench \
-        --package solana-accountsdb-plugin-postgres \
         --package solana-sdk \
         --package solana-program:%{version}
 
@@ -368,7 +367,6 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 %dir /opt/solana/%{solana_suffix}
 %dir /opt/solana/%{solana_suffix}/bin
 %dir /opt/solana/%{solana_suffix}/bin/deps
-/opt/solana/%{solana_suffix}/bin/deps/libsolana_accountsdb_plugin_postgres.so
 /opt/solana/%{solana_suffix}/bin/deps/libsolana_program.so
 /opt/solana/%{solana_suffix}/bin/deps/libsolana_sdk.so
 
@@ -456,6 +454,9 @@ exit 0
 
 
 %changelog
+* Thu Feb 17 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.9.7-1
+- Update to 1.9.7
+
 * Sat Feb 12 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.9.6-1
 - Update to 1.9.6
 
