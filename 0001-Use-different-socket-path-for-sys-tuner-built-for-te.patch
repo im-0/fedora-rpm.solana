@@ -1,4 +1,4 @@
-From 78361d9b8ff4fa8bb6db6aa3a79b2104d89eceb4 Mon Sep 17 00:00:00 2001
+From b4c1ef4cbe92acc0b195bc64765130d5583bf83a Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Sat, 22 Jan 2022 10:48:13 +0500
 Subject: [PATCH] Use different socket path for sys-tuner built for testnet and
