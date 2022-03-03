@@ -16,8 +16,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      0
-# git 450404f8007cc75b6a873d8c6fa0af44006e0d11
-Version:    1.9.9
+# git 7dbde2247d271511905a4b29df4ea631ee690c1d
+Version:    1.10.0
 Release:    1%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -50,6 +50,8 @@ Patch1002: 0002-Enable-LTO.patch
 
 Patch2001: 0003-Replace-bundled-C-C-libraries-with-system-provided.patch
 
+Patch3001: rocksdb-dynamic-linking.patch
+
 Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
 
 ExclusiveArch:  %{rust_arches}
@@ -57,21 +59,22 @@ ExclusiveArch:  %{rust_arches}
 %global python python3
 BuildRequires:  %{python}
 
+BuildRequires:  findutils
 BuildRequires:  rust-packaging
 BuildRequires:  rustfmt
-BuildRequires:  rust = 1.57.0
+BuildRequires:  rust = 1.59.0
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  gcc
 BuildRequires:  clang
 BuildRequires:  make
 BuildRequires:  pkgconf-pkg-config
 BuildRequires:  openssl-devel
-BuildRequires:  zlib-devel
+BuildRequires:  zlib-ng-devel
 BuildRequires:  bzip2-devel
 BuildRequires:  lz4-devel
 BuildRequires:  hidapi-devel
 BuildRequires:  jemalloc-devel
-BuildRequires:  rocksdb-devel
+BuildRequires:  rocksdb-devel >= 6.28.0
 BuildRequires:  libzstd-devel
 
 # libudev-devel
@@ -170,6 +173,8 @@ cp Cargo.toml Cargo.toml.no-lto
 
 %patch2001 -p1
 
+%patch3001 -p1
+
 %patch4001 -p1
 
 # Remove bundled C/C++ source code.
@@ -179,24 +184,29 @@ rm -r vendor/hidapi/etc/hidapi
 %{python} %{SOURCE100} vendor/hidapi '^etc/hidapi/.*'
 rm -r vendor/tikv-jemalloc-sys/jemalloc
 %{python} %{SOURCE100} vendor/tikv-jemalloc-sys '^jemalloc/.*'
-rm -r vendor/librocksdb-sys/bzip2
 rm -r vendor/librocksdb-sys/lz4
 rm -r vendor/librocksdb-sys/rocksdb
 rm -r vendor/librocksdb-sys/snappy
-rm -r vendor/librocksdb-sys/zlib
-rm -r vendor/librocksdb-sys/zstd
+mkdir vendor/librocksdb-sys/rocksdb
+touch vendor/librocksdb-sys/rocksdb/AUTHORS
 %{python} %{SOURCE100} vendor/librocksdb-sys \
-        '^bzip2/.*' \
         '^lz4/.*' \
         '^rocksdb/.*' \
-        '^snappy/.*' \
-        '^zlib/.*' \
-        '^zstd/.*'
+        '^snappy/.*'
 rm -r vendor/zstd-sys/zstd
 %{python} %{SOURCE100} vendor/zstd-sys '^zstd/.*'
+rm -r vendor/libz-sys/src/zlib
+rm -r vendor/libz-sys/src/zlib-ng
+%{python} %{SOURCE100} vendor/libz-sys \
+        '^src/zlib/.*' \
+        '^src/zlib-ng/.*'
 
 mkdir .cargo
 cp %{SOURCE2} .cargo/
+
+# Fix Fedora's shebang mangling errors:
+#     *** ERROR: ./usr/src/debug/solana-testnet-1.10.0-1.fc35.x86_64/vendor/ascii/src/ascii_char.rs has shebang which doesn't start with '/' ([cfg_attr(rustfmt, rustfmt_skip)])
+find . -type f -name "*.rs" -exec chmod 0644 "{}" ";"
 
 
 %build
@@ -215,7 +225,6 @@ export RUSTFLAGS='-C target-cpu=%{validator_target_cpu}'
         --package solana-bench-streamer \
         --package solana-merkle-root-bench \
         --package solana-poh-bench \
-        --package solana-sdk \
         --package solana-program:%{version}
 
 mv target/release ./release.newer-cpus
@@ -308,7 +317,11 @@ rm target/release/*.rlib
 rm target/release/solana-install target/release/solana-install-init target/release/solana-ledger-udev
 # Excluded. 
 # TODO: Why? Official binary release does not contain these, only libsolana_*_program.so installed.
-rm target/release/libsolana_frozen_abi_macro.so target/release/libsolana_sdk_macro.so
+rm \
+        target/release/libsolana_frozen_abi_macro.so \
+        target/release/libsolana_sdk_macro.so \
+        target/release/libsolana_sdk.so \
+        target/release/libsolana_zk_token_sdk.so
 rm target/release/gen-syscall-list
 
 mv target/release/*.so \
@@ -368,7 +381,6 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 %dir /opt/solana/%{solana_suffix}/bin
 %dir /opt/solana/%{solana_suffix}/bin/deps
 /opt/solana/%{solana_suffix}/bin/deps/libsolana_program.so
-/opt/solana/%{solana_suffix}/bin/deps/libsolana_sdk.so
 
 
 %files daemons
@@ -454,6 +466,9 @@ exit 0
 
 
 %changelog
+* Thu Mar 03 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.10.0-1
+- Update to 1.10.0
+
 * Thu Feb 24 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.9.9-1
 - Update to 1.9.9
 
