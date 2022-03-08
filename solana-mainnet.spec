@@ -16,9 +16,9 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      1
-# git 450404f8007cc75b6a873d8c6fa0af44006e0d11
-Version:    1.9.9
-Release:    101%{?dist}
+# git f56b25ac29a1ce00ff6f85839c34e014f9addf88
+Version:    1.9.10
+Release:    100%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -50,6 +50,9 @@ Patch1002: 0002-Enable-LTO.patch
 
 Patch2001: 0003-Replace-bundled-C-C-libraries-with-system-provided.patch
 
+Patch3001: 0001-Update-rocksdb-to-0.18.0-release-23031.patch
+Patch3002: rocksdb-dynamic-linking.patch
+
 Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
 
 ExclusiveArch:  %{rust_arches}
@@ -66,12 +69,12 @@ BuildRequires:  clang
 BuildRequires:  make
 BuildRequires:  pkgconf-pkg-config
 BuildRequires:  openssl-devel
-BuildRequires:  zlib-devel
+BuildRequires:  zlib-ng-devel
 BuildRequires:  bzip2-devel
 BuildRequires:  lz4-devel
 BuildRequires:  hidapi-devel
 BuildRequires:  jemalloc-devel
-BuildRequires:  rocksdb-devel
+BuildRequires:  rocksdb-devel >= 6.28.0
 BuildRequires:  libzstd-devel
 
 # libudev-devel
@@ -170,6 +173,9 @@ cp Cargo.toml Cargo.toml.no-lto
 
 %patch2001 -p1
 
+%patch3001 -p1
+%patch3002 -p1
+
 %patch4001 -p1
 
 # Remove bundled C/C++ source code.
@@ -179,24 +185,29 @@ rm -r vendor/hidapi/etc/hidapi
 %{python} %{SOURCE100} vendor/hidapi '^etc/hidapi/.*'
 rm -r vendor/tikv-jemalloc-sys/jemalloc
 %{python} %{SOURCE100} vendor/tikv-jemalloc-sys '^jemalloc/.*'
-rm -r vendor/librocksdb-sys/bzip2
 rm -r vendor/librocksdb-sys/lz4
 rm -r vendor/librocksdb-sys/rocksdb
 rm -r vendor/librocksdb-sys/snappy
-rm -r vendor/librocksdb-sys/zlib
-rm -r vendor/librocksdb-sys/zstd
+mkdir vendor/librocksdb-sys/rocksdb
+touch vendor/librocksdb-sys/rocksdb/AUTHORS
 %{python} %{SOURCE100} vendor/librocksdb-sys \
-        '^bzip2/.*' \
         '^lz4/.*' \
         '^rocksdb/.*' \
-        '^snappy/.*' \
-        '^zlib/.*' \
-        '^zstd/.*'
+        '^snappy/.*'
 rm -r vendor/zstd-sys/zstd
 %{python} %{SOURCE100} vendor/zstd-sys '^zstd/.*'
+rm -r vendor/libz-sys/src/zlib
+rm -r vendor/libz-sys/src/zlib-ng
+%{python} %{SOURCE100} vendor/libz-sys \
+        '^src/zlib/.*' \
+        '^src/zlib-ng/.*'
 
 mkdir .cargo
 cp %{SOURCE2} .cargo/
+
+# Fix Fedora's shebang mangling errors:
+#     *** ERROR: ./usr/src/debug/solana-testnet-1.10.0-1.fc35.x86_64/vendor/ascii/src/ascii_char.rs has shebang which doesn't start with '/' ([cfg_attr(rustfmt, rustfmt_skip)])
+find . -type f -name "*.rs" -exec chmod 0644 "{}" ";"
 
 
 %build
@@ -454,6 +465,9 @@ exit 0
 
 
 %changelog
+* Wed Mar 09 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.9.10-100
+- Update to 1.9.10
+
 * Mon Mar 07 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.9.9-101
 - Rebuild with newer rocksdb
 
