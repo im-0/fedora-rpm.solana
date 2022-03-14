@@ -1,4 +1,4 @@
-From 3346e94cc5b6cef472c3a3f7c56c745d9d6467e2 Mon Sep 17 00:00:00 2001
+From 2746f875ef52ef9d9e2d55650750c4bde60d65cc Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Thu, 18 Feb 2021 17:17:32 +0500
 Subject: [PATCH 3/3] Replace bundled C/C++ libraries with system provided
@@ -12,10 +12,10 @@ Subject: [PATCH 3/3] Replace bundled C/C++ libraries with system provided
  5 files changed, 5 insertions(+), 22 deletions(-)
 
 diff --git a/Cargo.lock b/Cargo.lock
-index da6b800801f1..93427f47d3cc 100644
+index b13835de42b1..ace93d78f4ed 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
-@@ -2688,15 +2688,6 @@ version = "0.1.4"
+@@ -2687,15 +2687,6 @@ version = "0.1.4"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "28988d872ab76095a6e6ac88d99b54fd267702734fd7ffe610ca27f533ddb95a"
  
@@ -31,7 +31,7 @@ index da6b800801f1..93427f47d3cc 100644
  [[package]]
  name = "openssl-sys"
  version = "0.9.70"
-@@ -2706,7 +2697,6 @@ dependencies = [
+@@ -2705,7 +2696,6 @@ dependencies = [
   "autocfg",
   "cc",
   "libc",
@@ -39,27 +39,27 @@ index da6b800801f1..93427f47d3cc 100644
   "pkg-config",
   "vcpkg",
  ]
-@@ -7476,4 +7466,5 @@ checksum = "fc49afa5c8d634e75761feda8c592051e7eeb4683ba827211eb0d731d3402ea8"
+@@ -7474,4 +7464,5 @@ checksum = "2ab0ea89a91ad628fca266da6c2864366d93dbc4b3008b9ab2d63be89da414b4"
  dependencies = [
   "cc",
   "libc",
 + "pkg-config",
  ]
 diff --git a/account-decoder/Cargo.toml b/account-decoder/Cargo.toml
-index 0751c005b648..0531543f3877 100644
+index 0caaa892d086..3478e5924400 100644
 --- a/account-decoder/Cargo.toml
 +++ b/account-decoder/Cargo.toml
-@@ -24,7 +24,7 @@ solana-sdk = { path = "../sdk", version = "=1.10.1" }
- solana-vote-program = { path = "../programs/vote", version = "=1.10.1" }
+@@ -24,7 +24,7 @@ solana-sdk = { path = "../sdk", version = "=1.10.2" }
+ solana-vote-program = { path = "../programs/vote", version = "=1.10.2" }
  spl-token = { version = "=3.2.0", features = ["no-entrypoint"] }
  thiserror = "1.0"
--zstd = "0.10.0"
-+zstd = { version = "0.10.0", features = ["pkg-config"] }
+-zstd = "0.11.0"
++zstd = { version = "0.11.0", features = ["pkg-config"] }
  
  [package.metadata.docs.rs]
  targets = ["x86_64-unknown-linux-gnu"]
 diff --git a/remote-wallet/Cargo.toml b/remote-wallet/Cargo.toml
-index 18ca897ac98d..d97ab97b64e8 100644
+index 43b2a3d7c0c7..fcf2f822e070 100644
 --- a/remote-wallet/Cargo.toml
 +++ b/remote-wallet/Cargo.toml
 @@ -24,7 +24,7 @@ thiserror = "1.0"
@@ -72,28 +72,28 @@ index 18ca897ac98d..d97ab97b64e8 100644
  linux-static-hidraw = ["hidapi/linux-static-hidraw"]
  linux-shared-libusb = ["hidapi/linux-shared-libusb"]
 diff --git a/runtime/Cargo.toml b/runtime/Cargo.toml
-index 2eedf3b091a0..90e1f457c7f9 100644
+index b5469c39907e..ea32b92f17b0 100644
 --- a/runtime/Cargo.toml
 +++ b/runtime/Cargo.toml
-@@ -56,7 +56,7 @@ symlink = "0.1.0"
+@@ -55,7 +55,7 @@ symlink = "0.1.0"
  tar = "0.4.38"
  tempfile = "3.3.0"
  thiserror = "1.0"
--zstd = "0.10.0"
-+zstd = { version = "0.10.0", features = ["pkg-config"] }
+-zstd = "0.11.0"
++zstd = { version = "0.11.0", features = ["pkg-config"] }
  
  [lib]
  crate-type = ["lib"]
 diff --git a/storage-bigtable/Cargo.toml b/storage-bigtable/Cargo.toml
-index 177175acebf6..dd7ab59c82eb 100644
+index 3e6bbf6dee6f..d9b64b56a6f4 100644
 --- a/storage-bigtable/Cargo.toml
 +++ b/storage-bigtable/Cargo.toml
-@@ -28,16 +28,8 @@ solana-storage-proto = { path = "../storage-proto", version = "=1.10.1" }
- solana-transaction-status = { path = "../transaction-status", version = "=1.10.1" }
+@@ -28,16 +28,8 @@ solana-storage-proto = { path = "../storage-proto", version = "=1.10.2" }
+ solana-transaction-status = { path = "../transaction-status", version = "=1.10.2" }
  thiserror = "1.0"
  tonic = { version = "0.6.2", features = ["tls", "transport"] }
--zstd = "0.10.0"
-+zstd = { version = "0.10.0", features = ["pkg-config"] }
+-zstd = "0.11.0"
++zstd = { version = "0.11.0", features = ["pkg-config"] }
  
 -# openssl is a dependency of the goauth and smpl_jwt crates, but explicitly
 -# declare it here as well to activate the "vendored" feature that builds OpenSSL
