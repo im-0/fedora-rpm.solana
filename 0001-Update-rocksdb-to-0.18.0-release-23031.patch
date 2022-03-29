@@ -1,4 +1,4 @@
-From 1d52c498b88a7d94dd0a2c080e3999599e17fa51 Mon Sep 17 00:00:00 2001
+From 3a71152b605498125482b1c757188512cb0b291e Mon Sep 17 00:00:00 2001
 From: steviez <steven@solana.com>
 Date: Wed, 9 Feb 2022 21:51:56 -0600
 Subject: [PATCH] Update rocksdb to 0.18.0 release (#23031)
@@ -9,7 +9,7 @@ Subject: [PATCH] Update rocksdb to 0.18.0 release (#23031)
  2 files changed, 18 insertions(+), 5 deletions(-)
 
 diff --git a/Cargo.lock b/Cargo.lock
-index 670d8b8048d1..371597475fff 100644
+index a3d0bba97eff..5e9e9b53ad45 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -2320,14 +2320,16 @@ checksum = "c7d73b3f436185384286bd8098d17ec07c9a7d2388a6599f824d8502b529702a"
@@ -62,7 +62,7 @@ index 670d8b8048d1..371597475fff 100644
   "libc",
   "librocksdb-sys",
 diff --git a/ledger/Cargo.toml b/ledger/Cargo.toml
-index e05d0e945302..820771e34971 100644
+index ea16ab96c8d9..cf3d59e840f7 100644
 --- a/ledger/Cargo.toml
 +++ b/ledger/Cargo.toml
 @@ -57,7 +57,7 @@ reed-solomon-erasure = { version = "5.0.1", features = ["simd-accel"] }
