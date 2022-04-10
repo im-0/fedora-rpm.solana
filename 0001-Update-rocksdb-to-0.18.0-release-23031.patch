@@ -1,4 +1,4 @@
-From 3a71152b605498125482b1c757188512cb0b291e Mon Sep 17 00:00:00 2001
+From 2adeeee3bb0f187615c0b7ee601c2cc9ad1c2787 Mon Sep 17 00:00:00 2001
 From: steviez <steven@solana.com>
 Date: Wed, 9 Feb 2022 21:51:56 -0600
 Subject: [PATCH] Update rocksdb to 0.18.0 release (#23031)
@@ -9,10 +9,10 @@ Subject: [PATCH] Update rocksdb to 0.18.0 release (#23031)
  2 files changed, 18 insertions(+), 5 deletions(-)
 
 diff --git a/Cargo.lock b/Cargo.lock
-index a3d0bba97eff..5e9e9b53ad45 100644
+index bbf4dbde3b3c..2bbbcba1ffb8 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
-@@ -2320,14 +2320,16 @@ checksum = "c7d73b3f436185384286bd8098d17ec07c9a7d2388a6599f824d8502b529702a"
+@@ -2391,14 +2391,16 @@ checksum = "c7d73b3f436185384286bd8098d17ec07c9a7d2388a6599f824d8502b529702a"
  
  [[package]]
  name = "librocksdb-sys"
@@ -31,7 +31,7 @@ index a3d0bba97eff..5e9e9b53ad45 100644
  ]
  
  [[package]]
-@@ -2397,6 +2399,17 @@ dependencies = [
+@@ -2468,6 +2470,17 @@ dependencies = [
   "libsecp256k1-core",
  ]
  
@@ -49,7 +49,7 @@ index a3d0bba97eff..5e9e9b53ad45 100644
  [[package]]
  name = "linked-hash-map"
  version = "0.5.4"
-@@ -3770,9 +3783,9 @@ dependencies = [
+@@ -3896,9 +3909,9 @@ dependencies = [
  
  [[package]]
  name = "rocksdb"
@@ -62,7 +62,7 @@ index a3d0bba97eff..5e9e9b53ad45 100644
   "libc",
   "librocksdb-sys",
 diff --git a/ledger/Cargo.toml b/ledger/Cargo.toml
-index ea16ab96c8d9..cf3d59e840f7 100644
+index 888b951b2f95..2bae43c0b2df 100644
 --- a/ledger/Cargo.toml
 +++ b/ledger/Cargo.toml
 @@ -57,7 +57,7 @@ reed-solomon-erasure = { version = "5.0.1", features = ["simd-accel"] }

@@ -16,8 +16,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      1
-# git caa55bb0f298be838948ea2aaf3b0fd53a4bee38
-Version:    1.9.14
+# git e02542003d2c7290704ce155b0dee1d176a6ab27
+Version:    1.9.15
 Release:    100%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -68,6 +68,7 @@ BuildRequires:  gcc
 BuildRequires:  clang
 BuildRequires:  make
 BuildRequires:  pkgconf-pkg-config
+BuildRequires:  protobuf-compiler
 BuildRequires:  openssl-devel
 BuildRequires:  zlib-ng-devel
 BuildRequires:  bzip2-devel
@@ -201,6 +202,9 @@ rm -r vendor/libz-sys/src/zlib-ng
 %{python} %{SOURCE100} vendor/libz-sys \
         '^src/zlib/.*' \
         '^src/zlib-ng/.*'
+rm -r vendor/prost-build/third-party
+%{python} %{SOURCE100} vendor/prost-build \
+        '^third-party/.*'
 
 mkdir .cargo
 cp %{SOURCE2} .cargo/
@@ -465,6 +469,9 @@ exit 0
 
 
 %changelog
+* Sun Apr 10 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.9.15-100
+- Update to 1.9.15
+
 * Tue Mar 29 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.9.14-100
 - Update to 1.9.14
 
