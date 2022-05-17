@@ -1,4 +1,4 @@
-From 0bed81e7faf3a0dc920eb6d116804014b595323e Mon Sep 17 00:00:00 2001
+From 92f3921098e2173874bda0f076fce50b77e199de Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Thu, 7 Oct 2021 07:57:32 +0500
 Subject: [PATCH 2/3] Enable LTO
@@ -18,5 +18,5 @@ index 14f98617aa9b..9ac020237f4e 100644
 +lto = "fat"
 +codegen-units = 1
 -- 
-2.35.3
+2.36.1
 
