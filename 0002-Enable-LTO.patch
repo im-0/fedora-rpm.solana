@@ -1,4 +1,4 @@
-From 8dbfde84194ccda6b4cf8bea6cf9ba3e47fb0d84 Mon Sep 17 00:00:00 2001
+From 43bc8db01232d58bda1105f7ed2db7d02e43599d Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Thu, 7 Oct 2021 07:57:32 +0500
 Subject: [PATCH 2/3] Enable LTO
