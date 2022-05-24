@@ -16,8 +16,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      0
-# git 866e527cddc2a0e02a154c432504ed2a6211ba37
-Version:    1.10.17
+# git f4a9697e16088090a13b7cf8ae6e61f3987b99e9
+Version:    1.10.18
 Release:    1%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -204,6 +204,7 @@ rm -r vendor/libz-sys/src/zlib-ng
 rm -r vendor/prost-build/third-party
 %{python} %{SOURCE100} vendor/prost-build \
         '^third-party/.*'
+# TODO: Use system lz4 for lz4-sys.
 
 mkdir .cargo
 cp %{SOURCE2} .cargo/
@@ -470,6 +471,9 @@ exit 0
 
 
 %changelog
+* Tue May 24 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.10.18-1
+- Update to 1.10.18
+
 * Wed May 18 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.10.17-1
 - Update to 1.10.17
 
