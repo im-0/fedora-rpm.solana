@@ -6,6 +6,8 @@
 %global solana_log    %{_localstatedir}/log/solana/%{solana_suffix}/
 %global solana_etc    %{_sysconfdir}/solana/%{solana_suffix}/
 
+%global rust_version 1.59.0
+
 # Available CPUs and features: `llc -march=x86-64 -mattr=help`.
 # x86-64-v3 (close to Haswell):
 #   AVX, AVX2, BMI1, BMI2, F16C, FMA, LZCNT, MOVBE, XSAVE
@@ -16,8 +18,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      0
-# git 5e56677d62530554dfc9336d6fa54d74de1cf924
-Version:    1.10.19
+# git 3127d6468d03a5363bf34e0ec5fe55d76b74811d
+Version:    1.10.20
 Release:    1%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -61,8 +63,10 @@ BuildRequires:  %{python}
 
 BuildRequires:  findutils
 BuildRequires:  rust-packaging
-BuildRequires:  rustfmt
-BuildRequires:  rust = 1.59.0
+BuildRequires:  rustfmt = %{rust_version}
+BuildRequires:  rust = %{rust_version}
+BuildRequires:  rust-std-static = %{rust_version}
+BuildRequires:  cargo = %{rust_version}
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  gcc
 BuildRequires:  clang
@@ -471,6 +475,9 @@ exit 0
 
 
 %changelog
+* Sat May 28 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.10.20-1
+- Update to 1.10.20
+
 * Tue May 24 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.10.19-1
 - Update to 1.10.19
 
