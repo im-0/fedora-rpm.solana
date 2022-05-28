@@ -6,6 +6,8 @@
 %global solana_log    %{_localstatedir}/log/solana/%{solana_suffix}/
 %global solana_etc    %{_sysconfdir}/solana/%{solana_suffix}/
 
+%global rust_version 1.57.0
+
 # Available CPUs and features: `llc -march=x86-64 -mattr=help`.
 # x86-64-v3 (close to Haswell):
 #   AVX, AVX2, BMI1, BMI2, F16C, FMA, LZCNT, MOVBE, XSAVE
@@ -16,8 +18,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      1
-# git 71c0c11fdbd05db27a5122f52a41069571a36007
-Version:    1.9.24
+# git b0377bf77ca56ca3db7a339f69f8e8ccb1433904
+Version:    1.9.25
 Release:    100%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -61,8 +63,10 @@ ExclusiveArch:  %{rust_arches}
 BuildRequires:  %{python}
 
 BuildRequires:  rust-packaging
-BuildRequires:  rustfmt
-BuildRequires:  rust = 1.57.0
+BuildRequires:  rustfmt = %{rust_version}
+BuildRequires:  rust = %{rust_version}
+BuildRequires:  rust-std-static = %{rust_version}
+BuildRequires:  cargo = %{rust_version}
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  gcc
 BuildRequires:  clang
@@ -469,6 +473,9 @@ exit 0
 
 
 %changelog
+* Sat May 28 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.9.25-100
+- Update to 1.9.25
+
 * Tue May 24 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.9.24-100
 - Update to 1.9.24
 
