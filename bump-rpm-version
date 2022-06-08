@@ -1,0 +1,512 @@
+#!/usr/bin/python3
+
+import argparse
+import datetime
+import glob
+import json
+import os
+import pprint
+import re
+import shutil
+import subprocess
+import typing
+import urllib.request
+import xml.etree.ElementTree
+
+
+_HTTP_TIMEOUT = 15  # seconds
+
+
+class _Spec(typing.NamedTuple):
+    file_name: str
+    name: str
+    version: str
+    release: str
+    epoch: int
+    last_changelog_name: str
+
+
+class _Patches(typing.NamedTuple):
+    all_patches: list[str]
+    ordered_patches: list[str]
+
+
+class _Config(typing.NamedTuple):
+    old_version: str
+    new_version: str
+    author: str
+
+
+def _main() -> None:
+    parser = argparse.ArgumentParser(
+        description='Bump Solana RPM version automatically',
+    )
+    parser.add_argument(
+        '-o',
+        '--old-version',
+        action='store',
+        default=None,
+        type=str,
+        required=False,
+        help='Old version. Default: current version from spec file.',
+    )
+    parser.add_argument(
+        '-n',
+        '--new-version',
+        action='store',
+        default=None,
+        type=str,
+        required=False,
+        help='New version. Default: current version from spec file.',
+    )
+    parser.add_argument(
+        '-a',
+        '--author',
+        action='store',
+        default=None,
+        type=str,
+        required=False,
+        help='Author for changelog entry. Default: author from last changelog entry from spec file.',
+    )
+    parser.add_argument(
+        '-D',
+        '--only-download',
+        action='store_true',
+        default=False,
+        required=False,
+        help='Only download the source tarball.',
+    )
+    parser.add_argument(
+        '-S',
+        '--only-spec',
+        action='store_true',
+        default=False,
+        required=False,
+        help='Only update the RPM Spec file.',
+    )
+    parser.add_argument(
+        '-P',
+        '--only-patches',
+        action='store_true',
+        default=False,
+        required=False,
+        help='Only update patches.',
+    )
+    parser.add_argument(
+        '-V',
+        '--only-vendor',
+        action='store_true',
+        default=False,
+        required=False,
+        help='Only crate tarball with vendored dependencies.',
+    )
+    parser.add_argument(
+        '-H',
+        '--only-hash-tarballs',
+        action='store_true',
+        default=False,
+        required=False,
+        help='Only write sha512 of tarballs into `sources`.',
+    )
+    args = parser.parse_args()
+
+    spec = _query_spec()
+    print('RPM Spec:')
+    pprint.pp(spec._asdict(), indent=4)
+    patches = _find_spec_patches(spec)
+    print('Patches:')
+    pprint.pp(patches._asdict(), indent=4)
+
+    if args.old_version is None:
+        old_version = spec.version
+    else:
+        old_version = args.old_version
+
+    if args.new_version is None:
+        new_version = spec.version
+    else:
+        new_version = args.new_version
+
+    if args.author is None:
+        author = spec.last_changelog_name
+    else:
+        author = args.author
+
+    config = _Config(
+        old_version=old_version,
+        new_version=new_version,
+        author=author)
+    print('Configuration:')
+    pprint.pp(config._asdict(), indent=4)
+
+    if args.only_download:
+        _download(config)
+    if args.only_spec:
+        _patch_spec(config, spec)
+    if args.only_patches:
+        _patch_patches(config, patches)
+    if args.only_vendor:
+        _vendor(config, patches)
+    if args.only_hash_tarballs:
+        _hash_tarballs(config)
+
+    if not (
+            args.only_download
+            or args.only_spec
+            or args.only_patches
+            or args.only_vendor
+            or args.only_hash_tarballs):
+        _download(config)
+        _patch_spec(config, spec)
+        _patch_patches(config, patches)
+        _vendor(config, patches)
+        _hash_tarballs(config)
+
+    print('All done!')
+
+
+def _query_spec() -> _Spec:
+    spec_files = glob.glob('*.spec')
+    assert len(spec_files) != 0, \
+        'No *.spec files found'
+    assert len(spec_files) == 1, \
+        f'More than one *.spec files found: {spec_files}'
+
+    file_name = spec_files[0]
+
+    cmd = (
+        'rpm',
+        '--query',
+        '--xml',
+        '--specfile', file_name,
+    )
+    xml_str = subprocess.check_output(
+        cmd,
+        stdin=subprocess.DEVNULL)
+    xml_str = b'<?xml version="1.0"?><rpms>' + xml_str + b'</rpms>'
+    xml_tree = xml.etree.ElementTree.fromstring(xml_str)
+
+    xml_first_rpm = next(xml_tree.iter('rpmHeader'))
+
+    name = _xml_get_rpm_tag_str(xml_first_rpm, 'Name')
+    assert file_name == f'{name}.spec', \
+        f'File name "{file_name}" does not match package name "{name}"'
+    version = _xml_get_rpm_tag_str(xml_first_rpm, 'Version')
+    release = _xml_get_rpm_tag_str(xml_first_rpm, 'Release')
+    epoch = _xml_get_rpm_tag_int(xml_first_rpm, 'Epoch')
+
+    try:
+        last_changelog_name = next(xml_first_rpm.iterfind('./rpmTag[@name="Changelogname"]/string')).text
+        last_changelog_name = last_changelog_name.split('-', 1)[0].strip()
+    except StopIteration:
+        last_changelog_name = 'Unknown <unknown@example.org>'
+
+    return _Spec(
+        file_name=file_name,
+        name=name,
+        version=version,
+        release=release,
+        epoch=epoch,
+        last_changelog_name=last_changelog_name)
+
+
+_RE_SPEC_PATCH_NAME = re.compile(r'^\s*Patch([0-9]+)\s*:\s*(\S+)\s*$')
+_RE_SPEC_PATCH_CMD = re.compile(r'^\s*%patch([0-9]+)(\s+.*)?$')
+
+
+def _find_spec_patches(spec: _Spec) -> _Patches:
+    ordered_patches = []
+    with open(spec.file_name, 'r') as spec_f:
+        patches = dict()
+        patch_file_names = set()
+        for line in spec_f:
+            line = line.strip()
+            patch_name_match = _RE_SPEC_PATCH_NAME.match(line)
+            patch_cmd_match = _RE_SPEC_PATCH_CMD.match(line)
+
+            if patch_name_match is not None:
+                patch_file_num = patch_name_match[1]
+                assert patch_file_num not in patches, \
+                    f'Duplicate patch number: "{patch_file_num}"'
+                patch_file_name = patch_name_match[2]
+                assert patch_file_name not in patch_file_names, \
+                    f'Duplicate patch file name: "{patch_file_name}"'
+
+                patch_file_names.add(patch_file_name)
+                patches[patch_file_num] = patch_file_name
+            elif patch_cmd_match is not None:
+                patch_file_num = patch_cmd_match[1]
+                patch_file_name = patches[patch_file_num]
+                patches[patch_file_num] = None
+                assert patch_file_name is not None, \
+                    f'Patch "{patch_file_num}" used more than once'
+                ordered_patches.append(patch_file_name)
+
+    return _Patches(
+        all_patches=glob.glob('*.patch'),
+        ordered_patches=ordered_patches)
+
+
+def _xml_get_rpm_tag_str(tree: xml.etree.ElementTree, name: str) -> str:
+    tag = _xml_get_rpm_tag(tree, name)
+    strings = tag.findall('./string')
+    assert len(strings) != 0, \
+        f'No <string> found in "{name}" rpmTag'
+    assert len(strings) == 1, \
+        f'More than one <string> found in "{name}" rpmTag'
+    return strings[0].text
+
+
+def _xml_get_rpm_tag_int(tree: xml.etree.ElementTree, name: str) -> int:
+    tag = _xml_get_rpm_tag(tree, name)
+    integers = tag.findall('./integer')
+    assert len(integers) != 0, \
+        f'No <integer> found in "{name}" rpmTag'
+    assert len(integers) == 1, \
+        f'More than one <integer> found in "{name}" rpmTag'
+    return int(integers[0].text)
+
+
+def _xml_get_rpm_tag(tree: xml.etree.ElementTree, name: str) -> xml.etree.ElementTree:
+    tags = tree.findall(f'./rpmTag[@name="{name}"]')
+    assert len(tags) != 0, \
+        f'No "{name}" rpmTag found'
+    assert len(tags) == 1, \
+        f'More than one "{name}" rpmTag found'
+    return tags[0]
+
+
+def _download(conf: _Config) -> None:
+    tarball_name = f'solana-{conf.new_version}.tar.gz'
+    if os.path.exists(tarball_name):
+        print(f'Source tarball "{tarball_name}" already exist, will not download again')
+    else:
+        cmd = (
+            'wget',
+            '--continue',
+            '--tries', '0',
+            '--timeout', str(_HTTP_TIMEOUT),
+            f'https://github.com/solana-labs/solana/archive/v{conf.new_version}/{tarball_name}',
+        )
+        subprocess.check_call(cmd, stdin=subprocess.DEVNULL)
+
+    if conf.old_version != conf.new_version:
+        old_tarball_name = f'solana-{conf.old_version}.tar.gz'
+        if os.path.exists(old_tarball_name):
+            print(f'Removing old tarball: {old_tarball_name}')
+            os.unlink(old_tarball_name)
+
+
+def _patch_spec(conf: _Config, spec: _Spec) -> None:
+    print(f'Patching spec file: {spec.file_name}')
+    with open(spec.file_name, 'r') as spec_f:
+        spec_str = spec_f.read()
+
+    # Patch comment with a git commit hash.
+    print('Getting commit hash...')
+    commit = _get_git_commit(conf)
+    print(f'Commit hash: {commit}')
+    new_spec_str = re.sub(
+        rf'(?m)^\s*#\s*git\s+\S+\s*$',
+        f'# git {commit}',
+        spec_str)
+    assert new_spec_str != spec_str, \
+        'Unable to patch git commit comment in the spec file'
+    spec_str = new_spec_str
+
+    # Patch Version.
+    old_version_re = conf.old_version.replace('.', '\\.')
+    new_spec_str = re.sub(
+        rf'(?m)^\s*Version:(\s*){old_version_re}\s*$',
+        f'Version:\\g<1>{conf.new_version}',
+        spec_str)
+    assert new_spec_str != spec_str, \
+        'Unable to patch Version in the spec file'
+    spec_str = new_spec_str
+
+    # Add changelog entry.
+    change = '* '
+    change += datetime.date.today().strftime('%a %b %d %Y')
+    change += f' {conf.author} - '
+    if spec.epoch != 0:
+        change += f'{spec.epoch}:'
+    change += f'{conf.new_version}-'
+    change += spec.release.rsplit('.', 1)[0]
+    change += '\n'
+    change += f'- Update to {conf.new_version}\n'
+
+    new_spec_str = re.sub(
+        rf'(?m)^%changelog$',
+        f'%changelog\n{change}',
+        spec_str)
+    assert new_spec_str != spec_str, \
+        'Unable to patch changelog in the spec file'
+    spec_str = new_spec_str
+
+    # Write patched file.
+    with open(spec.file_name, 'w') as spec_f:
+        spec_f.write(spec_str)
+
+
+def _get_git_commit(conf: _Config) -> str:
+    with urllib.request.urlopen(
+            f'https://api.github.com/repos/solana-labs/solana/git/ref/tags/v{conf.new_version}',
+            timeout=_HTTP_TIMEOUT) as response:
+        data = json.loads(response.read())
+
+    sha = _sanitize_sha(data['object']['sha'])
+    if data['object']['type'] == 'commit':
+        return sha
+
+    with urllib.request.urlopen(
+            f'https://api.github.com/repos/solana-labs/solana/git/tags/{sha}',
+            timeout=_HTTP_TIMEOUT) as response:
+        data = json.loads(response.read())
+    assert data['object']['type'] == 'commit', \
+        'Unable to get tag\'s commit'
+    sha = _sanitize_sha(data['object']['sha'])
+    return sha
+
+
+_SHA_ALPHABET = '0123456789abcdef'
+
+
+def _sanitize_sha(sha: str) -> str:
+    sha = sha.lower()
+    assert all(c in _SHA_ALPHABET for c in sha), \
+        'Invalid hash received'
+    return sha
+
+
+def _patch_patches(conf: _Config, patches: _Patches) -> None:
+    old_version_re = conf.old_version.replace('.', '\\.')
+
+    for patch in patches.all_patches:
+        print(f'Patching patch: {patch}')
+        with open(patch, 'r') as patch_f:
+            patch_str = patch_f.read()
+
+        patch_str = re.sub(
+            rf'(?m)(version\s*=\s*"=?){old_version_re}"',
+            f'\\g<1>{conf.new_version}"',
+            patch_str)
+
+        with open(patch, 'w') as patch_f:
+            patch_f.write(patch_str)
+
+
+def _vendor(conf: _Config, patches: _Patches) -> None:
+    tarball_name = f'solana-{conf.new_version}.cargo-vendor.tar.xz'
+    if os.path.exists(tarball_name):
+        print(f'Dependencies tarball "{tarball_name}" already exist, will not create again')
+    else:
+        print(f'Creating dependencies tarball: {tarball_name}')
+
+        # TODO: Use proper temporary directory.
+        tmp = './cargo-vendor.tmp'
+        if os.path.exists(tmp):
+            shutil.rmtree(tmp)
+        os.mkdir(tmp)
+        tmp_src = os.path.join(tmp, 'src')
+        os.mkdir(tmp_src)
+
+        # Unpack source code.
+        src_tarball_name = f'solana-{conf.new_version}.tar.gz'
+        print(f'Unpacking "{src_tarball_name}"...')
+        cmd = (
+            'tar',
+            '--directory', tmp_src,
+            '--extract',
+            '--file', src_tarball_name,
+        )
+        subprocess.check_call(
+            cmd,
+            stdin=subprocess.DEVNULL)
+        tmp_src_root = os.path.join(tmp_src, f'solana-{conf.new_version}')
+
+        # First run of `cargo vendor`.
+        cmd = (
+            'cargo',
+            'vendor',
+        )
+        subprocess.check_call(
+            cmd,
+            stdin=subprocess.DEVNULL,
+            cwd=tmp_src_root)
+        tmp_src_root_vendor = os.path.join(tmp_src_root, 'vendor')
+
+        # Apply patches.
+        for patch in patches.ordered_patches:
+            print(f'Applying "{patch}"...')
+            with open(patch, 'rb') as patch_f:
+                patch_bytes = patch_f.read()
+
+            cmd = ('patch', '-p1')
+            subprocess.run(
+                cmd,
+                input=patch_bytes,
+                cwd=tmp_src_root,
+                check=True)
+
+        # Second run of `cargo vendor`.
+        shutil.rmtree(tmp_src_root_vendor)
+        cmd = (
+            'cargo',
+            'vendor',
+        )
+        subprocess.check_call(
+            cmd,
+            stdin=subprocess.DEVNULL,
+            cwd=tmp_src_root)
+
+        # Remove extra files.
+        print('Removing extra files...')
+        for file_name in os.listdir(tmp_src_root):
+            if file_name != 'vendor':
+                path = os.path.join(tmp_src_root, file_name)
+                if os.path.isdir(path):
+                    shutil.rmtree(path)
+                else:
+                    os.unlink(path)
+
+        # Create tarball.
+        print(f'Compressing "{tarball_name}"...')
+        cmd = (
+            'tar',
+            '--directory', tmp_src,
+            '--create',
+            '--xz',
+            '--file', tarball_name,
+            '--verbose',
+            f'solana-{conf.new_version}',
+        )
+        subprocess.check_call(
+            cmd,
+            stdin=subprocess.DEVNULL)
+
+        # Remove temporary directory.
+        shutil.rmtree(tmp)
+
+    if conf.old_version != conf.new_version:
+        old_tarball_name = f'solana-{conf.old_version}.cargo-vendor.tar.xz'
+        if os.path.exists(old_tarball_name):
+            print(f'Removing old dependencies tarball: {old_tarball_name}')
+            os.unlink(old_tarball_name)
+
+
+def _hash_tarballs(conf: _Config) -> None:
+    print('Hashing tarballs...')
+    cmd = (
+        'sha512sum',
+        '--tag',
+        f'solana-{conf.new_version}.tar.gz',
+        f'solana-{conf.new_version}.cargo-vendor.tar.xz',
+    )
+    hashes = subprocess.check_output(
+        cmd,
+        stdin=subprocess.DEVNULL)
+    with open('sources', 'wb') as sources_f:
+        sources_f.write(hashes)
+
+
+_main()
