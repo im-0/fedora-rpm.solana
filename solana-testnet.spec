@@ -565,7 +565,7 @@ exit 0
 * Wed Jan 19 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.9.4-2
 - Make sure that sys-tuner start before validator
 
-* Sun Jan 8 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.9.4-1
+* Sat Jan 8 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.9.4-1
 - Update to 1.9.4
 
 * Thu Jan 6 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.9.3-1
