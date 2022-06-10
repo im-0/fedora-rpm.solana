@@ -20,7 +20,7 @@ Name:       solana-%{solana_suffix}
 Epoch:      0
 # git 15456493b4161ca0c673995f3cd0c69b815a945a
 Version:    1.10.24
-Release:    1%{?dist}
+Release:    2%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -55,6 +55,7 @@ Patch2001: 0003-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch3001: rocksdb-dynamic-linking.patch
 
 Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
+Patch4002: 0001-A-default-tower-is-no-longer-considered-to-contain-a.patch
 
 ExclusiveArch:  %{rust_arches}
 
@@ -181,6 +182,7 @@ cp Cargo.toml Cargo.toml.no-lto
 %patch3001 -p1
 
 %patch4001 -p1
+%patch4002 -p1
 
 # Remove bundled C/C++ source code.
 rm -r vendor/bzip2-sys/bzip2-*
@@ -475,6 +477,9 @@ exit 0
 
 
 %changelog
+* Sat Jun 11 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.10.24-2
+- A default tower is no longer considered to contain a stray last vote (backported patch)
+
 * Thu Jun 09 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.10.24-1
 - Update to 1.10.24
 
