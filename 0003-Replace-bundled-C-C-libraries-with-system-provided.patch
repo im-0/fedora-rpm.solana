@@ -49,8 +49,8 @@ diff --git a/account-decoder/Cargo.toml b/account-decoder/Cargo.toml
 index 4b1a3b947d18..51d8dbc8cd93 100644
 --- a/account-decoder/Cargo.toml
 +++ b/account-decoder/Cargo.toml
-@@ -24,7 +24,7 @@ solana-sdk = { path = "../sdk", version = "=1.9.28" }
- solana-vote-program = { path = "../programs/vote", version = "=1.9.28" }
+@@ -24,7 +24,7 @@ solana-sdk = { path = "../sdk", version = "=1.9.29" }
+ solana-vote-program = { path = "../programs/vote", version = "=1.9.29" }
  spl-token = { version = "=3.2.0", features = ["no-entrypoint"] }
  thiserror = "1.0"
 -zstd = "0.9.0"
@@ -88,8 +88,8 @@ diff --git a/storage-bigtable/Cargo.toml b/storage-bigtable/Cargo.toml
 index fe6c6f7d40fb..7939f622c274 100644
 --- a/storage-bigtable/Cargo.toml
 +++ b/storage-bigtable/Cargo.toml
-@@ -28,16 +28,8 @@ solana-storage-proto = { path = "../storage-proto", version = "=1.9.28" }
- solana-transaction-status = { path = "../transaction-status", version = "=1.9.28" }
+@@ -28,16 +28,8 @@ solana-storage-proto = { path = "../storage-proto", version = "=1.9.29" }
+ solana-transaction-status = { path = "../transaction-status", version = "=1.9.29" }
  thiserror = "1.0"
  tonic = { version = "0.7.1", features = ["tls", "transport"] }
 -zstd = "0.9.0"

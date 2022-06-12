@@ -18,9 +18,9 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      1
-# git b576e9cc4ea5bcacf90cf45bdc8ad4b770839850
-Version:    1.9.28
-Release:    101%{?dist}
+# git 0c54340a4a4b71583595da6307213055efab80da
+Version:    1.9.29
+Release:    100%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -56,7 +56,6 @@ Patch3001: 0001-Update-rocksdb-to-0.18.0-release-23031.patch
 Patch3002: rocksdb-dynamic-linking.patch
 
 Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
-Patch4002: 0001-Update-Version-CrdsData-on-node-identity-changes.patch
 
 ExclusiveArch:  %{rust_arches}
 
@@ -183,7 +182,6 @@ cp Cargo.toml Cargo.toml.no-lto
 %patch3002 -p1
 
 %patch4001 -p1
-%patch4002 -p1
 
 # Remove bundled C/C++ source code.
 rm -r vendor/bzip2-sys/bzip2-*
@@ -475,6 +473,9 @@ exit 0
 
 
 %changelog
+* Sun Jun 12 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.9.29-100
+- Update to 1.9.29
+
 * Wed Jun 08 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.9.28-101
 - Update Version CrdsData on node identity changes (backported patch)
 
