@@ -423,16 +423,6 @@ def _vendor(conf: _Config, patches: _Patches) -> None:
             cmd,
             stdin=subprocess.DEVNULL)
         tmp_src_root = os.path.join(tmp_src, f'solana-{conf.new_version}')
-
-        # First run of `cargo vendor`.
-        cmd = (
-            'cargo',
-            'vendor',
-        )
-        subprocess.check_call(
-            cmd,
-            stdin=subprocess.DEVNULL,
-            cwd=tmp_src_root)
         tmp_src_root_vendor = os.path.join(tmp_src_root, 'vendor')
 
         # Apply patches.
@@ -441,6 +431,17 @@ def _vendor(conf: _Config, patches: _Patches) -> None:
             with open(patch, 'rb') as patch_f:
                 patch_bytes = patch_f.read()
 
+            if b'vendor/' in patch_bytes:
+                # Run `cargo vendor` to allow patches for dependencies.
+                cmd = (
+                    'cargo',
+                    'vendor',
+                )
+                subprocess.check_call(
+                    cmd,
+                    stdin=subprocess.DEVNULL,
+                    cwd=tmp_src_root)
+
             cmd = ('patch', '-p1')
             subprocess.run(
                 cmd,
@@ -448,7 +449,7 @@ def _vendor(conf: _Config, patches: _Patches) -> None:
                 cwd=tmp_src_root,
                 check=True)
 
-        # Second run of `cargo vendor`.
+        # Final run of `cargo vendor`.
         shutil.rmtree(tmp_src_root_vendor)
         cmd = (
             'cargo',
