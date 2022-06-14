@@ -6,7 +6,7 @@
 %global solana_log    %{_localstatedir}/log/solana/%{solana_suffix}/
 %global solana_etc    %{_sysconfdir}/solana/%{solana_suffix}/
 
-%global rust_version 1.57.0
+%global rust_version 1.59.0
 
 # Available CPUs and features: `llc -march=x86-64 -mattr=help`.
 # x86-64-v3 (close to Haswell):
@@ -18,8 +18,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      1
-# git 0c54340a4a4b71583595da6307213055efab80da
-Version:    1.9.29
+# git d64f6808a005ca1fba6f4ca0a2ef303f862af893
+Version:    1.10.25
 Release:    100%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -52,8 +52,7 @@ Patch1002: 0002-Enable-LTO.patch
 
 Patch2001: 0003-Replace-bundled-C-C-libraries-with-system-provided.patch
 
-Patch3001: 0001-Update-rocksdb-to-0.18.0-release-23031.patch
-Patch3002: rocksdb-dynamic-linking.patch
+Patch3001: rocksdb-dynamic-linking.patch
 
 Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
 
@@ -62,6 +61,7 @@ ExclusiveArch:  %{rust_arches}
 %global python python3
 BuildRequires:  %{python}
 
+BuildRequires:  findutils
 BuildRequires:  rust-packaging
 BuildRequires:  rustfmt = %{rust_version}
 BuildRequires:  rust = %{rust_version}
@@ -179,7 +179,6 @@ cp Cargo.toml Cargo.toml.no-lto
 %patch2001 -p1
 
 %patch3001 -p1
-%patch3002 -p1
 
 %patch4001 -p1
 
@@ -209,6 +208,7 @@ rm -r vendor/libz-sys/src/zlib-ng
 rm -r vendor/prost-build/third-party
 %{python} %{SOURCE100} vendor/prost-build \
         '^third-party/.*'
+# TODO: Use system lz4 for lz4-sys.
 
 mkdir .cargo
 cp %{SOURCE2} .cargo/
@@ -234,7 +234,6 @@ export RUSTFLAGS='-C target-cpu=%{validator_target_cpu}'
         --package solana-bench-streamer \
         --package solana-merkle-root-bench \
         --package solana-poh-bench \
-        --package solana-sdk \
         --package solana-program:%{version}
 
 mv target/release ./release.newer-cpus
@@ -327,7 +326,11 @@ rm target/release/*.rlib
 rm target/release/solana-install target/release/solana-install-init target/release/solana-ledger-udev
 # Excluded. 
 # TODO: Why? Official binary release does not contain these, only libsolana_*_program.so installed.
-rm target/release/libsolana_frozen_abi_macro.so target/release/libsolana_sdk_macro.so
+rm \
+        target/release/libsolana_frozen_abi_macro.so \
+        target/release/libsolana_sdk_macro.so \
+        target/release/libsolana_sdk.so \
+        target/release/libsolana_zk_token_sdk.so
 rm target/release/gen-syscall-list
 
 mv target/release/*.so \
@@ -387,7 +390,6 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 %dir /opt/solana/%{solana_suffix}/bin
 %dir /opt/solana/%{solana_suffix}/bin/deps
 /opt/solana/%{solana_suffix}/bin/deps/libsolana_program.so
-/opt/solana/%{solana_suffix}/bin/deps/libsolana_sdk.so
 
 
 %files daemons
@@ -473,6 +475,9 @@ exit 0
 
 
 %changelog
+* Tue Jun 14 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.10.25-100
+- Update to 1.10.25
+
 * Sun Jun 12 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.9.29-100
 - Update to 1.9.29
 
