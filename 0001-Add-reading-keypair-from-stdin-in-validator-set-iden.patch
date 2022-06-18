@@ -1,0 +1,181 @@
+From 502249411be0dfea333b281221576820a890e234 Mon Sep 17 00:00:00 2001
+From: Ivan Mironov <mironov.ivan@gmail.com>
+Date: Sat, 18 Jun 2022 18:04:40 +0500
+Subject: [PATCH 1/2] Add reading keypair from stdin in `validator
+ set-identity`
+
+---
+ validator/src/admin_rpc_service.rs | 45 ++++++++++++++++++--
+ validator/src/main.rs              | 66 ++++++++++++++++++++++--------
+ 2 files changed, 89 insertions(+), 22 deletions(-)
+
+diff --git a/validator/src/admin_rpc_service.rs b/validator/src/admin_rpc_service.rs
+index 25b2ef20e30a..fad3dda88c52 100644
+--- a/validator/src/admin_rpc_service.rs
++++ b/validator/src/admin_rpc_service.rs
+@@ -163,6 +163,14 @@ pub trait AdminRpc {
+         require_tower: bool,
+     ) -> Result<()>;
+ 
++    #[rpc(meta, name = "setIdentityFromBytes")]
++    fn set_identity_from_bytes(
++        &self,
++        meta: Self::Metadata,
++        identity_keypair: Vec<u8>,
++        require_tower: bool,
++    ) -> Result<()>;
++
+     #[rpc(meta, name = "contactInfo")]
+     fn contact_info(&self, meta: Self::Metadata) -> Result<AdminRpcContactInfo>;
+ }
+@@ -256,6 +264,39 @@ impl AdminRpc for AdminRpcImpl {
+             ))
+         })?;
+ 
++        self.set_identity_keypair(meta, identity_keypair, require_tower)
++    }
++
++    fn set_identity_from_bytes(
++        &self,
++        meta: Self::Metadata,
++        identity_keypair: Vec<u8>,
++        require_tower: bool,
++    ) -> Result<()> {
++        debug!("set_identity_from_bytes request received");
++
++        let identity_keypair = Keypair::from_bytes(&identity_keypair).map_err(|err| {
++            jsonrpc_core::error::Error::invalid_params(format!(
++                "Failed to read identity keypair from provided byte array: {}",
++                err
++            ))
++        })?;
++
++        self.set_identity_keypair(meta, identity_keypair, require_tower)
++    }
++
++    fn contact_info(&self, meta: Self::Metadata) -> Result<AdminRpcContactInfo> {
++        meta.with_post_init(|post_init| Ok(post_init.cluster_info.my_contact_info().into()))
++    }
++}
++
++impl AdminRpcImpl {
++    fn set_identity_keypair(
++        &self,
++        meta: AdminRpcRequestMetadata,
++        identity_keypair: Keypair,
++        require_tower: bool,
++    ) -> Result<()> {
+         meta.with_post_init(|post_init| {
+             if require_tower {
+                 let _ = Tower::restore(meta.tower_storage.as_ref(), &identity_keypair.pubkey())
+@@ -276,10 +317,6 @@ impl AdminRpc for AdminRpcImpl {
+             Ok(())
+         })
+     }
+-
+-    fn contact_info(&self, meta: Self::Metadata) -> Result<AdminRpcContactInfo> {
+-        meta.with_post_init(|post_init| Ok(post_init.cluster_info.my_contact_info().into()))
+-    }
+ }
+ 
+ // Start the Admin RPC interface
+diff --git a/validator/src/main.rs b/validator/src/main.rs
+index 6df769e77ca0..b759c0f3e58f 100644
+--- a/validator/src/main.rs
++++ b/validator/src/main.rs
+@@ -66,7 +66,7 @@ use {
+         commitment_config::CommitmentConfig,
+         hash::Hash,
+         pubkey::Pubkey,
+-        signature::{Keypair, Signer},
++        signature::{read_keypair, Keypair, Signer},
+     },
+     solana_send_transaction_service::send_transaction_service::{
+         self, MAX_BATCH_SEND_RATE_MS, MAX_TRANSACTION_BATCH_SIZE,
+@@ -1801,9 +1801,11 @@ pub fn main() {
+                 Arg::with_name("identity")
+                     .index(1)
+                     .value_name("KEYPAIR")
++                    .required(false)
+                     .takes_value(true)
+                     .validator(is_keypair)
+-                    .help("Validator identity keypair")
++                    .help("Path to validator identity keypair \
++                           [default: read JSON keypair from stdin]")
+             )
+             .arg(
+                 clap::Arg::with_name("require_tower")
+@@ -1983,26 +1985,54 @@ pub fn main() {
+         }
+         ("set-identity", Some(subcommand_matches)) => {
+             let require_tower = subcommand_matches.is_present("require_tower");
+-            let identity_keypair = value_t_or_exit!(subcommand_matches, "identity", String);
+ 
+-            let identity_keypair = fs::canonicalize(&identity_keypair).unwrap_or_else(|err| {
+-                println!("Unable to access path: {}: {:?}", identity_keypair, err);
+-                exit(1);
+-            });
+-            println!("Validator identity: {}", identity_keypair.display());
++            if let Some(identity_keypair) = value_t!(subcommand_matches, "identity", String).ok() {
++                let identity_keypair = fs::canonicalize(&identity_keypair).unwrap_or_else(|err| {
++                    println!("Unable to access path: {}: {:?}", identity_keypair, err);
++                    exit(1);
++                });
++                println!(
++                    "New validator identity path: {}",
++                    identity_keypair.display()
++                );
+ 
+-            let admin_client = admin_rpc_service::connect(&ledger_path);
+-            admin_rpc_service::runtime()
+-                .block_on(async move {
+-                    admin_client
+-                        .await?
+-                        .set_identity(identity_keypair.display().to_string(), require_tower)
+-                        .await
+-                })
+-                .unwrap_or_else(|err| {
+-                    println!("setIdentity request failed: {}", err);
++                let admin_client = admin_rpc_service::connect(&ledger_path);
++                admin_rpc_service::runtime()
++                    .block_on(async move {
++                        admin_client
++                            .await?
++                            .set_identity(identity_keypair.display().to_string(), require_tower)
++                            .await
++                    })
++                    .unwrap_or_else(|err| {
++                        println!("setIdentity request failed: {}", err);
++                        exit(1);
++                    });
++            } else {
++                let mut stdin = std::io::stdin();
++                let identity_keypair = read_keypair(&mut stdin).unwrap_or_else(|err| {
++                    println!("Unable to read JSON keypair from stdin: {:?}", err);
+                     exit(1);
+                 });
++                println!("New validator identity: {}", identity_keypair.pubkey());
++
++                let admin_client = admin_rpc_service::connect(&ledger_path);
++                admin_rpc_service::runtime()
++                    .block_on(async move {
++                        admin_client
++                            .await?
++                            .set_identity_from_bytes(
++                                Vec::from(identity_keypair.to_bytes()),
++                                require_tower,
++                            )
++                            .await
++                    })
++                    .unwrap_or_else(|err| {
++                        println!("setIdentityFromBytes request failed: {}", err);
++                        exit(1);
++                    });
++            };
++
+             return;
+         }
+         ("set-log-filter", Some(subcommand_matches)) => {
+-- 
+2.36.1
+

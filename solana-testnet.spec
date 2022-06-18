@@ -20,7 +20,7 @@ Name:       solana-%{solana_suffix}
 Epoch:      0
 # git 1a0b783b26f1242aa126bf3cf91751fb82db2538
 Version:    1.10.26
-Release:    1%{?dist}
+Release:    2%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -55,6 +55,9 @@ Patch2001: 0003-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch3001: rocksdb-dynamic-linking.patch
 
 Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
+
+Patch5001: 0001-Add-reading-keypair-from-stdin-in-validator-set-iden.patch
+Patch5002: 0002-Add-reading-keypair-from-stdin-in-validator-authoriz.patch
 
 ExclusiveArch:  %{rust_arches}
 
@@ -181,6 +184,9 @@ cp Cargo.toml Cargo.toml.no-lto
 %patch3001 -p1
 
 %patch4001 -p1
+
+%patch5001 -p1
+%patch5002 -p1
 
 # Remove bundled C/C++ source code.
 rm -r vendor/bzip2-sys/bzip2-*
@@ -475,6 +481,9 @@ exit 0
 
 
 %changelog
+* Sat Jun 18 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.10.26-2
+- Add patches to support reading keypairs from stdin in validator subcommands
+
 * Sat Jun 18 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.10.26-1
 - Update to 1.10.26
 
