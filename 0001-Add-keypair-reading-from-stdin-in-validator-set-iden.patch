@@ -1,16 +1,16 @@
-From 502249411be0dfea333b281221576820a890e234 Mon Sep 17 00:00:00 2001
+From c9c114451faf4b29d84d02afce3a472c705ddc31 Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Sat, 18 Jun 2022 18:04:40 +0500
-Subject: [PATCH 1/2] Add reading keypair from stdin in `validator
+Subject: [PATCH 1/2] Add keypair reading from stdin in `validator
  set-identity`
 
 ---
- validator/src/admin_rpc_service.rs | 45 ++++++++++++++++++--
+ validator/src/admin_rpc_service.rs | 44 ++++++++++++++++++--
  validator/src/main.rs              | 66 ++++++++++++++++++++++--------
- 2 files changed, 89 insertions(+), 22 deletions(-)
+ 2 files changed, 88 insertions(+), 22 deletions(-)
 
 diff --git a/validator/src/admin_rpc_service.rs b/validator/src/admin_rpc_service.rs
-index 25b2ef20e30a..fad3dda88c52 100644
+index 25b2ef20e30a..a73bcd7f8920 100644
 --- a/validator/src/admin_rpc_service.rs
 +++ b/validator/src/admin_rpc_service.rs
 @@ -163,6 +163,14 @@ pub trait AdminRpc {
@@ -28,11 +28,11 @@ index 25b2ef20e30a..fad3dda88c52 100644
      #[rpc(meta, name = "contactInfo")]
      fn contact_info(&self, meta: Self::Metadata) -> Result<AdminRpcContactInfo>;
  }
-@@ -256,6 +264,39 @@ impl AdminRpc for AdminRpcImpl {
+@@ -256,6 +264,38 @@ impl AdminRpc for AdminRpcImpl {
              ))
          })?;
  
-+        self.set_identity_keypair(meta, identity_keypair, require_tower)
++        AdminRpcImpl::set_identity_keypair(meta, identity_keypair, require_tower)
 +    }
 +
 +    fn set_identity_from_bytes(
@@ -50,7 +50,7 @@ index 25b2ef20e30a..fad3dda88c52 100644
 +            ))
 +        })?;
 +
-+        self.set_identity_keypair(meta, identity_keypair, require_tower)
++        AdminRpcImpl::set_identity_keypair(meta, identity_keypair, require_tower)
 +    }
 +
 +    fn contact_info(&self, meta: Self::Metadata) -> Result<AdminRpcContactInfo> {
@@ -60,7 +60,6 @@ index 25b2ef20e30a..fad3dda88c52 100644
 +
 +impl AdminRpcImpl {
 +    fn set_identity_keypair(
-+        &self,
 +        meta: AdminRpcRequestMetadata,
 +        identity_keypair: Keypair,
 +        require_tower: bool,
@@ -68,7 +67,7 @@ index 25b2ef20e30a..fad3dda88c52 100644
          meta.with_post_init(|post_init| {
              if require_tower {
                  let _ = Tower::restore(meta.tower_storage.as_ref(), &identity_keypair.pubkey())
-@@ -276,10 +317,6 @@ impl AdminRpc for AdminRpcImpl {
+@@ -276,10 +316,6 @@ impl AdminRpc for AdminRpcImpl {
              Ok(())
          })
      }
@@ -80,7 +79,7 @@ index 25b2ef20e30a..fad3dda88c52 100644
  
  // Start the Admin RPC interface
 diff --git a/validator/src/main.rs b/validator/src/main.rs
-index 6df769e77ca0..b759c0f3e58f 100644
+index e5ae4d62378e..fc7ba72201aa 100644
 --- a/validator/src/main.rs
 +++ b/validator/src/main.rs
 @@ -66,7 +66,7 @@ use {
@@ -92,7 +91,7 @@ index 6df769e77ca0..b759c0f3e58f 100644
      },
      solana_send_transaction_service::send_transaction_service::{
          self, MAX_BATCH_SEND_RATE_MS, MAX_TRANSACTION_BATCH_SIZE,
-@@ -1801,9 +1801,11 @@ pub fn main() {
+@@ -1867,9 +1867,11 @@ pub fn main() {
                  Arg::with_name("identity")
                      .index(1)
                      .value_name("KEYPAIR")
@@ -105,7 +104,7 @@ index 6df769e77ca0..b759c0f3e58f 100644
              )
              .arg(
                  clap::Arg::with_name("require_tower")
-@@ -1983,26 +1985,54 @@ pub fn main() {
+@@ -2049,26 +2051,54 @@ pub fn main() {
          }
          ("set-identity", Some(subcommand_matches)) => {
              let require_tower = subcommand_matches.is_present("require_tower");

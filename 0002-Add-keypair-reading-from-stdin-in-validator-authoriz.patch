@@ -1,16 +1,16 @@
-From d687bc44052a2bc1de01c5d47f041d5d39231928 Mon Sep 17 00:00:00 2001
+From 74a8428db0795adb156cd6b0694cdb328fc3a2e3 Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Sat, 18 Jun 2022 18:59:01 +0500
-Subject: [PATCH 2/2] Add reading keypair from stdin in `validator
+Subject: [PATCH 2/2] Add keypair reading from stdin in `validator
  authorized-voter add`
 
 ---
- validator/src/admin_rpc_service.rs | 51 +++++++++++++----
+ validator/src/admin_rpc_service.rs | 50 +++++++++++++----
  validator/src/main.rs              | 88 ++++++++++++++++++++----------
- 2 files changed, 99 insertions(+), 40 deletions(-)
+ 2 files changed, 98 insertions(+), 40 deletions(-)
 
 diff --git a/validator/src/admin_rpc_service.rs b/validator/src/admin_rpc_service.rs
-index fad3dda88c52..dc7bc06ee0c2 100644
+index a73bcd7f8920..2c32cc8e24a6 100644
 --- a/validator/src/admin_rpc_service.rs
 +++ b/validator/src/admin_rpc_service.rs
 @@ -152,6 +152,10 @@ pub trait AdminRpc {
@@ -29,7 +29,7 @@ index fad3dda88c52..dc7bc06ee0c2 100644
              .map_err(|err| jsonrpc_core::error::Error::invalid_params(format!("{}", err)))?;
  
 -        let mut authorized_voter_keypairs = meta.authorized_voter_keypairs.write().unwrap();
-+        self.add_authorized_voter_keypair(meta, authorized_voter)
++        AdminRpcImpl::add_authorized_voter_keypair(meta, authorized_voter)
 +    }
  
 -        if authorized_voter_keypairs
@@ -56,16 +56,15 @@ index fad3dda88c52..dc7bc06ee0c2 100644
 -        }
 +        })?;
 +
-+        self.add_authorized_voter_keypair(meta, authorized_voter)
++        AdminRpcImpl::add_authorized_voter_keypair(meta, authorized_voter)
      }
  
      fn remove_all_authorized_voters(&self, meta: Self::Metadata) -> Result<()> {
-@@ -291,6 +300,26 @@ impl AdminRpc for AdminRpcImpl {
+@@ -291,6 +300,25 @@ impl AdminRpc for AdminRpcImpl {
  }
  
  impl AdminRpcImpl {
 +    fn add_authorized_voter_keypair(
-+        &self,
 +        meta: AdminRpcRequestMetadata,
 +        authorized_voter: Keypair,
 +    ) -> Result<()> {
@@ -85,13 +84,13 @@ index fad3dda88c52..dc7bc06ee0c2 100644
 +    }
 +
      fn set_identity_keypair(
-         &self,
          meta: AdminRpcRequestMetadata,
+         identity_keypair: Keypair,
 diff --git a/validator/src/main.rs b/validator/src/main.rs
-index b759c0f3e58f..b717e7ced97c 100644
+index fc7ba72201aa..eaec950a1a75 100644
 --- a/validator/src/main.rs
 +++ b/validator/src/main.rs
-@@ -1756,9 +1756,11 @@ pub fn main() {
+@@ -1822,9 +1822,11 @@ pub fn main() {
                      Arg::with_name("authorized_voter_keypair")
                          .index(1)
                          .value_name("KEYPAIR")
@@ -104,7 +103,7 @@ index b759c0f3e58f..b717e7ced97c 100644
                  )
                  .after_help("Note: the new authorized voter only applies to the \
                               currently running validator instance")
-@@ -1874,36 +1876,64 @@ pub fn main() {
+@@ -1940,36 +1942,64 @@ pub fn main() {
          ("authorized-voter", Some(authorized_voter_subcommand_matches)) => {
              match authorized_voter_subcommand_matches.subcommand() {
                  ("add", Some(subcommand_matches)) => {
@@ -175,7 +174,7 @@ index b759c0f3e58f..b717e7ced97c 100644
 +                                    .await
 +                            })
 +                            .unwrap_or_else(|err| {
-+                                println!("addAuthorizedVoter request failed: {}", err);
++                                println!("addAuthorizedVoterFromBytes request failed: {}", err);
 +                                exit(1);
 +                            });
 +                    }

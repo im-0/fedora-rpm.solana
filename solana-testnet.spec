@@ -6,7 +6,7 @@
 %global solana_log    %{_localstatedir}/log/solana/%{solana_suffix}/
 %global solana_etc    %{_sysconfdir}/solana/%{solana_suffix}/
 
-%global rust_version 1.59.0
+%global rust_version 1.60.0
 
 # Available CPUs and features: `llc -march=x86-64 -mattr=help`.
 # x86-64-v3 (close to Haswell):
@@ -18,9 +18,9 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      0
-# git 1a0b783b26f1242aa126bf3cf91751fb82db2538
-Version:    1.10.26
-Release:    2%{?dist}
+# git d2afa6b418eb5fda4f8ae446bdde1011bc7170ca
+Version:    1.11.0
+Release:    1%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -56,8 +56,8 @@ Patch3001: rocksdb-dynamic-linking.patch
 
 Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
 
-Patch5001: 0001-Add-reading-keypair-from-stdin-in-validator-set-iden.patch
-Patch5002: 0002-Add-reading-keypair-from-stdin-in-validator-authoriz.patch
+Patch5001: 0001-Add-keypair-reading-from-stdin-in-validator-set-iden.patch
+Patch5002: 0002-Add-keypair-reading-from-stdin-in-validator-authoriz.patch
 
 ExclusiveArch:  %{rust_arches}
 
@@ -154,6 +154,15 @@ Requires: %{name}-common = %{epoch}:%{version}-%{release}
 
 %description bpf-utils
 Solana BPF utilities (%{solana_suffix} version).
+
+
+%package sbf-utils
+Summary: Solana SBF utilities (%{solana_suffix} version)
+Requires: %{name}-common = %{epoch}:%{version}-%{release}
+
+
+%description sbf-utils
+Solana SBF utilities (%{solana_suffix} version).
 
 
 %package tests
@@ -338,6 +347,7 @@ rm \
         target/release/libsolana_sdk.so \
         target/release/libsolana_zk_token_sdk.so
 rm target/release/gen-syscall-list
+rm target/release/gen-headers
 
 mv target/release/*.so \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/deps/
@@ -405,7 +415,6 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 %dir /opt/solana/%{solana_suffix}/libexec
 /opt/solana/%{solana_suffix}/bin/solana-faucet
 /opt/solana/%{solana_suffix}/bin/solana-ip-address-server
-/opt/solana/%{solana_suffix}/bin/solana-replica-node
 /opt/solana/%{solana_suffix}/bin/solana-sys-tuner
 /opt/solana/%{solana_suffix}/bin/solana-validator
 /opt/solana/%{solana_suffix}/bin/solana-watchtower
@@ -435,6 +444,14 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 /opt/solana/%{solana_suffix}/bin/cargo-build-bpf
 /opt/solana/%{solana_suffix}/bin/cargo-test-bpf
 /opt/solana/%{solana_suffix}/bin/rbpf-cli
+
+
+%files sbf-utils
+%dir /opt/solana
+%dir /opt/solana/%{solana_suffix}
+%dir /opt/solana/%{solana_suffix}/bin
+/opt/solana/%{solana_suffix}/bin/cargo-build-sbf
+/opt/solana/%{solana_suffix}/bin/cargo-test-sbf
 
 
 %files tests
@@ -481,6 +498,9 @@ exit 0
 
 
 %changelog
+* Tue Jun 21 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.11.0-1
+- Update to 1.11.0
+
 * Sat Jun 18 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.10.26-2
 - Add patches to support reading keypairs from stdin in validator subcommands
 
