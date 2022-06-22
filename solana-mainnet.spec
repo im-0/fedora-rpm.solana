@@ -18,9 +18,9 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      1
-# git 1a0b783b26f1242aa126bf3cf91751fb82db2538
-Version:    1.10.26
-Release:    101%{?dist}
+# git 8a9f596206d09f242742555d26e109ce2d32e73d
+Version:    1.10.27
+Release:    100%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -56,8 +56,8 @@ Patch3001: rocksdb-dynamic-linking.patch
 
 Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
 
-Patch5001: 0001-Add-reading-keypair-from-stdin-in-validator-set-iden.patch
-Patch5002: 0002-Add-reading-keypair-from-stdin-in-validator-authoriz.patch
+Patch5001: 0001-Add-keypair-reading-from-stdin-in-validator-set-iden.patch
+Patch5002: 0002-Add-keypair-reading-from-stdin-in-validator-authoriz.patch
 
 ExclusiveArch:  %{rust_arches}
 
@@ -481,6 +481,9 @@ exit 0
 
 
 %changelog
+* Wed Jun 22 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.10.27-100
+- Update to 1.10.27
+
 * Sat Jun 18 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.10.26-101
 - Add patches to support reading keypairs from stdin in validator subcommands
 
