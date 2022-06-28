@@ -56,9 +56,6 @@ Patch3001: rocksdb-dynamic-linking.patch
 
 Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
 
-Patch5001: 0001-Add-keypair-reading-from-stdin-in-validator-set-iden.patch
-Patch5002: 0002-Add-keypair-reading-from-stdin-in-validator-authoriz.patch
-
 ExclusiveArch:  %{rust_arches}
 
 %global python python3
@@ -184,9 +181,6 @@ cp Cargo.toml Cargo.toml.no-lto
 %patch3001 -p1
 
 %patch4001 -p1
-
-%patch5001 -p1
-%patch5002 -p1
 
 # Remove bundled C/C++ source code.
 rm -r vendor/bzip2-sys/bzip2-*
