@@ -1,7 +1,7 @@
 PATH="/opt/solana/__SUFFIX__/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"
 
 # Logging configuration.
-RUST_LOG="info"
+RUST_LOG="solana=info"
 
 # Print full backtrace on panic.
 RUST_BACKTRACE="full"
