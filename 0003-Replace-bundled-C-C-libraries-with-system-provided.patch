@@ -1,4 +1,4 @@
-From 70521dd411dfe86a39ebcc9ee85623965b174de4 Mon Sep 17 00:00:00 2001
+From 4d7b3150bcdf23b41f90fd6ad5ecafd0b8a781d7 Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Thu, 18 Feb 2021 17:17:32 +0500
 Subject: [PATCH 3/3] Replace bundled C/C++ libraries with system provided
@@ -12,7 +12,7 @@ Subject: [PATCH 3/3] Replace bundled C/C++ libraries with system provided
  5 files changed, 5 insertions(+), 22 deletions(-)
 
 diff --git a/Cargo.lock b/Cargo.lock
-index c6ac2a1e01c2..8086333fc797 100644
+index 1915141acd11..d13f171c1bce 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -2964,15 +2964,6 @@ version = "0.1.4"
@@ -30,7 +30,7 @@ index c6ac2a1e01c2..8086333fc797 100644
 -
  [[package]]
  name = "openssl-sys"
- version = "0.9.73"
+ version = "0.9.75"
 @@ -2982,7 +2973,6 @@ dependencies = [
   "autocfg",
   "cc",
@@ -39,19 +39,19 @@ index c6ac2a1e01c2..8086333fc797 100644
   "pkg-config",
   "vcpkg",
  ]
-@@ -8062,4 +8052,5 @@ checksum = "9fd07cbbc53846d9145dbffdf6dd09a7a0aa52be46741825f5c97bdd4f73f12b"
+@@ -8079,4 +8069,5 @@ checksum = "9fd07cbbc53846d9145dbffdf6dd09a7a0aa52be46741825f5c97bdd4f73f12b"
  dependencies = [
   "cc",
   "libc",
 + "pkg-config",
  ]
 diff --git a/account-decoder/Cargo.toml b/account-decoder/Cargo.toml
-index 38265fca7fcc..c85705fbc7b3 100644
+index ce4f04ee9da9..28f2328e85e7 100644
 --- a/account-decoder/Cargo.toml
 +++ b/account-decoder/Cargo.toml
-@@ -25,7 +25,7 @@ solana-vote-program = { path = "../programs/vote", version = "=1.11.4" }
- spl-token = { version = "=3.3.0", features = ["no-entrypoint"] }
- spl-token-2022 = { version = "=0.3.0", features = ["no-entrypoint"] }
+@@ -25,7 +25,7 @@ solana-vote-program = { path = "../programs/vote", version = "=1.11.5" }
+ spl-token = { version = "=3.3.1", features = ["no-entrypoint"] }
+ spl-token-2022 = { version = "=0.4.2", features = ["no-entrypoint"] }
  thiserror = "1.0"
 -zstd = "0.11.2"
 +zstd = { version = "0.11.2", features = ["pkg-config"] }
@@ -59,7 +59,7 @@ index 38265fca7fcc..c85705fbc7b3 100644
  [package.metadata.docs.rs]
  targets = ["x86_64-unknown-linux-gnu"]
 diff --git a/remote-wallet/Cargo.toml b/remote-wallet/Cargo.toml
-index df4fd0625607..cde7dcd398dc 100644
+index bb5d1904a546..9e39f36f17c3 100644
 --- a/remote-wallet/Cargo.toml
 +++ b/remote-wallet/Cargo.toml
 @@ -24,7 +24,7 @@ thiserror = "1.0"
@@ -72,7 +72,7 @@ index df4fd0625607..cde7dcd398dc 100644
  linux-static-hidraw = ["hidapi/linux-static-hidraw"]
  linux-shared-libusb = ["hidapi/linux-shared-libusb"]
 diff --git a/runtime/Cargo.toml b/runtime/Cargo.toml
-index 0852d7064e06..661b230b1253 100644
+index 40f08833c1f3..302b00be39c7 100644
 --- a/runtime/Cargo.toml
 +++ b/runtime/Cargo.toml
 @@ -60,7 +60,7 @@ symlink = "0.1.0"
@@ -85,13 +85,13 @@ index 0852d7064e06..661b230b1253 100644
  [lib]
  crate-type = ["lib"]
 diff --git a/storage-bigtable/Cargo.toml b/storage-bigtable/Cargo.toml
-index fa07fcc5f7cc..70e7b6fa404d 100644
+index 430324252246..b634a4c7c85d 100644
 --- a/storage-bigtable/Cargo.toml
 +++ b/storage-bigtable/Cargo.toml
-@@ -34,16 +34,8 @@ solana-transaction-status = { path = "../transaction-status", version = "=1.11.4
+@@ -34,16 +34,8 @@ solana-transaction-status = { path = "../transaction-status", version = "=1.11.5
  thiserror = "1.0"
  tokio = "~1.14.1"
- tonic = { version = "0.7.2", features = ["tls", "transport"] }
+ tonic = { version = "0.8.0", features = ["tls", "transport"] }
 -zstd = "0.11.2"
 +zstd = { version = "0.11.2", features = ["pkg-config"] }
  

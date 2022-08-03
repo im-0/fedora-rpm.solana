@@ -18,8 +18,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      0
-# git 4308db74e48af58a58aec02e564fb35106503f3e
-Version:    1.11.4
+# git 403b2e4841ef7301370e86a443ebe51f8ae512e0
+Version:    1.11.5
 Release:    1%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -73,6 +73,7 @@ BuildRequires:  clang
 BuildRequires:  make
 BuildRequires:  pkgconf-pkg-config
 BuildRequires:  protobuf-compiler
+BuildRequires:  protobuf-devel
 BuildRequires:  openssl-devel
 BuildRequires:  zlib-ng-devel
 BuildRequires:  bzip2-devel
@@ -214,8 +215,8 @@ rm -r vendor/libz-sys/src/zlib-ng
 %{python} %{SOURCE100} vendor/libz-sys \
         '^src/zlib/.*' \
         '^src/zlib-ng/.*'
-rm -r vendor/prost-build/third-party
-%{python} %{SOURCE100} vendor/prost-build \
+rm -r vendor/prost-build-0.9.0/third-party
+%{python} %{SOURCE100} vendor/prost-build-0.9.0 \
         '^third-party/.*'
 # TODO: Use system lz4 for lz4-sys.
 
@@ -233,6 +234,8 @@ export ROCKSDB_INCLUDE_DIR=%{_includedir}
 export ROCKSDB_LIB_DIR=%{_libdir}
 export LZ4_INCLUDE_DIR=%{_includedir}
 export LZ4_LIB_DIR=%{_libdir}
+export PROTOC=/usr/bin/protoc
+export PROTOC_INCLUDE=/usr/include
 
 # First, build binaries optimized for newer CPUs.
 export RUSTFLAGS='-C target-cpu=%{validator_target_cpu}'
@@ -492,6 +495,9 @@ exit 0
 
 
 %changelog
+* Thu Aug 04 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.11.5-1
+- Update to 1.11.5
+
 * Sat Jul 23 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.11.4-1
 - Update to 1.11.4
 
