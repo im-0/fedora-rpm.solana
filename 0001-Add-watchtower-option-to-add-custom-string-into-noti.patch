@@ -1,14 +1,20 @@
-From d127738e2d67749c3750963f9b922e2cd18b47fe Mon Sep 17 00:00:00 2001
+From 24d47ef7593afa6a0709890a2d4b92191754b1dc Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
-Date: Tue, 26 Oct 2021 12:03:04 +0500
-Subject: [PATCH] Add watchtower option to add custom string into notifications
+Date: Sun, 7 Aug 2022 15:26:27 +0500
+Subject: [PATCH 1/2] Add watchtower option to add custom string into
+ notifications
 
+This helps to distinguish between Mainnet and Testnet notifications sent
+into the same notification channel. Usage example:
+
+	solana-watchtower --name-suffix " mainnet" ...
+	solana-watchtower --name-suffix " testnet" ...
 ---
- watchtower/src/main.rs | 20 +++++++++++++++++---
- 1 file changed, 17 insertions(+), 3 deletions(-)
+ watchtower/src/main.rs | 21 ++++++++++++++++++---
+ 1 file changed, 18 insertions(+), 3 deletions(-)
 
 diff --git a/watchtower/src/main.rs b/watchtower/src/main.rs
-index 3dd06dd8aaa5..a8a7424e9c31 100644
+index 15504001e574..f70aa1d3379c 100644
 --- a/watchtower/src/main.rs
 +++ b/watchtower/src/main.rs
 @@ -34,6 +34,7 @@ struct Config {
@@ -19,7 +25,7 @@ index 3dd06dd8aaa5..a8a7424e9c31 100644
  }
  
  fn get_config() -> Config {
-@@ -134,6 +135,13 @@ fn get_config() -> Config {
+@@ -134,6 +135,14 @@ fn get_config() -> Config {
                      no alerting should a Bad Gateway error be a side effect of \
                      the real problem")
          )
@@ -28,21 +34,22 @@ index 3dd06dd8aaa5..a8a7424e9c31 100644
 +                .long("name-suffix")
 +                .value_name("SUFFIX")
 +                .takes_value(true)
-+                .help("Add this string into all notification messages after \"^solana-watchtower\"")
++                .default_value("")
++                .help("Add this string into all notification messages after \"solana-watchtower\"")
 +        )
          .get_matches();
  
      let config = if let Some(config_file) = matches.value_of("config_file") {
-@@ -159,6 +167,8 @@ fn get_config() -> Config {
+@@ -159,6 +168,8 @@ fn get_config() -> Config {
      let monitor_active_stake = matches.is_present("monitor_active_stake");
      let ignore_http_bad_gateway = matches.is_present("ignore_http_bad_gateway");
  
-+    let name_suffix = matches.value_of("name_suffix").unwrap_or("").to_owned();
++    let name_suffix = value_t_or_exit!(matches, "name_suffix", String);
 +
      let config = Config {
          address_labels: config.address_labels,
          ignore_http_bad_gateway,
-@@ -168,6 +178,7 @@ fn get_config() -> Config {
+@@ -168,6 +179,7 @@ fn get_config() -> Config {
          monitor_active_stake,
          unhealthy_threshold,
          validator_identity_pubkeys,
@@ -50,7 +57,7 @@ index 3dd06dd8aaa5..a8a7424e9c31 100644
      };
  
      info!("RPC URL: {}", config.json_rpc_url);
-@@ -337,8 +348,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
+@@ -337,8 +349,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
  
          if let Some((failure_test_name, failure_error_message)) = &failure {
              let notification_msg = format!(
@@ -61,7 +68,7 @@ index 3dd06dd8aaa5..a8a7424e9c31 100644
              );
              num_consecutive_failures += 1;
              if num_consecutive_failures > config.unhealthy_threshold {
-@@ -370,7 +381,10 @@ fn main() -> Result<(), Box<dyn error::Error>> {
+@@ -370,7 +382,10 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                      humantime::format_duration(alarm_duration)
                  );
                  info!("{}", all_clear_msg);
@@ -74,5 +81,5 @@ index 3dd06dd8aaa5..a8a7424e9c31 100644
              last_notification_msg = "".into();
              last_success = Instant::now();
 -- 
-2.33.1
+2.37.1
 
