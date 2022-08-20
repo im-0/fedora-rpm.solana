@@ -1,4 +1,4 @@
-From d8dd3e1eb0db92eca7fee2e6f2692a2d91a33167 Mon Sep 17 00:00:00 2001
+From 2866e70577c85165cd9422d9e7757dc6f62df3e1 Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Thu, 7 Oct 2021 07:57:32 +0500
 Subject: [PATCH 2/3] Enable LTO
@@ -8,15 +8,15 @@ Subject: [PATCH 2/3] Enable LTO
  1 file changed, 2 insertions(+)
 
 diff --git a/Cargo.toml b/Cargo.toml
-index ec2c731619ab..ecf68778819e 100644
+index 5791a71621fe..b40840aff6d0 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
-@@ -95,3 +95,5 @@ exclude = [
+@@ -102,3 +102,5 @@ crossbeam-epoch = { git = "https://github.com/solana-labs/crossbeam", rev = "fd2
  [profile.release]
  opt-level = 3
  debug = true
 +lto = "fat"
 +codegen-units = 1
 -- 
-2.37.1
+2.37.2
 

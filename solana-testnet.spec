@@ -18,9 +18,9 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      0
-# git 403b2e4841ef7301370e86a443ebe51f8ae512e0
-Version:    1.11.5
-Release:    2%{?dist}
+# git e48d8a95895e3ba2a4a1f2168561eb2b53c773f0
+Version:    1.11.7
+Release:    1%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -81,7 +81,7 @@ BuildRequires:  bzip2-devel
 BuildRequires:  lz4-devel
 BuildRequires:  hidapi-devel
 BuildRequires:  jemalloc-devel
-BuildRequires:  rocksdb-devel >= 6.28.0
+BuildRequires:  rocksdb-devel >= 7.4.0
 BuildRequires:  libzstd-devel
 
 # libudev-devel
@@ -193,6 +193,15 @@ cp Cargo.toml Cargo.toml.no-lto
 
 %patch4001 -p1
 %patch4002 -p1
+
+# https://github.com/solana-labs/crossbeam/commit/fd279d707025f0e60951e429bf778b4813d1b6bf
+# Patched crate ^^^ seems to be already downloaded by `cargo vendor`, but
+# `cargo build` tries to download it again during build.
+sed -i "/^ *crossbeam-epoch *=.*$/d" Cargo.toml Cargo.toml.no-lto
+# Safety check:
+grep --silent \
+        "https://github.com/solana-labs/solana/issues/22603" \
+        vendor/crossbeam-epoch/src/internal.rs
 
 # Remove bundled C/C++ source code.
 rm -r vendor/bzip2-sys/bzip2-*
@@ -497,6 +506,9 @@ exit 0
 
 
 %changelog
+* Sat Aug 20 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.11.7-1
+- Update to 1.11.7
+
 * Sun Aug 07 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.11.5-2
 - Update solana-watchtower patches
 
