@@ -18,9 +18,9 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      1
-# git 4edcb5f34a0ff866cf41eb4b56925c0ff1ab3f09
-Version:    1.10.34
-Release:    101%{?dist}
+# git a4a23a3061de4897a44677599b20c64c69f22556
+Version:    1.10.35
+Release:    100%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -477,6 +477,9 @@ exit 0
 
 
 %changelog
+* Sat Aug 20 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.10.35-100
+- Update to 1.10.35
+
 * Sun Aug 07 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.10.34-101
 - Update solana-watchtower patches
 
