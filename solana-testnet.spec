@@ -73,8 +73,8 @@ BuildRequires:  gcc
 BuildRequires:  clang
 BuildRequires:  make
 BuildRequires:  pkgconf-pkg-config
-BuildRequires:  protobuf-compiler
-BuildRequires:  protobuf-devel
+BuildRequires:  protobuf-compiler >= 3.15.0
+BuildRequires:  protobuf-devel >= 3.15.0
 BuildRequires:  openssl-devel
 BuildRequires:  zlib-ng-devel
 BuildRequires:  bzip2-devel
