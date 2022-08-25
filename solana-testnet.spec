@@ -20,7 +20,7 @@ Name:       solana-%{solana_suffix}
 Epoch:      0
 # git e48d8a95895e3ba2a4a1f2168561eb2b53c773f0
 Version:    1.11.7
-Release:    1%{?dist}
+Release:    2%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -55,7 +55,9 @@ Patch2001: 0003-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch3001: rocksdb-dynamic-linking.patch
 
 Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
-Patch4002: 0002-Add-watchtower-option-to-specify-RPC-timeout.patch
+Patch4002: 0002-Add-a-builder-for-an-HttpSender-to-support-more-clie.patch
+Patch4003: 0003-Add-watchtower-option-to-specify-RPC-timeout.patch
+Patch4004: 0004-Allow-reducing-HTTP-s-pool-idle-timeout-in-watchtowe.patch
 
 ExclusiveArch:  %{rust_arches}
 
@@ -193,6 +195,8 @@ cp Cargo.toml Cargo.toml.no-lto
 
 %patch4001 -p1
 %patch4002 -p1
+%patch4003 -p1
+%patch4004 -p1
 
 # https://github.com/solana-labs/crossbeam/commit/fd279d707025f0e60951e429bf778b4813d1b6bf
 # Patched crate ^^^ seems to be already downloaded by `cargo vendor`, but
@@ -506,6 +510,9 @@ exit 0
 
 
 %changelog
+* Thu Aug 25 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.11.7-2
+- Update solana-watchtower patches
+
 * Sat Aug 20 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.11.7-1
 - Update to 1.11.7
 
