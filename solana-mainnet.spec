@@ -20,7 +20,7 @@ Name:       solana-%{solana_suffix}
 Epoch:      1
 # git a4a23a3061de4897a44677599b20c64c69f22556
 Version:    1.10.35
-Release:    100%{?dist}
+Release:    101%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -55,7 +55,9 @@ Patch2001: 0003-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch3001: rocksdb-dynamic-linking.patch
 
 Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
-Patch4002: 0002-Add-watchtower-option-to-specify-RPC-timeout.patch
+Patch4002: 0002-Add-a-builder-for-an-HttpSender-to-support-more-clie.patch
+Patch4003: 0003-Add-watchtower-option-to-specify-RPC-timeout.patch
+Patch4004: 0004-Allow-reducing-HTTP-s-pool-idle-timeout-in-watchtowe.patch
 
 ExclusiveArch:  %{rust_arches}
 
@@ -183,6 +185,8 @@ cp Cargo.toml Cargo.toml.no-lto
 
 %patch4001 -p1
 %patch4002 -p1
+%patch4003 -p1
+%patch4004 -p1
 
 # Remove bundled C/C++ source code.
 rm -r vendor/bzip2-sys/bzip2-*
@@ -477,6 +481,9 @@ exit 0
 
 
 %changelog
+* Thu Aug 25 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.10.35-101
+- Update solana-watchtower patches
+
 * Sat Aug 20 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.10.35-100
 - Update to 1.10.35
 
