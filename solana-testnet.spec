@@ -20,7 +20,7 @@ Name:       solana-%{solana_suffix}
 Epoch:      0
 # git 843e018c77678de5ef75dc6e5e5a72f2da5caa48
 Version:    1.11.10
-Release:    1%{?dist}
+Release:    2%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -46,9 +46,6 @@ Source10:   jemalloc-wrapper
 Source11:   0001-Use-different-socket-path-for-sys-tuner-built-for-te.patch
 
 Source100:  filter-cargo-checksum
-
-Patch1001: 0001-Enable-debug-info-in-release-profile.patch
-Patch1002: 0002-Enable-LTO.patch
 
 Patch2001: 0003-Replace-bundled-C-C-libraries-with-system-provided.patch
 
@@ -178,16 +175,11 @@ Solana tests and benchmarks (%{solana_suffix} version).
 
 
 %prep
-%autosetup -N -b0 -n solana-%{version}
 %autosetup -N -b1 -n solana-%{version}
 
 sed 's,__SUFFIX__,%{solana_suffix},g' \
         <%{SOURCE11} \
         | patch -p1
-
-%patch1001 -p1
-cp Cargo.toml Cargo.toml.no-lto
-%patch1002 -p1
 
 %patch2001 -p1
 
@@ -227,7 +219,7 @@ rm -r vendor/prost-build-0.9.0/third-party
 # TODO: Use system lz4 for lz4-sys.
 
 mkdir .cargo
-cp %{SOURCE2} .cargo/
+cp %{SOURCE2} .cargo/config.toml
 
 # Fix Fedora's shebang mangling errors:
 #     *** ERROR: ./usr/src/debug/solana-testnet-1.10.0-1.fc35.x86_64/vendor/ascii/src/ascii_char.rs has shebang which doesn't start with '/' ([cfg_attr(rustfmt, rustfmt_skip)])
@@ -243,9 +235,25 @@ export LZ4_LIB_DIR=%{_libdir}
 export PROTOC=/usr/bin/protoc
 export PROTOC_INCLUDE=/usr/include
 
-# First, build binaries optimized for newer CPUs.
-export RUSTFLAGS='-C target-cpu=%{validator_target_cpu}'
-%{__cargo} build %{?_smp_mflags} -Z avoid-dev-deps --frozen --release \
+# Check https://pagure.io/fedora-rust/rust2rpm/blob/main/f/data/macros.rust for
+# rust-specific variables.
+export RUSTC_BOOTSTRAP=1
+export CFLAGS="%{build_cflags}"
+export CXXFLAGS="%{build_cxxflags}"
+export LDFLAGS="%{build_ldflags}"
+
+# First, build binaries optimized for generic baseline CPU.
+export RUSTFLAGS='%{build_rustflags} -Copt-level=3 -Ctarget-cpu=%{base_target_cpu}'
+cargo build %{__cargo_common_opts} --release --frozen
+
+mv target/release ./_release
+cargo clean
+
+# Second, build binaries optimized for newer CPUs with "fat" LTO.
+echo "[profile.release]" >>Cargo.toml
+echo "lto = \"fat\"" >>Cargo.toml
+export RUSTFLAGS='%{build_rustflags} -Ccodegen-units=1 -Copt-level=3 -Ctarget-cpu=%{validator_target_cpu}'
+cargo build %{__cargo_common_opts} --release --frozen \
         --package solana-validator \
         --package solana-accounts-bench \
         --package solana-banking-bench \
@@ -254,13 +262,8 @@ export RUSTFLAGS='-C target-cpu=%{validator_target_cpu}'
         --package solana-poh-bench \
         --package solana-program:%{version}
 
-mv target/release ./release.newer-cpus
-%{__cargo} clean
-
-# Second, build binaries optimized for generic baseline CPU.
-cp Cargo.toml.no-lto Cargo.toml
-export RUSTFLAGS='-C target-cpu=%{base_target_cpu}'
-%{__cargo} build %{?_smp_mflags} -Z avoid-dev-deps --frozen --release
+mv target/release ./_release.optimized
+cargo clean
 
 sed 's,__SUFFIX__,%{solana_suffix},g' \
         <%{SOURCE3} \
@@ -288,7 +291,7 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
         >jemalloc-wrapper
 chmod a+x jemalloc-wrapper
 
-./target/release/solana completion --shell bash >solana.bash-completion
+./_release/solana completion --shell bash >solana.bash-completion
 
 
 %install
@@ -328,37 +331,37 @@ cp jemalloc-wrapper \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/solana-validator
 
 # Use binaries optimized for newer CPUs for running validator and local benchmarks.
-mv release.newer-cpus/*.so target/release/
-mv release.newer-cpus/solana-validator target/release/
-mv release.newer-cpus/solana-accounts-bench target/release/
-mv release.newer-cpus/solana-banking-bench target/release/
-mv release.newer-cpus/solana-bench-streamer target/release/
-mv release.newer-cpus/solana-merkle-root-bench target/release/
-mv release.newer-cpus/solana-poh-bench target/release/
-mv release.newer-cpus/solana-test-validator target/release/
+mv _release.optimized/*.so ./_release/
+mv _release.optimized/solana-validator ./_release/
+mv _release.optimized/solana-accounts-bench ./_release/
+mv _release.optimized/solana-banking-bench ./_release/
+mv _release.optimized/solana-bench-streamer ./_release/
+mv _release.optimized/solana-merkle-root-bench ./_release/
+mv _release.optimized/solana-poh-bench ./_release/
+mv _release.optimized/solana-test-validator ./_release/
 
-find target/release -mindepth 1 -maxdepth 1 -type d -exec rm -r "{}" \;
-rm target/release/*.d
-rm target/release/*.rlib
+find ./_release/ -mindepth 1 -maxdepth 1 -type d -exec rm -r "{}" \;
+rm ./_release/*.d
+rm ./_release/*.rlib
 # Excluded because we do not need installers.
-rm target/release/solana-install target/release/solana-install-init target/release/solana-ledger-udev
+rm ./_release/solana-install ./_release/solana-install-init ./_release/solana-ledger-udev
 # Excluded. 
 # TODO: Why? Official binary release does not contain these, only libsolana_*_program.so installed.
 rm \
-        target/release/libsolana_frozen_abi_macro.so \
-        target/release/libsolana_sdk_macro.so \
-        target/release/libsolana_sdk.so \
-        target/release/libsolana_zk_token_sdk.so
-rm target/release/gen-syscall-list
-rm target/release/gen-headers
+        ./_release/libsolana_frozen_abi_macro.so \
+        ./_release/libsolana_sdk_macro.so \
+        ./_release/libsolana_sdk.so \
+        ./_release/libsolana_zk_token_sdk.so
+rm ./_release/gen-syscall-list
+rm ./_release/gen-headers
 
-mv target/release/*.so \
+mv ./_release/*.so \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/deps/
-mv target/release/solana-validator \
+mv ./_release/solana-validator \
         %{buildroot}/opt/solana/%{solana_suffix}/libexec/
-mv target/release/solana-ledger-tool \
+mv ./_release/solana-ledger-tool \
         %{buildroot}/opt/solana/%{solana_suffix}/libexec/
-mv target/release/* \
+mv ./_release/* \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/
 
 mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.bash-completion
@@ -501,6 +504,9 @@ exit 0
 
 
 %changelog
+* Sun Sep 11 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.11.10-2
+- Simplify build process, fix CPU-specific optimizations
+
 * Sat Aug 27 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.11.10-1
 - Update to 1.11.10
 
