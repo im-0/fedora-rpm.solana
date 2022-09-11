@@ -12,9 +12,11 @@
 # x86-64-v3 (close to Haswell):
 #   AVX, AVX2, BMI1, BMI2, F16C, FMA, LZCNT, MOVBE, XSAVE
 %global validator_target_cpu x86-64-v3
+%global validator_target_cpu_mtune generic
 # x86-64:
 #   CMOV, CMPXCHG8B, FPU, FXSR, MMX, FXSR, SCE, SSE, SSE2
 %global base_target_cpu x86-64
+%global base_target_cpu_mtune generic
 
 Name:       solana-%{solana_suffix}
 Epoch:      1
@@ -226,12 +228,12 @@ export LZ4_LIB_DIR=%{_libdir}
 # Check https://pagure.io/fedora-rust/rust2rpm/blob/main/f/data/macros.rust for
 # rust-specific variables.
 export RUSTC_BOOTSTRAP=1
-export CFLAGS="%{build_cflags}"
-export CXXFLAGS="%{build_cxxflags}"
 export LDFLAGS="%{build_ldflags}"
 
 # First, build binaries optimized for generic baseline CPU.
 export RUSTFLAGS='%{build_rustflags} -Copt-level=3 -Ctarget-cpu=%{base_target_cpu}'
+export CFLAGS="%{build_cflags} -march=%{base_target_cpu} -mtune=%{base_target_cpu_mtune}"
+export CXXFLAGS="%{build_cxxflags} -march=%{base_target_cpu} -mtune=%{base_target_cpu_mtune}"
 cargo build %{__cargo_common_opts} --release --frozen
 
 mv target/release ./_release
@@ -241,6 +243,8 @@ cargo clean
 echo "[profile.release]" >>Cargo.toml
 echo "lto = \"fat\"" >>Cargo.toml
 export RUSTFLAGS='%{build_rustflags} -Ccodegen-units=1 -Copt-level=3 -Ctarget-cpu=%{validator_target_cpu}'
+export CFLAGS="%{build_cflags} -march=%{validator_target_cpu} -mtune=%{validator_target_cpu_mtune}"
+export CXXFLAGS="%{build_cxxflags} -march=%{validator_target_cpu} -mtune=%{validator_target_cpu_mtune}"
 cargo build %{__cargo_common_opts} --release --frozen \
         --package solana-validator \
         --package solana-accounts-bench \
