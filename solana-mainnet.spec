@@ -1,3 +1,4 @@
+%bcond_with bundled-libs
 %global solana_suffix mainnet
 
 %global solana_user   solana-%{solana_suffix}
@@ -52,7 +53,6 @@ Source11:   0001-Use-different-socket-path-for-sys-tuner-built-for-te.patch
 Source100:  filter-cargo-checksum
 
 Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
-
 Patch3001: rocksdb-dynamic-linking.patch
 
 Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
@@ -78,6 +78,8 @@ BuildRequires:  clang
 BuildRequires:  make
 BuildRequires:  pkgconf-pkg-config
 BuildRequires:  protobuf-compiler
+
+%if %{without bundled-libs}
 BuildRequires:  openssl-devel
 BuildRequires:  zlib-ng-devel
 BuildRequires:  bzip2-devel
@@ -86,6 +88,7 @@ BuildRequires:  hidapi-devel
 BuildRequires:  jemalloc-devel
 BuildRequires:  rocksdb-devel >= 6.28.0
 BuildRequires:  libzstd-devel
+%endif
 
 # libudev-devel
 BuildRequires:  systemd-devel
@@ -180,9 +183,10 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
         <%{SOURCE11} \
         | patch -p1
 
+%if %{without bundled-libs}
 %patch2001 -p1
-
 %patch3001 -p1
+%endif
 
 %patch4001 -p1
 %patch4002 -p1
@@ -190,6 +194,7 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
 
 %patch5001 -p1
 
+%if %{without bundled-libs}
 # Remove bundled C/C++ source code.
 rm -r vendor/bzip2-sys/bzip2-*
 %{python} %{SOURCE100} vendor/bzip2-sys '^bzip2-.*'
@@ -213,10 +218,12 @@ rm -r vendor/libz-sys/src/zlib-ng
 %{python} %{SOURCE100} vendor/libz-sys \
         '^src/zlib/.*' \
         '^src/zlib-ng/.*'
+# TODO: Use system lz4 for lz4-sys.
+%endif
+
 rm -r vendor/prost-build/third-party
 %{python} %{SOURCE100} vendor/prost-build \
         '^third-party/.*'
-# TODO: Use system lz4 for lz4-sys.
 
 mkdir .cargo
 cp %{SOURCE2} .cargo/config.toml
@@ -227,11 +234,13 @@ find . -type f -name "*.rs" -exec chmod 0644 "{}" ";"
 
 
 %build
+%if %{without bundled-libs}
 export JEMALLOC_OVERRIDE=%{_libdir}/libjemalloc.so
 export ROCKSDB_INCLUDE_DIR=%{_includedir}
 export ROCKSDB_LIB_DIR=%{_libdir}
 export LZ4_INCLUDE_DIR=%{_includedir}
 export LZ4_LIB_DIR=%{_libdir}
+%endif
 
 %ifarch x86_64
 %global cpu_base_cflags -march=%{base_target_cpu} -mtune=%{base_target_cpu_mtune}
@@ -338,10 +347,17 @@ mv solana-watchtower \
 mv solana-validator.logrotate \
         %{buildroot}%{_sysconfdir}/logrotate.d/solana-validator-%{solana_suffix}
 
+%if %{without bundled-libs}
 cp jemalloc-wrapper \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/solana-ledger-tool
 cp jemalloc-wrapper \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/solana-validator
+%else
+ln -s ../libexec/solana-ledger-tool \
+        %{buildroot}/opt/solana/%{solana_suffix}/bin/
+ln -s ../libexec/solana-validator \
+        %{buildroot}/opt/solana/%{solana_suffix}/bin/
+%endif
 
 # Use binaries optimized for newer CPUs for running validator and local benchmarks.
 mv _release.optimized/*.so ./_release/
