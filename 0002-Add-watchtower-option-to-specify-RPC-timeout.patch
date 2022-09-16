@@ -1,46 +1,18 @@
-From e6e8479295a4f122e96fd6d369111b84965a896a Mon Sep 17 00:00:00 2001
+From 6cda25c44ee860e020a1707fdf57f08b19b2b53a Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Sun, 7 Aug 2022 16:00:32 +0500
-Subject: [PATCH 3/4] Add watchtower option to specify RPC timeout
+Subject: [PATCH 2/3] Add watchtower option to specify RPC timeout
 
 This is useful when solana-watchtower is running on slow network.
 ---
- client/src/lib.rs      |  2 +-
- watchtower/src/main.rs | 24 ++++++++++++++++++++++--
- 2 files changed, 23 insertions(+), 3 deletions(-)
+ watchtower/src/main.rs | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
 
-diff --git a/client/src/lib.rs b/client/src/lib.rs
-index 2cef3aa9665f..2cc6f8157945 100644
---- a/client/src/lib.rs
-+++ b/client/src/lib.rs
-@@ -8,7 +8,7 @@ extern crate solana_metrics;
- pub mod blockhash_query;
- pub mod client_error;
- pub mod connection_cache;
--pub(crate) mod http_sender;
-+pub mod http_sender;
- pub(crate) mod mock_sender;
- pub mod nonblocking;
- pub mod nonce_utils;
 diff --git a/watchtower/src/main.rs b/watchtower/src/main.rs
-index f70aa1d3379c..ad5c7c7d74ba 100644
+index f70aa1d3379c..bf3d0a807bed 100644
 --- a/watchtower/src/main.rs
 +++ b/watchtower/src/main.rs
-@@ -9,7 +9,12 @@ use {
-         input_validators::{is_parsable, is_pubkey_or_keypair, is_url},
-     },
-     solana_cli_output::display::format_labeled_address,
--    solana_client::{client_error, rpc_client::RpcClient, rpc_response::RpcVoteAccountStatus},
-+    solana_client::{
-+        client_error,
-+        http_sender::HttpSenderBuilder,
-+        rpc_client::{RpcClient, RpcClientConfig},
-+        rpc_response::RpcVoteAccountStatus,
-+    },
-     solana_metrics::{datapoint_error, datapoint_info},
-     solana_notifier::Notifier,
-     solana_sdk::{
-@@ -30,6 +35,7 @@ struct Config {
+@@ -30,6 +30,7 @@ struct Config {
      ignore_http_bad_gateway: bool,
      interval: Duration,
      json_rpc_url: String,
@@ -48,7 +20,7 @@ index f70aa1d3379c..ad5c7c7d74ba 100644
      minimum_validator_identity_balance: u64,
      monitor_active_stake: bool,
      unhealthy_threshold: usize,
-@@ -80,6 +86,14 @@ fn get_config() -> Config {
+@@ -80,6 +81,14 @@ fn get_config() -> Config {
                  .validator(is_url)
                  .help("JSON RPC URL for the cluster"),
          )
@@ -63,7 +35,7 @@ index f70aa1d3379c..ad5c7c7d74ba 100644
          .arg(
              Arg::with_name("interval")
                  .long("interval")
-@@ -160,6 +174,8 @@ fn get_config() -> Config {
+@@ -160,6 +169,8 @@ fn get_config() -> Config {
      ));
      let json_rpc_url =
          value_t!(matches, "json_rpc_url", String).unwrap_or_else(|_| config.json_rpc_url.clone());
@@ -72,7 +44,7 @@ index f70aa1d3379c..ad5c7c7d74ba 100644
      let validator_identity_pubkeys: Vec<_> = pubkeys_of(&matches, "validator_identities")
          .unwrap_or_default()
          .into_iter()
-@@ -175,6 +191,7 @@ fn get_config() -> Config {
+@@ -175,6 +186,7 @@ fn get_config() -> Config {
          ignore_http_bad_gateway,
          interval,
          json_rpc_url,
@@ -80,18 +52,15 @@ index f70aa1d3379c..ad5c7c7d74ba 100644
          minimum_validator_identity_balance,
          monitor_active_stake,
          unhealthy_threshold,
-@@ -220,7 +237,10 @@ fn main() -> Result<(), Box<dyn error::Error>> {
+@@ -220,7 +232,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
  
      let config = get_config();
  
 -    let rpc_client = RpcClient::new(config.json_rpc_url.clone());
-+    let http_sender_builder =
-+        HttpSenderBuilder::new(config.json_rpc_url.clone()).timeout(config.rpc_timeout);
-+
-+    let rpc_client = RpcClient::new_sender(http_sender_builder.build(), RpcClientConfig::default());
++    let rpc_client = RpcClient::new_with_timeout(config.json_rpc_url.clone(), config.rpc_timeout);
      let notifier = Notifier::default();
      let mut last_transaction_count = 0;
      let mut last_recent_blockhash = Hash::default();
 -- 
-2.37.2
+2.37.3
 
