@@ -57,6 +57,8 @@ Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
 Patch4002: 0002-Add-watchtower-option-to-specify-RPC-timeout.patch
 Patch4003: 0003-rpc-client-Use-regular-timeout-value-for-pool-idle-t.patch
 
+Patch5001: 0001-sys-tuner-Do-not-change-sysctl-parameters-to-smaller.patch
+
 ExclusiveArch:  %{rust_arches}
 
 %global python python3
@@ -189,6 +191,8 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
 %patch4001 -p1
 %patch4002 -p1
 %patch4003 -p1
+
+%patch5001 -p1
 
 # Remove bundled C/C++ source code.
 rm -r vendor/bzip2-sys/bzip2-*
