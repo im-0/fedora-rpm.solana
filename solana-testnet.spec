@@ -8,6 +8,8 @@
 
 %global rust_version 1.60.0
 
+# Used only on x86_64:
+#
 # Available CPUs and features: `llc -march=x86-64 -mattr=help`.
 # x86-64-v3 (close to Haswell):
 #   AVX, AVX2, BMI1, BMI2, F16C, FMA, LZCNT, MOVBE, XSAVE
@@ -135,7 +137,9 @@ Requires: %{name}-common = %{epoch}:%{version}-%{release}
 Requires: %{name}-cli = %{epoch}:%{version}-%{release}
 Requires: %{name}-utils = %{epoch}:%{version}-%{release}
 Requires: %{name}-deps = %{epoch}:%{version}-%{release}
+%ifarch x86_64
 Requires: solana-perf-libs-%{solana_suffix}
+%endif
 Requires: logrotate
 Requires: zstd
 Requires(pre): shadow-utils
@@ -170,7 +174,9 @@ Solana SBF utilities (%{solana_suffix} version).
 Summary: Solana tests and benchmarks (%{solana_suffix} version)
 Requires: %{name}-common = %{epoch}:%{version}-%{release}
 Requires: %{name}-deps = %{epoch}:%{version}-%{release}
+%ifarch x86_64
 Requires: solana-perf-libs-%{solana_suffix}
+%endif
 
 
 %description tests
@@ -239,15 +245,27 @@ export LZ4_LIB_DIR=%{_libdir}
 export PROTOC=/usr/bin/protoc
 export PROTOC_INCLUDE=/usr/include
 
+%ifarch x86_64
+%global cpu_base_cflags -march=%{base_target_cpu} -mtune=%{base_target_cpu_mtune}
+%global cpu_base_rustflags -Ctarget-cpu=%{base_target_cpu}
+%global cpu_validator_cflags -march=%{validator_target_cpu} -mtune=%{validator_target_cpu_mtune}
+%global cpu_validator_rustflags -Ctarget-cpu=%{validator_target_cpu}
+%else
+%global cpu_base_cflags %{nil}
+%global cpu_base_rustflags %{nil}
+%global cpu_validator_cflags %{nil}
+%global cpu_validator_rustflags %{nil}
+%endif
+
 # Check https://pagure.io/fedora-rust/rust2rpm/blob/main/f/data/macros.rust for
 # rust-specific variables.
 export RUSTC_BOOTSTRAP=1
-export LDFLAGS="%{build_ldflags}"
 
 # First, build binaries optimized for generic baseline CPU.
-export RUSTFLAGS='%{build_rustflags} -Copt-level=3 -Ctarget-cpu=%{base_target_cpu}'
-export CFLAGS="%{build_cflags} -march=%{base_target_cpu} -mtune=%{base_target_cpu_mtune}"
-export CXXFLAGS="%{build_cxxflags} -march=%{base_target_cpu} -mtune=%{base_target_cpu_mtune}"
+export RUSTFLAGS='%{build_rustflags} -Copt-level=3 %{cpu_base_rustflags}'
+export CFLAGS="%{build_cflags} %{cpu_base_cflags}"
+export CXXFLAGS="%{build_cxxflags} %{cpu_base_cflags}"
+export LDFLAGS="%{build_ldflags} %{cpu_base_cflags}"
 cargo build %{__cargo_common_opts} --release --frozen
 
 mv target/release ./_release
@@ -256,9 +274,10 @@ cargo clean
 # Second, build binaries optimized for newer CPUs with "fat" LTO.
 echo "[profile.release]" >>Cargo.toml
 echo "lto = \"fat\"" >>Cargo.toml
-export RUSTFLAGS='%{build_rustflags} -Ccodegen-units=1 -Copt-level=3 -Ctarget-cpu=%{validator_target_cpu}'
-export CFLAGS="%{build_cflags} -march=%{validator_target_cpu} -mtune=%{validator_target_cpu_mtune}"
-export CXXFLAGS="%{build_cxxflags} -march=%{validator_target_cpu} -mtune=%{validator_target_cpu_mtune}"
+export RUSTFLAGS='%{build_rustflags} -Ccodegen-units=1 -Copt-level=3 %{cpu_validator_rustflags}'
+export CFLAGS="%{build_cflags} -flto %{cpu_validator_cflags}"
+export CXXFLAGS="%{build_cxxflags} -flto %{cpu_validator_cflags}"
+export LDFLAGS="%{build_ldflags} %{build_cflags} -flto %{cpu_validator_cflags}"
 cargo build %{__cargo_common_opts} --release --frozen \
         --package solana-validator \
         --package solana-accounts-bench \
