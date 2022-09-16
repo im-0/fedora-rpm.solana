@@ -1,0 +1,34 @@
+From f296acda44d4777849c29889fd75e5f740224b81 Mon Sep 17 00:00:00 2001
+From: Ivan Mironov <mironov.ivan@gmail.com>
+Date: Sat, 17 Sep 2022 00:42:44 +0500
+Subject: [PATCH 3/3] rpc-client: Use regular timeout value for pool idle
+ timeout too
+
+Setting pool idle timeout to a value smaller than solana-watchtower's
+poll interval can fix following error:
+
+	[2022-08-25T04:03:22.811160892Z INFO  solana_watchtower] Failure 1 of 3: solana-watchtower testnet: Error: rpc-error: error sending request for url (https://api.testnet.solana.com/): connection closed before message completed
+
+It looks like this happens because either RPC servers or ISPs drop HTTP
+connections without properly notifying the client in some cases.
+
+Similar issue: https://github.com/hyperium/hyper/issues/2136.
+---
+ client/src/http_sender.rs | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/client/src/http_sender.rs b/client/src/http_sender.rs
+index 84e1418d7a0f..18caad62d6d4 100644
+--- a/client/src/http_sender.rs
++++ b/client/src/http_sender.rs
+@@ -59,6 +59,7 @@ impl HttpSender {
+             reqwest::Client::builder()
+                 .default_headers(default_headers)
+                 .timeout(timeout)
++                .pool_idle_timeout(timeout)
+                 .build()
+                 .expect("build rpc client"),
+         );
+-- 
+2.37.3
+

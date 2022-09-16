@@ -54,9 +54,8 @@ Patch2001: 0003-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch3001: rocksdb-dynamic-linking.patch
 
 Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
-Patch4002: 0002-Add-a-builder-for-an-HttpSender-to-support-more-clie.patch
-Patch4003: 0003-Add-watchtower-option-to-specify-RPC-timeout.patch
-Patch4004: 0004-Allow-reducing-HTTP-s-pool-idle-timeout-in-watchtowe.patch
+Patch4002: 0002-Add-watchtower-option-to-specify-RPC-timeout.patch
+Patch4003: 0003-rpc-client-Use-regular-timeout-value-for-pool-idle-t.patch
 
 ExclusiveArch:  %{rust_arches}
 
@@ -180,7 +179,6 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
 %patch4001 -p1
 %patch4002 -p1
 %patch4003 -p1
-%patch4004 -p1
 
 # Remove bundled C/C++ source code.
 rm -r vendor/bzip2-sys/bzip2-*
