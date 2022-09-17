@@ -20,9 +20,9 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      1
-# git 5ff670cb5171f78bbfa0d5705a79a3984bf04041
-Version:    1.10.38
-Release:    101%{?dist}
+# git 33fe9ff78207bf916b874396b2a076a77d3a3480
+Version:    1.10.39
+Release:    100%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -49,7 +49,7 @@ Source11:   0001-Use-different-socket-path-for-sys-tuner-built-for-te.patch
 
 Source100:  filter-cargo-checksum
 
-Patch2001: 0003-Replace-bundled-C-C-libraries-with-system-provided.patch
+Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
 
 Patch3001: rocksdb-dynamic-linking.patch
 
@@ -490,6 +490,9 @@ exit 0
 
 
 %changelog
+* Sat Sep 17 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.10.39-100
+- Update to 1.10.39
+
 * Sun Sep 11 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.10.38-101
 - Simplify build process, fix CPU-specific optimizations
 
