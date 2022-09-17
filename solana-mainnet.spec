@@ -52,6 +52,8 @@ Source11:   0001-Use-different-socket-path-for-sys-tuner-built-for-te.patch
 
 Source100:  filter-cargo-checksum
 
+Patch1001: 27650.patch
+
 Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch3001: rocksdb-dynamic-linking.patch
 
@@ -182,6 +184,8 @@ Solana tests and benchmarks (%{solana_suffix} version).
 sed 's,__SUFFIX__,%{solana_suffix},g' \
         <%{SOURCE11} \
         | patch -p1
+
+%patch1001 -p1
 
 %if %{without bundled-libs}
 %patch2001 -p1
