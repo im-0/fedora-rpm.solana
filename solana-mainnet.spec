@@ -268,6 +268,7 @@ cargo build %{__cargo_common_opts} --release --frozen
 mv target/release ./_release
 cargo clean
 
+%ifarch x86_64
 # Second, build binaries optimized for newer CPUs with "fat" LTO.
 echo "[profile.release]" >>Cargo.toml
 echo "lto = \"fat\"" >>Cargo.toml
@@ -286,6 +287,7 @@ cargo build %{__cargo_common_opts} --release --frozen \
 
 mv target/release ./_release.optimized
 cargo clean
+%endif
 
 sed 's,__SUFFIX__,%{solana_suffix},g' \
         <%{SOURCE3} \
@@ -359,6 +361,7 @@ ln -s ../libexec/solana-validator \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/
 %endif
 
+%ifarch x86_64
 # Use binaries optimized for newer CPUs for running validator and local benchmarks.
 mv _release.optimized/*.so ./_release/
 mv _release.optimized/solana-validator ./_release/
@@ -368,6 +371,7 @@ mv _release.optimized/solana-bench-streamer ./_release/
 mv _release.optimized/solana-merkle-root-bench ./_release/
 mv _release.optimized/solana-poh-bench ./_release/
 mv _release.optimized/solana-test-validator ./_release/
+%endif
 
 find ./_release/ -mindepth 1 -maxdepth 1 -type d -exec rm -r "{}" \;
 rm ./_release/*.d
