@@ -262,6 +262,9 @@ export LZ4_LIB_DIR=%{_libdir}
 # rust-specific variables.
 export RUSTC_BOOTSTRAP=1
 
+export CC=clang
+export CXX=clang++
+
 # First, build binaries optimized for generic baseline CPU.
 export RUSTFLAGS='%{build_rustflags} -Copt-level=3 %{cpu_base_rustflags}'
 export CFLAGS="%{build_cflags} %{cpu_base_cflags}"
