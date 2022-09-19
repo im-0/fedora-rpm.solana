@@ -280,9 +280,9 @@ export CXX=clang++
 
 # First, build binaries optimized for generic baseline CPU.
 export RUSTFLAGS='%{build_rustflags} -Copt-level=3 %{cpu_base_rustflags}'
-export CFLAGS="%{build_cflags} %{cpu_base_cflags}"
-export CXXFLAGS="%{build_cxxflags} %{cpu_base_cflags}"
-export LDFLAGS="%{build_ldflags} %{cpu_base_cflags}"
+export CFLAGS="-O3 %{cpu_base_cflags}"
+export CXXFLAGS="-O3 %{cpu_base_cflags}"
+export LDFLAGS="-O3 %{cpu_base_cflags}"
 cargo build %{__cargo_common_opts} --release --frozen
 
 mv target/release ./_release
@@ -293,9 +293,9 @@ cargo clean
 echo "[profile.release]" >>Cargo.toml
 echo "lto = \"fat\"" >>Cargo.toml
 export RUSTFLAGS='%{build_rustflags} -Ccodegen-units=1 -Copt-level=3 %{cpu_validator_rustflags}'
-export CFLAGS="%{build_cflags} -flto %{cpu_validator_cflags}"
-export CXXFLAGS="%{build_cxxflags} -flto %{cpu_validator_cflags}"
-export LDFLAGS="%{build_ldflags} %{build_cflags} -flto %{cpu_validator_cflags}"
+export CFLAGS="-O3 %{cpu_validator_cflags}"
+export CXXFLAGS="-O3 %{cpu_validator_cflags}"
+export LDFLAGS="-O3 %{cpu_validator_cflags}"
 cargo build %{__cargo_common_opts} --release --frozen \
         --package solana-validator \
         --package solana-accounts-bench \
