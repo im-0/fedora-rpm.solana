@@ -91,6 +91,10 @@ BuildRequires:  rocksdb-devel >= 7.4.0
 BuildRequires:  libzstd-devel
 %endif
 
+%if %{with bundled_libs}
+BuildRequires:  perl
+%endif
+
 # libudev-devel
 BuildRequires:  systemd-devel
 
