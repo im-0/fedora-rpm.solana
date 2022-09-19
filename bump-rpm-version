@@ -450,7 +450,8 @@ def _vendor(conf: _Config, patches: _Patches) -> None:
                 check=True)
 
         # Final run of `cargo vendor`.
-        shutil.rmtree(tmp_src_root_vendor)
+        if os.path.exists(tmp_src_root_vendor):
+            shutil.rmtree(tmp_src_root_vendor)
         cmd = (
             'cargo',
             'vendor',
