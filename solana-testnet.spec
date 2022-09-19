@@ -1,4 +1,4 @@
-%bcond_with bundled-libs
+%bcond_with bundled_libs
 %global solana_suffix testnet
 
 %global solana_user   solana-%{solana_suffix}
@@ -80,7 +80,7 @@ BuildRequires:  pkgconf-pkg-config
 BuildRequires:  protobuf-compiler >= 3.15.0
 BuildRequires:  protobuf-devel >= 3.15.0
 
-%if %{without bundled-libs}
+%if %{without bundled_libs}
 BuildRequires:  openssl-devel
 BuildRequires:  zlib-ng-devel
 BuildRequires:  bzip2-devel
@@ -193,7 +193,7 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
         <%{SOURCE11} \
         | patch -p1
 
-%if %{without bundled-libs}
+%if %{without bundled_libs}
 %patch2001 -p1
 %patch3001 -p1
 %endif
@@ -204,7 +204,7 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
 
 %patch5001 -p1
 
-%if %{without bundled-libs}
+%if %{without bundled_libs}
 # Remove bundled C/C++ source code.
 rm -r vendor/bzip2-sys/bzip2-*
 %{python} %{SOURCE100} vendor/bzip2-sys '^bzip2-.*'
@@ -244,7 +244,7 @@ find . -type f -name "*.rs" -exec chmod 0644 "{}" ";"
 
 
 %build
-%if %{without bundled-libs}
+%if %{without bundled_libs}
 export JEMALLOC_OVERRIDE=%{_libdir}/libjemalloc.so
 export ROCKSDB_INCLUDE_DIR=%{_includedir}
 export ROCKSDB_LIB_DIR=%{_libdir}
@@ -365,7 +365,7 @@ mv solana-watchtower \
 mv solana-validator.logrotate \
         %{buildroot}%{_sysconfdir}/logrotate.d/solana-validator-%{solana_suffix}
 
-%if %{without bundled-libs}
+%if %{without bundled_libs}
 cp jemalloc-wrapper \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/solana-ledger-tool
 cp jemalloc-wrapper \
