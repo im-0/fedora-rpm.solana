@@ -23,8 +23,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      0
-# git 25ce9a75b67f1ec931a37e8a5f7c441202ddb0ed
-Version:    1.14.2
+# git fa1e326333666ce9ccbb6fb0d73fda3067153fd3
+Version:    1.14.3
 Release:    1%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -54,10 +54,6 @@ Source100:  filter-cargo-checksum
 
 Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch3001: rocksdb-dynamic-linking.patch
-
-Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
-Patch4002: 0002-Add-watchtower-option-to-specify-RPC-timeout.patch
-Patch4003: 0003-rpc-client-Use-regular-timeout-value-for-pool-idle-t.patch
 
 Patch5001: 0001-sys-tuner-Do-not-change-sysctl-parameters-to-smaller.patch
 
@@ -201,10 +197,6 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
 %patch2001 -p1
 %patch3001 -p1
 %endif
-
-%patch4001 -p1
-%patch4002 -p1
-%patch4003 -p1
 
 %patch5001 -p1
 
@@ -557,6 +549,9 @@ exit 0
 
 
 %changelog
+* Thu Sep 29 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.14.3-1
+- Update to 1.14.3
+
 * Sat Sep 17 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.14.2-1
 - Update to 1.14.2
 
