@@ -23,8 +23,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      1
-# git 3b81ee9c2602620ca4904df20bdf098bff47aaf9
-Version:    1.13.4
+# git 9138494335acec3e5406e77587607aaba30ab95e
+Version:    1.13.5
 Release:    100%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -51,8 +51,6 @@ Source10:   jemalloc-wrapper
 Source11:   0001-Use-different-socket-path-for-sys-tuner-built-for-te.patch
 
 Source100:  filter-cargo-checksum
-
-Patch1001: 27650.patch
 
 Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch3001: rocksdb-dynamic-linking.patch
@@ -188,8 +186,6 @@ Solana tests and benchmarks (%{solana_suffix} version).
 sed 's,__SUFFIX__,%{solana_suffix},g' \
         <%{SOURCE11} \
         | patch -p1
-
-%patch1001 -p1
 
 %if %{without bundled_libs}
 %patch2001 -p1
@@ -540,6 +536,9 @@ exit 0
 
 
 %changelog
+* Sat Nov 12 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.13.5-100
+- Update to 1.13.5
+
 * Sat Oct 22 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.13.4-100
 - Update to 1.13.4
 
