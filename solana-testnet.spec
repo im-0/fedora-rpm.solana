@@ -23,8 +23,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      0
-# git c9929a413a01e9cda97a12073e19b5592bd37626
-Version:    1.14.8
+# git af329cf4ee4a4dbc821486743a22274e65df0bbb
+Version:    1.14.9
 Release:    1%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -549,6 +549,9 @@ exit 0
 
 
 %changelog
+* Tue Nov 29 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.14.9-1
+- Update to 1.14.9
+
 * Tue Nov 22 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1.14.8-1
 - Update to 1.14.8
 
