@@ -7,7 +7,7 @@
 %global solana_log    %{_localstatedir}/log/solana/%{solana_suffix}/
 %global solana_etc    %{_sysconfdir}/solana/%{solana_suffix}/
 
-%global rust_version 1.59.0
+%global rust_version 1.60.0
 
 # Used only on x86_64:
 #
@@ -23,8 +23,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      1
-# git 9138494335acec3e5406e77587607aaba30ab95e
-Version:    1.13.5
+# git df128573127c324cb5b53634a7e2d77427c6f2d8
+Version:    1.14.10
 Release:    100%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -55,10 +55,6 @@ Source100:  filter-cargo-checksum
 Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch3001: rocksdb-dynamic-linking.patch
 
-Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
-Patch4002: 0002-Add-watchtower-option-to-specify-RPC-timeout.patch
-Patch4003: 0003-rpc-client-Use-regular-timeout-value-for-pool-idle-t.patch
-
 Patch5001: 0001-sys-tuner-Do-not-change-sysctl-parameters-to-smaller.patch
 
 ExclusiveArch:  %{rust_arches}
@@ -77,7 +73,8 @@ BuildRequires:  gcc
 BuildRequires:  clang
 BuildRequires:  make
 BuildRequires:  pkgconf-pkg-config
-BuildRequires:  protobuf-compiler
+BuildRequires:  protobuf-compiler >= 3.15.0
+BuildRequires:  protobuf-devel >= 3.15.0
 
 %if %{without bundled_libs}
 BuildRequires:  openssl-devel
@@ -86,7 +83,7 @@ BuildRequires:  bzip2-devel
 BuildRequires:  lz4-devel
 BuildRequires:  hidapi-devel
 BuildRequires:  jemalloc-devel
-BuildRequires:  rocksdb-devel >= 6.28.0
+BuildRequires:  rocksdb-devel >= 7.4.0
 BuildRequires:  libzstd-devel
 %endif
 
@@ -167,6 +164,15 @@ Requires: %{name}-common = %{epoch}:%{version}-%{release}
 Solana BPF utilities (%{solana_suffix} version).
 
 
+%package sbf-utils
+Summary: Solana SBF utilities (%{solana_suffix} version)
+Requires: %{name}-common = %{epoch}:%{version}-%{release}
+
+
+%description sbf-utils
+Solana SBF utilities (%{solana_suffix} version).
+
+
 %package tests
 Summary: Solana tests and benchmarks (%{solana_suffix} version)
 Requires: %{name}-common = %{epoch}:%{version}-%{release}
@@ -191,10 +197,6 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
 %patch2001 -p1
 %patch3001 -p1
 %endif
-
-%patch4001 -p1
-%patch4002 -p1
-%patch4003 -p1
 
 %patch5001 -p1
 
@@ -225,8 +227,8 @@ rm -r vendor/libz-sys/src/zlib-ng
 # TODO: Use system lz4 for lz4-sys.
 %endif
 
-rm -r vendor/prost-build/third-party
-%{python} %{SOURCE100} vendor/prost-build \
+rm -r vendor/prost-build-0.9.0/third-party
+%{python} %{SOURCE100} vendor/prost-build-0.9.0 \
         '^third-party/.*'
 
 mkdir .cargo
@@ -245,6 +247,9 @@ export ROCKSDB_LIB_DIR=%{_libdir}
 export LZ4_INCLUDE_DIR=%{_includedir}
 export LZ4_LIB_DIR=%{_libdir}
 %endif
+
+export PROTOC=/usr/bin/protoc
+export PROTOC_INCLUDE=/usr/include
 
 %ifarch x86_64
 %global cpu_base_cflags -march=%{base_target_cpu} -mtune=%{base_target_cpu_mtune}
@@ -393,6 +398,7 @@ rm \
         ./_release/libsolana_sdk.so \
         ./_release/libsolana_zk_token_sdk.so
 rm ./_release/gen-syscall-list
+rm ./_release/gen-headers
 
 mv ./_release/*.so \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/deps/
@@ -460,7 +466,6 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 %dir /opt/solana/%{solana_suffix}/libexec
 /opt/solana/%{solana_suffix}/bin/solana-faucet
 /opt/solana/%{solana_suffix}/bin/solana-ip-address-server
-/opt/solana/%{solana_suffix}/bin/solana-replica-node
 /opt/solana/%{solana_suffix}/bin/solana-sys-tuner
 /opt/solana/%{solana_suffix}/bin/solana-validator
 /opt/solana/%{solana_suffix}/bin/solana-watchtower
@@ -490,6 +495,14 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 /opt/solana/%{solana_suffix}/bin/cargo-build-bpf
 /opt/solana/%{solana_suffix}/bin/cargo-test-bpf
 /opt/solana/%{solana_suffix}/bin/rbpf-cli
+
+
+%files sbf-utils
+%dir /opt/solana
+%dir /opt/solana/%{solana_suffix}
+%dir /opt/solana/%{solana_suffix}/bin
+/opt/solana/%{solana_suffix}/bin/cargo-build-sbf
+/opt/solana/%{solana_suffix}/bin/cargo-test-sbf
 
 
 %files tests
@@ -536,6 +549,9 @@ exit 0
 
 
 %changelog
+* Fri Dec 09 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.14.10-100
+- Update to 1.14.10
+
 * Sat Nov 12 2022 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.13.5-100
 - Update to 1.13.5
 

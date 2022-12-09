@@ -1,4 +1,4 @@
-From b4c1ef4cbe92acc0b195bc64765130d5583bf83a Mon Sep 17 00:00:00 2001
+From 6118cd55708d80064b06e7ad255e083432f8c184 Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Sat, 22 Jan 2022 10:48:13 +0500
 Subject: [PATCH] Use different socket path for sys-tuner built for testnet and
@@ -21,5 +21,5 @@ index 7cc123ac6465..efdd178dc62c 100644
  #[cfg(unix)]
  pub fn request_realtime_poh() {
 -- 
-2.34.1
+2.36.1
 

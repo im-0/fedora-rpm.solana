@@ -1,4 +1,4 @@
-From f2cca16e049067e78ff78abeb47f441d2a997457 Mon Sep 17 00:00:00 2001
+From 5e964d0f77aa9e8fa769eee2605e77620e468acd Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Thu, 18 Feb 2021 17:17:32 +0500
 Subject: [PATCH] Replace bundled C/C++ libraries with system provided
@@ -12,10 +12,10 @@ Subject: [PATCH] Replace bundled C/C++ libraries with system provided
  5 files changed, 5 insertions(+), 22 deletions(-)
 
 diff --git a/Cargo.lock b/Cargo.lock
-index 8f06ed0ebb18..3412ab587c9c 100644
+index 2eefae104551..6f5d2729189a 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
-@@ -2975,15 +2975,6 @@ version = "0.1.4"
+@@ -2936,15 +2936,6 @@ version = "0.1.4"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "28988d872ab76095a6e6ac88d99b54fd267702734fd7ffe610ca27f533ddb95a"
  
@@ -30,8 +30,8 @@ index 8f06ed0ebb18..3412ab587c9c 100644
 -
  [[package]]
  name = "openssl-sys"
- version = "0.9.73"
-@@ -2993,7 +2984,6 @@ dependencies = [
+ version = "0.9.75"
+@@ -2954,7 +2945,6 @@ dependencies = [
   "autocfg",
   "cc",
   "libc",
@@ -39,31 +39,31 @@ index 8f06ed0ebb18..3412ab587c9c 100644
   "pkg-config",
   "vcpkg",
  ]
-@@ -8166,4 +8156,5 @@ checksum = "9fd07cbbc53846d9145dbffdf6dd09a7a0aa52be46741825f5c97bdd4f73f12b"
+@@ -8079,4 +8069,5 @@ checksum = "9fd07cbbc53846d9145dbffdf6dd09a7a0aa52be46741825f5c97bdd4f73f12b"
  dependencies = [
   "cc",
   "libc",
 + "pkg-config",
  ]
 diff --git a/account-decoder/Cargo.toml b/account-decoder/Cargo.toml
-index 189f6b00b188..fd36297649ae 100644
+index d6e286aaabc8..aa8e1e44f37a 100644
 --- a/account-decoder/Cargo.toml
 +++ b/account-decoder/Cargo.toml
-@@ -25,7 +25,7 @@ solana-vote-program = { path = "../programs/vote", version = "=1.13.5" }
+@@ -26,7 +26,7 @@ solana-vote-program = { path = "../programs/vote", version = "=1.14.10" }
  spl-token = { version = "=3.5.0", features = ["no-entrypoint"] }
- spl-token-2022 = { version = "=0.4.2", features = ["no-entrypoint"] }
+ spl-token-2022 = { version = "=0.5.0", features = ["no-entrypoint"] }
  thiserror = "1.0"
--zstd = "0.11.1"
-+zstd = { version = "0.11.1", features = ["pkg-config"] }
+-zstd = "0.11.2"
++zstd = { version = "0.11.2", features = ["pkg-config"] }
  
  [package.metadata.docs.rs]
  targets = ["x86_64-unknown-linux-gnu"]
 diff --git a/remote-wallet/Cargo.toml b/remote-wallet/Cargo.toml
-index c05aed2622c5..768f9128ac65 100644
+index 47e9855235c0..abae11954e46 100644
 --- a/remote-wallet/Cargo.toml
 +++ b/remote-wallet/Cargo.toml
 @@ -24,7 +24,7 @@ thiserror = "1.0"
- uriparse = "0.6.3"
+ uriparse = "0.6.4"
  
  [features]
 -default = ["linux-static-hidraw", "hidapi"]
@@ -72,28 +72,28 @@ index c05aed2622c5..768f9128ac65 100644
  linux-static-hidraw = ["hidapi/linux-static-hidraw"]
  linux-shared-libusb = ["hidapi/linux-shared-libusb"]
 diff --git a/runtime/Cargo.toml b/runtime/Cargo.toml
-index 06c57728ef58..ed1dd3f9948c 100644
+index 6504fb446a32..a6a22634f409 100644
 --- a/runtime/Cargo.toml
 +++ b/runtime/Cargo.toml
-@@ -56,7 +56,7 @@ symlink = "0.1.0"
+@@ -60,7 +60,7 @@ symlink = "0.1.0"
  tar = "0.4.38"
  tempfile = "3.3.0"
  thiserror = "1.0"
--zstd = "0.11.1"
-+zstd = { version = "0.11.1", features = ["pkg-config"] }
- lz4 = "1.24.0"
- strum_macros = "0.24"
- strum = { version = "0.24", features = ["derive"] }
+-zstd = "0.11.2"
++zstd = { version = "0.11.2", features = ["pkg-config"] }
+ 
+ [lib]
+ crate-type = ["lib"]
 diff --git a/storage-bigtable/Cargo.toml b/storage-bigtable/Cargo.toml
-index 44aa93cd8a57..228133ef4858 100644
+index 5e649a32f2a2..3e8922e3f703 100644
 --- a/storage-bigtable/Cargo.toml
 +++ b/storage-bigtable/Cargo.toml
-@@ -34,16 +34,8 @@ solana-transaction-status = { path = "../transaction-status", version = "=1.10.3
+@@ -34,16 +34,8 @@ solana-transaction-status = { path = "../transaction-status", version = "=1.14.9
  thiserror = "1.0"
  tokio = "1"
- tonic = { version = "0.7.1", features = ["tls", "transport"] }
--zstd = "0.11.1"
-+zstd = { version = "0.11.1", features = ["pkg-config"] }
+ tonic = { version = "0.8.0", features = ["tls", "transport"] }
+-zstd = "0.11.2"
++zstd = { version = "0.11.2", features = ["pkg-config"] }
  
 -# openssl is a dependency of the goauth and smpl_jwt crates, but explicitly
 -# declare it here as well to activate the "vendored" feature that builds OpenSSL
@@ -107,5 +107,5 @@ index 44aa93cd8a57..228133ef4858 100644
  
  [lib]
 -- 
-2.37.3
+2.38.1
 
