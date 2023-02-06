@@ -16,6 +16,11 @@ import xml.etree.ElementTree
 
 _HTTP_TIMEOUT = 15  # seconds
 
+# Do not apply some patches during vendoring phase.
+_SKIP_PATCHES = {
+    '0002-Manually-vendor-the-patched-crossbeam.patch',
+}
+
 
 class _Spec(typing.NamedTuple):
     file_name: str
@@ -34,6 +39,7 @@ class _Patches(typing.NamedTuple):
 class _Config(typing.NamedTuple):
     old_version: str
     new_version: str
+    crossbeam_commit: str
     author: str
 
 
@@ -135,6 +141,7 @@ def _main() -> None:
     config = _Config(
         old_version=old_version,
         new_version=new_version,
+        crossbeam_commit=_find_spec_crossbeam_commit(spec),
         author=author)
     print('Configuration:')
     pprint.pp(config._asdict(), indent=4)
@@ -245,6 +252,25 @@ def _find_spec_patches(spec: _Spec) -> _Patches:
     return _Patches(
         all_patches=glob.glob('*.patch'),
         ordered_patches=ordered_patches)
+
+
+_RE_SPEC_CROSSBEAM_COMMIT = re.compile(r'^\s*%global\s+solana_crossbeam_commit\s+(\S+)\s*?$')
+
+
+def _find_spec_crossbeam_commit(spec: _Spec) -> str:
+    crossbeam_commit = None
+    with open(spec.file_name, 'r') as spec_f:
+        for line in spec_f:
+            line = line.strip()
+            commit_match = _RE_SPEC_CROSSBEAM_COMMIT.match(line)
+
+            if commit_match is not None:
+                commit = commit_match[1]
+                assert crossbeam_commit is None, \
+                    f'Duplicate crossbeam commit, previous == {crossbeam_commit}, new == {commit}'
+                crossbeam_commit = commit
+    assert crossbeam_commit is not None, 'Crossbeam commit not found in RPM SPEC'
+    return crossbeam_commit
 
 
 def _xml_get_rpm_tag_str(tree: xml.etree.ElementTree, name: str) -> str:
@@ -426,7 +452,12 @@ def _vendor(conf: _Config, patches: _Patches) -> None:
         tmp_src_root_vendor = os.path.join(tmp_src_root, 'vendor')
 
         # Apply patches.
+        skip_patches = set(_SKIP_PATCHES)
         for patch in patches.ordered_patches:
+            if patch in skip_patches:
+                skip_patches.remove(patch)
+                continue
+
             print(f'Applying "{patch}"...')
             with open(patch, 'rb') as patch_f:
                 patch_bytes = patch_f.read()
@@ -448,6 +479,8 @@ def _vendor(conf: _Config, patches: _Patches) -> None:
                 input=patch_bytes,
                 cwd=tmp_src_root,
                 check=True)
+
+        assert not skip_patches, f'Some patches to skip are missing: {skip_patches}'
 
         # Final run of `cargo vendor`.
         if os.path.exists(tmp_src_root_vendor):
@@ -503,6 +536,7 @@ def _hash_tarballs(conf: _Config) -> None:
         '--tag',
         f'solana-{conf.new_version}.tar.gz',
         f'solana-{conf.new_version}.cargo-vendor.tar.xz',
+        f'solana-crossbeam-{conf.crossbeam_commit}.tar.gz',
     )
     hashes = subprocess.check_output(
         cmd,

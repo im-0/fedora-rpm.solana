@@ -1,5 +1,6 @@
 %bcond_with bundled_libs
 %global solana_suffix testnet
+%global solana_crossbeam_commit fd279d707025f0e60951e429bf778b4813d1b6bf
 
 %global solana_user   solana-%{solana_suffix}
 %global solana_group  solana-%{solana_suffix}
@@ -7,7 +8,8 @@
 %global solana_log    %{_localstatedir}/log/solana/%{solana_suffix}/
 %global solana_etc    %{_sysconfdir}/solana/%{solana_suffix}/
 
-%global rust_version 1.60.0
+# See ${SOLANA_SRC}/rust-toolchain.toml
+%global rust_version 1.66.1
 
 # Used only on x86_64:
 #
@@ -23,8 +25,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      0
-# git 0a3e52ba8b4f63c3675fa91fc89c4f54f69e5855
-Version:    1.14.13
+# git 3f2373c91c756d7b7eb69a106c44406fddb53cef
+Version:    1.15.0
 Release:    1%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -38,24 +40,27 @@ Source0:    https://github.com/solana-labs/solana/archive/v%{version}/solana-%{v
 #     $ mv vendor solana-X.Y.Z/
 #     $ tar vcJf solana-X.Y.Z.cargo-vendor.tar.xz solana-X.Y.Z
 Source1:    solana-%{version}.cargo-vendor.tar.xz
-Source2:    config.toml
 
-Source3:    activate
-Source4:    solana-validator.service
-Source5:    solana-validator
-Source6:    solana-sys-tuner.service
-Source7:    solana-watchtower.service
-Source8:    solana-watchtower
-Source9:    solana-validator.logrotate
-Source10:   jemalloc-wrapper
-Source11:   0001-Use-different-socket-path-for-sys-tuner-built-for-te.patch
+# Crossbeam patched by Solana developers.
+# `cargo vendor` does not support this properly: https://github.com/rust-lang/cargo/issues/9172.
+Source2:    https://github.com/solana-labs/crossbeam/archive/%{solana_crossbeam_commit}/solana-crossbeam-%{solana_crossbeam_commit}.tar.gz
 
-Source100:  filter-cargo-checksum
+Source102:  config.toml
+Source103:  activate
+Source104:  solana-validator.service
+Source105:  solana-validator
+Source106:  solana-sys-tuner.service
+Source107:  solana-watchtower.service
+Source108:  solana-watchtower
+Source109:  solana-validator.logrotate
+Source110:  jemalloc-wrapper
+Source111:  0001-Use-different-socket-path-for-sys-tuner-built-for-te.patch
+
+Source200:  filter-cargo-checksum
 
 Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
+Patch2002: 0002-Manually-vendor-the-patched-crossbeam.patch
 Patch3001: rocksdb-dynamic-linking.patch
-
-Patch5001: 0001-sys-tuner-Do-not-change-sysctl-parameters-to-smaller.patch
 
 ExclusiveArch:  %{rust_arches}
 
@@ -187,10 +192,12 @@ Solana tests and benchmarks (%{solana_suffix} version).
 
 
 %prep
-%autosetup -N -b1 -n solana-%{version}
+%setup -q -D -T -b0 -n solana-%{version}
+%setup -q -D -T -b1 -n solana-%{version}
+%setup -q -D -T -b2 -n solana-%{version}
 
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE11} \
+        <%{SOURCE111} \
         | patch -p1
 
 %if %{without bundled_libs}
@@ -198,41 +205,42 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
 %patch3001 -p1
 %endif
 
-%patch5001 -p1
+%patch2002 -p1
+ln -sv ../crossbeam-%{solana_crossbeam_commit} ./solana-crossbeam
 
 %if %{without bundled_libs}
 # Remove bundled C/C++ source code.
 rm -r vendor/bzip2-sys/bzip2-*
-%{python} %{SOURCE100} vendor/bzip2-sys '^bzip2-.*'
+%{python} %{SOURCE200} vendor/bzip2-sys '^bzip2-.*'
 rm -r vendor/hidapi/etc/hidapi
-%{python} %{SOURCE100} vendor/hidapi '^etc/hidapi/.*'
+%{python} %{SOURCE200} vendor/hidapi '^etc/hidapi/.*'
 rm -r vendor/tikv-jemalloc-sys/jemalloc
-%{python} %{SOURCE100} vendor/tikv-jemalloc-sys '^jemalloc/.*'
+%{python} %{SOURCE200} vendor/tikv-jemalloc-sys '^jemalloc/.*'
 rm -r vendor/librocksdb-sys/lz4
 rm -r vendor/librocksdb-sys/rocksdb
 rm -r vendor/librocksdb-sys/snappy
 mkdir vendor/librocksdb-sys/rocksdb
 touch vendor/librocksdb-sys/rocksdb/AUTHORS
-%{python} %{SOURCE100} vendor/librocksdb-sys \
+%{python} %{SOURCE200} vendor/librocksdb-sys \
         '^lz4/.*' \
         '^rocksdb/.*' \
         '^snappy/.*'
 rm -r vendor/zstd-sys/zstd
-%{python} %{SOURCE100} vendor/zstd-sys '^zstd/.*'
+%{python} %{SOURCE200} vendor/zstd-sys '^zstd/.*'
 rm -r vendor/libz-sys/src/zlib
 rm -r vendor/libz-sys/src/zlib-ng
-%{python} %{SOURCE100} vendor/libz-sys \
+%{python} %{SOURCE200} vendor/libz-sys \
         '^src/zlib/.*' \
         '^src/zlib-ng/.*'
 # TODO: Use system lz4 for lz4-sys.
 %endif
 
 rm -r vendor/prost-build-0.9.0/third-party
-%{python} %{SOURCE100} vendor/prost-build-0.9.0 \
+%{python} %{SOURCE200} vendor/prost-build-0.9.0 \
         '^third-party/.*'
 
 mkdir .cargo
-cp %{SOURCE2} .cargo/config.toml
+cp %{SOURCE102} .cargo/config.toml
 
 # Fix Fedora's shebang mangling errors:
 #     *** ERROR: ./usr/src/debug/solana-testnet-1.10.0-1.fc35.x86_64/vendor/ascii/src/ascii_char.rs has shebang which doesn't start with '/' ([cfg_attr(rustfmt, rustfmt_skip)])
@@ -302,28 +310,28 @@ cargo clean
 %endif
 
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE3} \
+        <%{SOURCE103} \
         >activate
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE4} \
+        <%{SOURCE104} \
         >solana-validator.service
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE5} \
+        <%{SOURCE105} \
         >solana-validator
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE6} \
+        <%{SOURCE106} \
         >solana-sys-tuner.service
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE7} \
+        <%{SOURCE107} \
         >solana-watchtower.service
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE8} \
+        <%{SOURCE108} \
         >solana-watchtower
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE9} \
+        <%{SOURCE109} \
         >solana-validator.logrotate
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE10} \
+        <%{SOURCE110} \
         >jemalloc-wrapper
 chmod a+x jemalloc-wrapper
 
@@ -399,6 +407,7 @@ rm \
         ./_release/libsolana_zk_token_sdk.so
 rm ./_release/gen-syscall-list
 rm ./_release/gen-headers
+rm ./_release/proto
 
 mv ./_release/*.so \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/deps/
@@ -549,6 +558,9 @@ exit 0
 
 
 %changelog
+* Mon Feb 06 2023 Ivan Mironov <mironov.ivan@gmail.com> - 1.15.0-1
+- Update to 1.15.0
+
 * Thu Jan 19 2023 Ivan Mironov <mironov.ivan@gmail.com> - 1.14.13-1
 - Update to 1.14.13
 
