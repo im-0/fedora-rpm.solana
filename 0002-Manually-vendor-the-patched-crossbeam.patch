@@ -1,4 +1,4 @@
-From a4a1fbfcdd129448b8e49d95e85c6599911de98d Mon Sep 17 00:00:00 2001
+From c13da45a62dfad7a11936b91de9b6f11cf55d50a Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Tue, 7 Feb 2023 00:07:34 +0100
 Subject: [PATCH 2/2] Manually vendor the patched crossbeam
