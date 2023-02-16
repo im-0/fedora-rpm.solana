@@ -138,10 +138,17 @@ def _main() -> None:
     else:
         author = args.author
 
+    ver = list(map(int, new_version.split('.', 2)))
+    if (ver[0] > 1) or ((ver[0] == 1) and (ver[1] >= 15)):
+        # if version >= 1.15:
+        crossbeam_commit = _find_spec_crossbeam_commit(spec)
+    else:
+        crossbeam_commit = ''
+
     config = _Config(
         old_version=old_version,
         new_version=new_version,
-        crossbeam_commit=_find_spec_crossbeam_commit(spec),
+        crossbeam_commit=crossbeam_commit,
         author=author)
     print('Configuration:')
     pprint.pp(config._asdict(), indent=4)
@@ -304,6 +311,24 @@ def _xml_get_rpm_tag(tree: xml.etree.ElementTree, name: str) -> xml.etree.Elemen
 
 def _download(conf: _Config) -> None:
     tarball_name = f'solana-{conf.new_version}.tar.gz'
+    _download_one(
+            f'https://github.com/solana-labs/solana/archive/v{conf.new_version}/{tarball_name}',
+            tarball_name)
+
+    if conf.crossbeam_commit:
+        tarball_name = f'solana-crossbeam-{conf.crossbeam_commit}.tar.gz'
+        _download_one(
+                f'https://github.com/solana-labs/crossbeam/archive/{conf.crossbeam_commit}/{tarball_name}',
+                tarball_name)
+
+    if conf.old_version != conf.new_version:
+        old_tarball_name = f'solana-{conf.old_version}.tar.gz'
+        if os.path.exists(old_tarball_name):
+            print(f'Removing old tarball: {old_tarball_name}')
+            os.unlink(old_tarball_name)
+
+
+def _download_one(url: str, tarball_name: str) -> None:
     if os.path.exists(tarball_name):
         print(f'Source tarball "{tarball_name}" already exist, will not download again')
     else:
@@ -312,15 +337,9 @@ def _download(conf: _Config) -> None:
             '--continue',
             '--tries', '0',
             '--timeout', str(_HTTP_TIMEOUT),
-            f'https://github.com/solana-labs/solana/archive/v{conf.new_version}/{tarball_name}',
+            url,
         )
         subprocess.check_call(cmd, stdin=subprocess.DEVNULL)
-
-    if conf.old_version != conf.new_version:
-        old_tarball_name = f'solana-{conf.old_version}.tar.gz'
-        if os.path.exists(old_tarball_name):
-            print(f'Removing old tarball: {old_tarball_name}')
-            os.unlink(old_tarball_name)
 
 
 def _patch_spec(conf: _Config, spec: _Spec) -> None:
@@ -531,13 +550,15 @@ def _vendor(conf: _Config, patches: _Patches) -> None:
 
 def _hash_tarballs(conf: _Config) -> None:
     print('Hashing tarballs...')
-    cmd = (
+    cmd = [
         'sha512sum',
         '--tag',
         f'solana-{conf.new_version}.tar.gz',
         f'solana-{conf.new_version}.cargo-vendor.tar.xz',
-        f'solana-crossbeam-{conf.crossbeam_commit}.tar.gz',
-    )
+    ]
+    if conf.crossbeam_commit:
+        cmd.append(f'solana-crossbeam-{conf.crossbeam_commit}.tar.gz')
+
     hashes = subprocess.check_output(
         cmd,
         stdin=subprocess.DEVNULL)
