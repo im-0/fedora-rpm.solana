@@ -1,6 +1,5 @@
 %bcond_with bundled_libs
 %global solana_suffix testnet
-%global solana_crossbeam_commit fd279d707025f0e60951e429bf778b4813d1b6bf
 
 %global solana_user   solana-%{solana_suffix}
 %global solana_group  solana-%{solana_suffix}
@@ -24,9 +23,9 @@
 %global base_target_cpu_mtune generic
 
 Name:       solana-%{solana_suffix}
-Epoch:      0
-# git dea65f48e9920a71edd7c12c305c5ebadd192afa
-Version:    1.15.2
+Epoch:      1
+# git 0fb2ffda2ec4abd71816f1c7f47223d547132c6d
+Version:    1.14.16
 Release:    1%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -40,10 +39,6 @@ Source0:    https://github.com/solana-labs/solana/archive/v%{version}/solana-%{v
 #     $ mv vendor solana-X.Y.Z/
 #     $ tar vcJf solana-X.Y.Z.cargo-vendor.tar.xz solana-X.Y.Z
 Source1:    solana-%{version}.cargo-vendor.tar.xz
-
-# Crossbeam patched by Solana developers.
-# `cargo vendor` does not support this properly: https://github.com/rust-lang/cargo/issues/9172.
-Source2:    https://github.com/solana-labs/crossbeam/archive/%{solana_crossbeam_commit}/solana-crossbeam-%{solana_crossbeam_commit}.tar.gz
 
 Source102:  config.toml
 Source103:  activate
@@ -59,8 +54,9 @@ Source111:  0001-Use-different-socket-path-for-sys-tuner-built-for-te.patch
 Source200:  filter-cargo-checksum
 
 Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
-Patch2002: 0002-Manually-vendor-the-patched-crossbeam.patch
 Patch3001: rocksdb-dynamic-linking.patch
+
+Patch5001: 0001-sys-tuner-Do-not-change-sysctl-parameters-to-smaller.patch
 
 ExclusiveArch:  %{rust_arches}
 
@@ -194,7 +190,6 @@ Solana tests and benchmarks (%{solana_suffix} version).
 %prep
 %setup -q -D -T -b0 -n solana-%{version}
 %setup -q -D -T -b1 -n solana-%{version}
-%setup -q -D -T -b2 -n solana-%{version}
 
 sed 's,__SUFFIX__,%{solana_suffix},g' \
         <%{SOURCE111} \
@@ -205,8 +200,7 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
 %patch3001 -p1
 %endif
 
-%patch2002 -p1
-ln -sv ../crossbeam-%{solana_crossbeam_commit} ./solana-crossbeam
+%patch5001 -p1
 
 %if %{without bundled_libs}
 # Remove bundled C/C++ source code.
@@ -407,7 +401,6 @@ rm \
         ./_release/libsolana_zk_token_sdk.so
 rm ./_release/gen-syscall-list
 rm ./_release/gen-headers
-rm ./_release/proto
 
 mv ./_release/*.so \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/deps/
@@ -558,6 +551,9 @@ exit 0
 
 
 %changelog
+* Sat Mar 4 2023 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.14.16-1
+- Downgrade to 1.14.16
+
 * Wed Feb 15 2023 Ivan Mironov <mironov.ivan@gmail.com> - 1.15.2-1
 - Update to 1.15.2
 
