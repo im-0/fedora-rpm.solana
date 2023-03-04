@@ -8,7 +8,7 @@
 %global solana_etc    %{_sysconfdir}/solana/%{solana_suffix}/
 
 # See ${SOLANA_SRC}/rust-toolchain.toml
-%global rust_version 1.66.1
+%global rust_version 1.60.0
 
 # Used only on x86_64:
 #
@@ -26,7 +26,7 @@ Name:       solana-%{solana_suffix}
 Epoch:      1
 # git 0fb2ffda2ec4abd71816f1c7f47223d547132c6d
 Version:    1.14.16
-Release:    1%{?dist}
+Release:    2%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -551,6 +551,9 @@ exit 0
 
 
 %changelog
+* Sat Mar 4 2023 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.14.16-2
+- Use right version of Rust
+
 * Sat Mar 4 2023 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.14.16-1
 - Downgrade to 1.14.16
 
