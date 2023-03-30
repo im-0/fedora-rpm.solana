@@ -53,6 +53,9 @@ Source111:  0001-Use-different-socket-path-for-sys-tuner-built-for-te.patch
 
 Source200:  filter-cargo-checksum
 
+Source300:  https://static.rust-lang.org/dist/rust-%{rust_version}-x86_64-unknown-linux-gnu.tar.gz
+Source301:  https://static.rust-lang.org/dist/rust-%{rust_version}-aarch64-unknown-linux-gnu.tar.gz
+
 Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch3001: rocksdb-dynamic-linking.patch
 
@@ -62,17 +65,13 @@ Patch4003: 0003-rpc-client-Use-regular-timeout-value-for-pool-idle-t.patch
 
 Patch5001: 0001-sys-tuner-Do-not-change-sysctl-parameters-to-smaller.patch
 
-ExclusiveArch:  %{rust_arches}
+ExclusiveArch:  x86_64 aarch64
 
 %global python python3
 BuildRequires:  %{python}
 
 BuildRequires:  findutils
 BuildRequires:  rust-packaging
-BuildRequires:  rustfmt = %{rust_version}
-BuildRequires:  rust = %{rust_version}
-BuildRequires:  rust-std-static = %{rust_version}
-BuildRequires:  cargo = %{rust_version}
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  gcc
 BuildRequires:  clang
@@ -186,6 +185,16 @@ Solana tests and benchmarks (%{solana_suffix} version).
 %setup -q -D -T -b0 -n solana-%{version}
 %setup -q -D -T -b1 -n solana-%{version}
 
+%ifarch x86_64
+%setup -q -D -T -b300 -n solana-%{version}
+%endif
+%ifarch aarch64
+%setup -q -D -T -b301 -n solana-%{version}
+%endif
+../rust-%{rust_version}-%{_arch}-unknown-linux-gnu/install.sh \
+        --prefix=../rust \
+        --disable-ldconfig
+
 sed 's,__SUFFIX__,%{solana_suffix},g' \
         <%{SOURCE111} \
         | patch -p1
@@ -241,6 +250,8 @@ find . -type f -name "*.rs" -exec chmod 0644 "{}" ";"
 
 
 %build
+export PATH="$( pwd )/../rust/bin:${PATH}"
+
 %if %{without bundled_libs}
 export JEMALLOC_OVERRIDE=%{_libdir}/libjemalloc.so
 export ROCKSDB_INCLUDE_DIR=%{_includedir}
