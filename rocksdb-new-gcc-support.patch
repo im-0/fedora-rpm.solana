@@ -1,0 +1,22 @@
+diff -ru solana-1.13.7.a/vendor/librocksdb-sys/rocksdb/table/block_based/data_block_hash_index.h solana-1.13.7.b/vendor/librocksdb-sys/rocksdb/table/block_based/data_block_hash_index.h
+--- solana-1.13.7.a/vendor/librocksdb-sys/rocksdb/table/block_based/data_block_hash_index.h	2023-03-30 04:41:10.000000000 +0200
++++ solana-1.13.7.b/vendor/librocksdb-sys/rocksdb/table/block_based/data_block_hash_index.h	2023-03-30 08:57:26.288881992 +0200
+@@ -5,6 +5,7 @@
+ 
+ #pragma once
+ 
++#include <cstdint>
+ #include <string>
+ #include <vector>
+ 
+diff -ru solana-1.13.7.a/vendor/librocksdb-sys/rocksdb/util/string_util.h solana-1.13.7.b/vendor/librocksdb-sys/rocksdb/util/string_util.h
+--- solana-1.13.7.a/vendor/librocksdb-sys/rocksdb/util/string_util.h	2023-03-30 04:41:10.000000000 +0200
++++ solana-1.13.7.b/vendor/librocksdb-sys/rocksdb/util/string_util.h	2023-03-30 08:57:26.289881997 +0200
+@@ -6,6 +6,7 @@
+ 
+ #pragma once
+ 
++#include <cstdint>
+ #include <sstream>
+ #include <string>
+ #include <unordered_map>
