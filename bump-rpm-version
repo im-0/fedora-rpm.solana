@@ -16,11 +16,6 @@ import xml.etree.ElementTree
 
 _HTTP_TIMEOUT = 15  # seconds
 
-# Do not apply some patches during vendoring phase.
-_SKIP_PATCHES = {
-    '0002-Manually-vendor-the-patched-crossbeam.patch',
-}
-
 
 class _Spec(typing.NamedTuple):
     file_name: str
@@ -142,8 +137,13 @@ def _main() -> None:
     if (ver[0] > 1) or ((ver[0] == 1) and (ver[1] >= 15)):
         # if version >= 1.15:
         crossbeam_commit = _find_spec_crossbeam_commit(spec)
+        # Do not apply some patches during vendoring phase.
+        skip_patches = {
+           '0002-Manually-vendor-the-patched-crossbeam.patch',
+        }
     else:
         crossbeam_commit = ''
+        skip_patches = set()
 
     config = _Config(
         old_version=old_version,
@@ -160,7 +160,7 @@ def _main() -> None:
     if args.only_patches:
         _patch_patches(config, patches)
     if args.only_vendor:
-        _vendor(config, patches)
+        _vendor(config, patches, skip_patches)
     if args.only_hash_tarballs:
         _hash_tarballs(config)
 
@@ -173,7 +173,7 @@ def _main() -> None:
         _download(config)
         _patch_spec(config, spec)
         _patch_patches(config, patches)
-        _vendor(config, patches)
+        _vendor(config, patches, skip_patches)
         _hash_tarballs(config)
 
     print('All done!')
@@ -440,7 +440,7 @@ def _patch_patches(conf: _Config, patches: _Patches) -> None:
             patch_f.write(patch_str)
 
 
-def _vendor(conf: _Config, patches: _Patches) -> None:
+def _vendor(conf: _Config, patches: _Patches, skip_patches: set[str]) -> None:
     tarball_name = f'solana-{conf.new_version}.cargo-vendor.tar.xz'
     if os.path.exists(tarball_name):
         print(f'Dependencies tarball "{tarball_name}" already exist, will not create again')
@@ -471,7 +471,7 @@ def _vendor(conf: _Config, patches: _Patches) -> None:
         tmp_src_root_vendor = os.path.join(tmp_src_root, 'vendor')
 
         # Apply patches.
-        skip_patches = set(_SKIP_PATCHES)
+        skip_patches = set(skip_patches)
         for patch in patches.ordered_patches:
             if patch in skip_patches:
                 skip_patches.remove(patch)
