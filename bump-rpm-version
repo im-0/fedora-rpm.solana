@@ -134,17 +134,18 @@ def _main() -> None:
     else:
         author = args.author
 
+    # Do not apply some patches during vendoring phase.
+    skip_patches = {
+        'rocksdb-new-gcc-support.patch',
+    }
+
     ver = list(map(int, new_version.split('.', 2)))
     if (ver[0] > 1) or ((ver[0] == 1) and (ver[1] >= 15)):
         # if version >= 1.15:
         crossbeam_commit = _find_spec_crossbeam_commit(spec)
-        # Do not apply some patches during vendoring phase.
-        skip_patches = {
-           '0002-Manually-vendor-the-patched-crossbeam.patch',
-        }
+        skip_patches.add('0002-Manually-vendor-the-patched-crossbeam.patch')
     else:
         crossbeam_commit = ''
-        skip_patches = set()
 
     config = _Config(
         old_version=old_version,
