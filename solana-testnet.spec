@@ -59,6 +59,7 @@ Source301:  https://static.rust-lang.org/dist/rust-%{rust_version}-aarch64-unkno
 Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch3001: rocksdb-dynamic-linking.patch
 Patch3002: rocksdb-new-gcc-support.patch
+Patch3003: rust-bindgen-pull-2319.patch
 
 Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
 Patch4002: 0002-Add-watchtower-option-to-specify-RPC-timeout.patch
@@ -206,6 +207,7 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
 %else
 %patch3002 -p1
 %endif
+%patch3003 -p1
 
 %patch4001 -p1
 %patch4002 -p1
