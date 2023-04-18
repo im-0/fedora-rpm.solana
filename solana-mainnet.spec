@@ -7,7 +7,8 @@
 %global solana_log    %{_localstatedir}/log/solana/%{solana_suffix}/
 %global solana_etc    %{_sysconfdir}/solana/%{solana_suffix}/
 
-%global rust_version 1.60.0
+# See ${SOLANA_SRC}/rust-toolchain.toml or ${SOLANA_SRC}/ci/rust-version.sh
+%global rust_version 1.59.0
 
 # Used only on x86_64:
 #
@@ -22,9 +23,9 @@
 %global base_target_cpu_mtune generic
 
 Name:       solana-%{solana_suffix}
-Epoch:      1
-# git 0fb2ffda2ec4abd71816f1c7f47223d547132c6d
-Version:    1.14.16
+Epoch:      2
+# git 88aeaa82a856fc807234e7da0b31b89f2dc0e091
+Version:    1.13.7
 Release:    100%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -38,36 +39,40 @@ Source0:    https://github.com/solana-labs/solana/archive/v%{version}/solana-%{v
 #     $ mv vendor solana-X.Y.Z/
 #     $ tar vcJf solana-X.Y.Z.cargo-vendor.tar.xz solana-X.Y.Z
 Source1:    solana-%{version}.cargo-vendor.tar.xz
-Source2:    config.toml
 
-Source3:    activate
-Source4:    solana-validator.service
-Source5:    solana-validator
-Source6:    solana-sys-tuner.service
-Source7:    solana-watchtower.service
-Source8:    solana-watchtower
-Source9:    solana-validator.logrotate
-Source10:   jemalloc-wrapper
-Source11:   0001-Use-different-socket-path-for-sys-tuner-built-for-te.patch
+Source102:  config.toml
+Source103:  activate
+Source104:  solana-validator.service
+Source105:  solana-validator
+Source106:  solana-sys-tuner.service
+Source107:  solana-watchtower.service
+Source108:  solana-watchtower
+Source109:  solana-validator.logrotate
+Source110:  jemalloc-wrapper
+Source111:  0001-Use-different-socket-path-for-sys-tuner-built-for-te.patch
 
-Source100:  filter-cargo-checksum
+Source200:  filter-cargo-checksum
+
+Source300:  https://static.rust-lang.org/dist/rust-%{rust_version}-x86_64-unknown-linux-gnu.tar.gz
+Source301:  https://static.rust-lang.org/dist/rust-%{rust_version}-aarch64-unknown-linux-gnu.tar.gz
 
 Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch3001: rocksdb-dynamic-linking.patch
+Patch3002: rocksdb-new-gcc-support.patch
+
+Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
+Patch4002: 0002-Add-watchtower-option-to-specify-RPC-timeout.patch
+Patch4003: 0003-rpc-client-Use-regular-timeout-value-for-pool-idle-t.patch
 
 Patch5001: 0001-sys-tuner-Do-not-change-sysctl-parameters-to-smaller.patch
 
-ExclusiveArch:  %{rust_arches}
+ExclusiveArch:  x86_64 aarch64
 
 %global python python3
 BuildRequires:  %{python}
 
 BuildRequires:  findutils
 BuildRequires:  rust-packaging
-BuildRequires:  rustfmt = %{rust_version}
-BuildRequires:  rust = %{rust_version}
-BuildRequires:  rust-std-static = %{rust_version}
-BuildRequires:  cargo = %{rust_version}
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  gcc
 BuildRequires:  clang
@@ -164,15 +169,6 @@ Requires: %{name}-common = %{epoch}:%{version}-%{release}
 Solana BPF utilities (%{solana_suffix} version).
 
 
-%package sbf-utils
-Summary: Solana SBF utilities (%{solana_suffix} version)
-Requires: %{name}-common = %{epoch}:%{version}-%{release}
-
-
-%description sbf-utils
-Solana SBF utilities (%{solana_suffix} version).
-
-
 %package tests
 Summary: Solana tests and benchmarks (%{solana_suffix} version)
 Requires: %{name}-common = %{epoch}:%{version}-%{release}
@@ -187,52 +183,69 @@ Solana tests and benchmarks (%{solana_suffix} version).
 
 
 %prep
-%autosetup -N -b1 -n solana-%{version}
+%setup -q -D -T -b0 -n solana-%{version}
+%setup -q -D -T -b1 -n solana-%{version}
+
+%ifarch x86_64
+%setup -q -D -T -b300 -n solana-%{version}
+%endif
+%ifarch aarch64
+%setup -q -D -T -b301 -n solana-%{version}
+%endif
+../rust-%{rust_version}-%{_arch}-unknown-linux-gnu/install.sh \
+        --prefix=../rust \
+        --disable-ldconfig
 
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE11} \
+        <%{SOURCE111} \
         | patch -p1
 
 %if %{without bundled_libs}
 %patch2001 -p1
 %patch3001 -p1
+%else
+%patch3002 -p1
 %endif
+
+%patch4001 -p1
+%patch4002 -p1
+%patch4003 -p1
 
 %patch5001 -p1
 
 %if %{without bundled_libs}
 # Remove bundled C/C++ source code.
 rm -r vendor/bzip2-sys/bzip2-*
-%{python} %{SOURCE100} vendor/bzip2-sys '^bzip2-.*'
+%{python} %{SOURCE200} vendor/bzip2-sys '^bzip2-.*'
 rm -r vendor/hidapi/etc/hidapi
-%{python} %{SOURCE100} vendor/hidapi '^etc/hidapi/.*'
+%{python} %{SOURCE200} vendor/hidapi '^etc/hidapi/.*'
 rm -r vendor/tikv-jemalloc-sys/jemalloc
-%{python} %{SOURCE100} vendor/tikv-jemalloc-sys '^jemalloc/.*'
+%{python} %{SOURCE200} vendor/tikv-jemalloc-sys '^jemalloc/.*'
 rm -r vendor/librocksdb-sys/lz4
 rm -r vendor/librocksdb-sys/rocksdb
 rm -r vendor/librocksdb-sys/snappy
 mkdir vendor/librocksdb-sys/rocksdb
 touch vendor/librocksdb-sys/rocksdb/AUTHORS
-%{python} %{SOURCE100} vendor/librocksdb-sys \
+%{python} %{SOURCE200} vendor/librocksdb-sys \
         '^lz4/.*' \
         '^rocksdb/.*' \
         '^snappy/.*'
 rm -r vendor/zstd-sys/zstd
-%{python} %{SOURCE100} vendor/zstd-sys '^zstd/.*'
+%{python} %{SOURCE200} vendor/zstd-sys '^zstd/.*'
 rm -r vendor/libz-sys/src/zlib
 rm -r vendor/libz-sys/src/zlib-ng
-%{python} %{SOURCE100} vendor/libz-sys \
+%{python} %{SOURCE200} vendor/libz-sys \
         '^src/zlib/.*' \
         '^src/zlib-ng/.*'
 # TODO: Use system lz4 for lz4-sys.
 %endif
 
 rm -r vendor/prost-build-0.9.0/third-party
-%{python} %{SOURCE100} vendor/prost-build-0.9.0 \
+%{python} %{SOURCE200} vendor/prost-build-0.9.0 \
         '^third-party/.*'
 
 mkdir .cargo
-cp %{SOURCE2} .cargo/config.toml
+cp %{SOURCE102} .cargo/config.toml
 
 # Fix Fedora's shebang mangling errors:
 #     *** ERROR: ./usr/src/debug/solana-testnet-1.10.0-1.fc35.x86_64/vendor/ascii/src/ascii_char.rs has shebang which doesn't start with '/' ([cfg_attr(rustfmt, rustfmt_skip)])
@@ -240,6 +253,8 @@ find . -type f -name "*.rs" -exec chmod 0644 "{}" ";"
 
 
 %build
+export PATH="$( pwd )/../rust/bin:${PATH}"
+
 %if %{without bundled_libs}
 export JEMALLOC_OVERRIDE=%{_libdir}/libjemalloc.so
 export ROCKSDB_INCLUDE_DIR=%{_includedir}
@@ -302,28 +317,28 @@ cargo clean
 %endif
 
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE3} \
+        <%{SOURCE103} \
         >activate
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE4} \
+        <%{SOURCE104} \
         >solana-validator.service
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE5} \
+        <%{SOURCE105} \
         >solana-validator
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE6} \
+        <%{SOURCE106} \
         >solana-sys-tuner.service
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE7} \
+        <%{SOURCE107} \
         >solana-watchtower.service
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE8} \
+        <%{SOURCE108} \
         >solana-watchtower
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE9} \
+        <%{SOURCE109} \
         >solana-validator.logrotate
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE10} \
+        <%{SOURCE110} \
         >jemalloc-wrapper
 chmod a+x jemalloc-wrapper
 
@@ -398,7 +413,6 @@ rm \
         ./_release/libsolana_sdk.so \
         ./_release/libsolana_zk_token_sdk.so
 rm ./_release/gen-syscall-list
-rm ./_release/gen-headers
 
 mv ./_release/*.so \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/deps/
@@ -466,6 +480,7 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 %dir /opt/solana/%{solana_suffix}/libexec
 /opt/solana/%{solana_suffix}/bin/solana-faucet
 /opt/solana/%{solana_suffix}/bin/solana-ip-address-server
+/opt/solana/%{solana_suffix}/bin/solana-replica-node
 /opt/solana/%{solana_suffix}/bin/solana-sys-tuner
 /opt/solana/%{solana_suffix}/bin/solana-validator
 /opt/solana/%{solana_suffix}/bin/solana-watchtower
@@ -495,14 +510,6 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 /opt/solana/%{solana_suffix}/bin/cargo-build-bpf
 /opt/solana/%{solana_suffix}/bin/cargo-test-bpf
 /opt/solana/%{solana_suffix}/bin/rbpf-cli
-
-
-%files sbf-utils
-%dir /opt/solana
-%dir /opt/solana/%{solana_suffix}
-%dir /opt/solana/%{solana_suffix}/bin
-/opt/solana/%{solana_suffix}/bin/cargo-build-sbf
-/opt/solana/%{solana_suffix}/bin/cargo-test-sbf
 
 
 %files tests
@@ -549,6 +556,9 @@ exit 0
 
 
 %changelog
+* Tue Apr 18 2023 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.13.7-100
+- Downgrade to 1.13.7
+
 * Fri Feb 17 2023 Ivan Mironov <mironov.ivan@gmail.com> - 1:1.14.16-100
 - Update to 1.14.16
 

@@ -34,6 +34,8 @@ class _Patches(typing.NamedTuple):
 class _Config(typing.NamedTuple):
     old_version: str
     new_version: str
+    crossbeam_commit: str
+    rust_version: str
     author: str
 
 
@@ -132,9 +134,24 @@ def _main() -> None:
     else:
         author = args.author
 
+    # Do not apply some patches during vendoring phase.
+    skip_patches = {
+        'rocksdb-new-gcc-support.patch',
+    }
+
+    ver = list(map(int, new_version.split('.', 2)))
+    if (ver[0] > 1) or ((ver[0] == 1) and (ver[1] >= 15)):
+        # if version >= 1.15:
+        crossbeam_commit = _find_spec_crossbeam_commit(spec)
+        skip_patches.add('0002-Manually-vendor-the-patched-crossbeam.patch')
+    else:
+        crossbeam_commit = ''
+
     config = _Config(
         old_version=old_version,
         new_version=new_version,
+        crossbeam_commit=crossbeam_commit,
+        rust_version=_find_spec_rust_version(spec),
         author=author)
     print('Configuration:')
     pprint.pp(config._asdict(), indent=4)
@@ -146,7 +163,7 @@ def _main() -> None:
     if args.only_patches:
         _patch_patches(config, patches)
     if args.only_vendor:
-        _vendor(config, patches)
+        _vendor(config, patches, skip_patches)
     if args.only_hash_tarballs:
         _hash_tarballs(config)
 
@@ -159,7 +176,7 @@ def _main() -> None:
         _download(config)
         _patch_spec(config, spec)
         _patch_patches(config, patches)
-        _vendor(config, patches)
+        _vendor(config, patches, skip_patches)
         _hash_tarballs(config)
 
     print('All done!')
@@ -247,6 +264,44 @@ def _find_spec_patches(spec: _Spec) -> _Patches:
         ordered_patches=ordered_patches)
 
 
+_RE_SPEC_CROSSBEAM_COMMIT = re.compile(r'^\s*%global\s+solana_crossbeam_commit\s+(\S+)\s*?$')
+
+
+def _find_spec_crossbeam_commit(spec: _Spec) -> str:
+    crossbeam_commit = None
+    with open(spec.file_name, 'r') as spec_f:
+        for line in spec_f:
+            line = line.strip()
+            commit_match = _RE_SPEC_CROSSBEAM_COMMIT.match(line)
+
+            if commit_match is not None:
+                commit = commit_match[1]
+                assert crossbeam_commit is None, \
+                    f'Duplicate crossbeam commit, previous == {crossbeam_commit}, new == {commit}'
+                crossbeam_commit = commit
+    assert crossbeam_commit is not None, 'Crossbeam commit not found in RPM SPEC'
+    return crossbeam_commit
+
+
+_RE_SPEC_RUST_VERSION = re.compile(r'^\s*%global\s+rust_version\s+(\S+)\s*?$')
+
+
+def _find_spec_rust_version(spec: _Spec) -> str:
+    rust_version = None
+    with open(spec.file_name, 'r') as spec_f:
+        for line in spec_f:
+            line = line.strip()
+            version_match = _RE_SPEC_RUST_VERSION.match(line)
+
+            if version_match is not None:
+                version = version_match[1]
+                assert rust_version is None, \
+                    f'Duplicate rust version, previous == {rust_version}, new == {version}'
+                rust_version = version
+    assert rust_version is not None, 'Rust version not found in RPM SPEC'
+    return rust_version
+
+
 def _xml_get_rpm_tag_str(tree: xml.etree.ElementTree, name: str) -> str:
     tag = _xml_get_rpm_tag(tree, name)
     strings = tag.findall('./string')
@@ -278,6 +333,36 @@ def _xml_get_rpm_tag(tree: xml.etree.ElementTree, name: str) -> xml.etree.Elemen
 
 def _download(conf: _Config) -> None:
     tarball_name = f'solana-{conf.new_version}.tar.gz'
+    _download_one(
+            f'https://github.com/solana-labs/solana/archive/v{conf.new_version}/{tarball_name}',
+            tarball_name)
+
+    if conf.crossbeam_commit:
+        tarball_name = f'solana-crossbeam-{conf.crossbeam_commit}.tar.gz'
+        _download_one(
+                f'https://github.com/solana-labs/crossbeam/archive/{conf.crossbeam_commit}/{tarball_name}',
+                tarball_name)
+
+    if conf.old_version != conf.new_version:
+        old_tarball_name = f'solana-{conf.old_version}.tar.gz'
+        if os.path.exists(old_tarball_name):
+            print(f'Removing old source tarball: {old_tarball_name}')
+            os.unlink(old_tarball_name)
+
+    rust_tarballs = set()
+    for rust_arch in 'x86_64', 'aarch64':
+        tarball_name = f'rust-{conf.rust_version}-{rust_arch}-unknown-linux-gnu.tar.gz'
+        rust_tarballs.add(tarball_name)
+        _download_one(
+                f'https://static.rust-lang.org/dist/{tarball_name}',
+                tarball_name)
+    existing_rust_tarballs = set(glob.glob('rust-*-*-unknown-linux-gnu.tar.gz'))
+    for old_rust_tarball in existing_rust_tarballs - rust_tarballs:
+        print(f'Removing old source tarball: {old_rust_tarball}')
+        os.unlink(old_rust_tarball)
+
+
+def _download_one(url: str, tarball_name: str) -> None:
     if os.path.exists(tarball_name):
         print(f'Source tarball "{tarball_name}" already exist, will not download again')
     else:
@@ -286,15 +371,9 @@ def _download(conf: _Config) -> None:
             '--continue',
             '--tries', '0',
             '--timeout', str(_HTTP_TIMEOUT),
-            f'https://github.com/solana-labs/solana/archive/v{conf.new_version}/{tarball_name}',
+            url,
         )
         subprocess.check_call(cmd, stdin=subprocess.DEVNULL)
-
-    if conf.old_version != conf.new_version:
-        old_tarball_name = f'solana-{conf.old_version}.tar.gz'
-        if os.path.exists(old_tarball_name):
-            print(f'Removing old tarball: {old_tarball_name}')
-            os.unlink(old_tarball_name)
 
 
 def _patch_spec(conf: _Config, spec: _Spec) -> None:
@@ -395,7 +474,7 @@ def _patch_patches(conf: _Config, patches: _Patches) -> None:
             patch_f.write(patch_str)
 
 
-def _vendor(conf: _Config, patches: _Patches) -> None:
+def _vendor(conf: _Config, patches: _Patches, skip_patches: set[str]) -> None:
     tarball_name = f'solana-{conf.new_version}.cargo-vendor.tar.xz'
     if os.path.exists(tarball_name):
         print(f'Dependencies tarball "{tarball_name}" already exist, will not create again')
@@ -426,7 +505,12 @@ def _vendor(conf: _Config, patches: _Patches) -> None:
         tmp_src_root_vendor = os.path.join(tmp_src_root, 'vendor')
 
         # Apply patches.
+        skip_patches = set(skip_patches)
         for patch in patches.ordered_patches:
+            if patch in skip_patches:
+                skip_patches.remove(patch)
+                continue
+
             print(f'Applying "{patch}"...')
             with open(patch, 'rb') as patch_f:
                 patch_bytes = patch_f.read()
@@ -448,6 +532,8 @@ def _vendor(conf: _Config, patches: _Patches) -> None:
                 input=patch_bytes,
                 cwd=tmp_src_root,
                 check=True)
+
+        assert not skip_patches, f'Some patches to skip are missing: {skip_patches}'
 
         # Final run of `cargo vendor`.
         if os.path.exists(tmp_src_root_vendor):
@@ -498,12 +584,17 @@ def _vendor(conf: _Config, patches: _Patches) -> None:
 
 def _hash_tarballs(conf: _Config) -> None:
     print('Hashing tarballs...')
-    cmd = (
+    cmd = [
         'sha512sum',
         '--tag',
         f'solana-{conf.new_version}.tar.gz',
         f'solana-{conf.new_version}.cargo-vendor.tar.xz',
-    )
+        f'rust-{conf.rust_version}-x86_64-unknown-linux-gnu.tar.gz',
+        f'rust-{conf.rust_version}-aarch64-unknown-linux-gnu.tar.gz',
+    ]
+    if conf.crossbeam_commit:
+        cmd.append(f'solana-crossbeam-{conf.crossbeam_commit}.tar.gz')
+
     hashes = subprocess.check_output(
         cmd,
         stdin=subprocess.DEVNULL)
