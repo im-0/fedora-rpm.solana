@@ -24,8 +24,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      2
-# git 88aeaa82a856fc807234e7da0b31b89f2dc0e091
-Version:    1.14.17
+# git b00d18cec4011bb452e3fe87a3412a3f0146942e
+Version:    1.14.18
 Release:    1%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -417,6 +417,7 @@ rm \
         ./_release/libsolana_zk_token_sdk.so
 rm ./_release/gen-syscall-list
 rm ./_release/gen-headers
+rm ./_release/proto
 
 mv ./_release/*.so \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/deps/
@@ -567,6 +568,9 @@ exit 0
 
 
 %changelog
+* Wed May 17 2023 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.14.18-1
+- Update to 1.14.18
+
 * Tue Apr 25 2023 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.14.17-1
 - Upgrade to 1.14.17
 
