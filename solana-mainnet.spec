@@ -8,7 +8,7 @@
 %global solana_etc    %{_sysconfdir}/solana/%{solana_suffix}/
 
 # See ${SOLANA_SRC}/rust-toolchain.toml or ${SOLANA_SRC}/ci/rust-version.sh
-%global rust_version 1.59.0
+%global rust_version 1.60.0
 
 # Used only on x86_64:
 #
@@ -24,8 +24,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      2
-# git 88aeaa82a856fc807234e7da0b31b89f2dc0e091
-Version:    1.13.7
+# git b29a37cf4c4c85ee74fa26544e2bbcc92738d8ea
+Version:    1.14.17
 Release:    100%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -60,10 +60,6 @@ Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch3001: rocksdb-dynamic-linking.patch
 Patch3002: rocksdb-new-gcc-support.patch
 Patch3003: rust-bindgen-pull-2319.patch
-
-Patch4001: 0001-Add-watchtower-option-to-add-custom-string-into-noti.patch
-Patch4002: 0002-Add-watchtower-option-to-specify-RPC-timeout.patch
-Patch4003: 0003-rpc-client-Use-regular-timeout-value-for-pool-idle-t.patch
 
 Patch5001: 0001-sys-tuner-Do-not-change-sysctl-parameters-to-smaller.patch
 
@@ -170,6 +166,15 @@ Requires: %{name}-common = %{epoch}:%{version}-%{release}
 Solana BPF utilities (%{solana_suffix} version).
 
 
+%package sbf-utils
+Summary: Solana SBF utilities (%{solana_suffix} version)
+Requires: %{name}-common = %{epoch}:%{version}-%{release}
+
+
+%description sbf-utils
+Solana SBF utilities (%{solana_suffix} version).
+
+
 %package tests
 Summary: Solana tests and benchmarks (%{solana_suffix} version)
 Requires: %{name}-common = %{epoch}:%{version}-%{release}
@@ -208,10 +213,6 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
 %patch3002 -p1
 %endif
 %patch3003 -p1
-
-%patch4001 -p1
-%patch4002 -p1
-%patch4003 -p1
 
 %patch5001 -p1
 
@@ -415,6 +416,7 @@ rm \
         ./_release/libsolana_sdk.so \
         ./_release/libsolana_zk_token_sdk.so
 rm ./_release/gen-syscall-list
+rm ./_release/gen-headers
 
 mv ./_release/*.so \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/deps/
@@ -482,7 +484,6 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 %dir /opt/solana/%{solana_suffix}/libexec
 /opt/solana/%{solana_suffix}/bin/solana-faucet
 /opt/solana/%{solana_suffix}/bin/solana-ip-address-server
-/opt/solana/%{solana_suffix}/bin/solana-replica-node
 /opt/solana/%{solana_suffix}/bin/solana-sys-tuner
 /opt/solana/%{solana_suffix}/bin/solana-validator
 /opt/solana/%{solana_suffix}/bin/solana-watchtower
@@ -512,6 +513,14 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 /opt/solana/%{solana_suffix}/bin/cargo-build-bpf
 /opt/solana/%{solana_suffix}/bin/cargo-test-bpf
 /opt/solana/%{solana_suffix}/bin/rbpf-cli
+
+
+%files sbf-utils
+%dir /opt/solana
+%dir /opt/solana/%{solana_suffix}
+%dir /opt/solana/%{solana_suffix}/bin
+/opt/solana/%{solana_suffix}/bin/cargo-build-sbf
+/opt/solana/%{solana_suffix}/bin/cargo-test-sbf
 
 
 %files tests
@@ -558,6 +567,9 @@ exit 0
 
 
 %changelog
+* Tue May 23 2023 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.14.17-100
+- Update to 1.14.17
+
 * Tue Apr 18 2023 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.13.7-100
 - Downgrade to 1.13.7
 
