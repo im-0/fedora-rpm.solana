@@ -26,7 +26,7 @@ Name:       solana-%{solana_suffix}
 Epoch:      2
 # git b29a37cf4c4c85ee74fa26544e2bbcc92738d8ea
 Version:    1.14.17
-Release:    100%{?dist}
+Release:    101%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -57,9 +57,10 @@ Source300:  https://static.rust-lang.org/dist/rust-%{rust_version}-x86_64-unknow
 Source301:  https://static.rust-lang.org/dist/rust-%{rust_version}-aarch64-unknown-linux-gnu.tar.gz
 
 Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
+Patch2002: 0001-Bump-librocksdb-sys-to-0.8.3-and-bindgen-to-0.64.0-3.patch
+Patch2003: 0002-Bump-rocksdb-from-0.19.0-to-0.21.0-31590.patch
 Patch3001: rocksdb-dynamic-linking.patch
 Patch3002: rocksdb-new-gcc-support.patch
-Patch3003: rust-bindgen-pull-2319.patch
 
 Patch5001: 0001-sys-tuner-Do-not-change-sysctl-parameters-to-smaller.patch
 
@@ -206,13 +207,15 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
         <%{SOURCE111} \
         | patch -p1
 
+%patch2002 -p1
+%patch2003 -p1
+
 %if %{without bundled_libs}
 %patch2001 -p1
 %patch3001 -p1
 %else
 %patch3002 -p1
 %endif
-%patch3003 -p1
 
 %patch5001 -p1
 
@@ -224,7 +227,6 @@ rm -r vendor/hidapi/etc/hidapi
 %{python} %{SOURCE200} vendor/hidapi '^etc/hidapi/.*'
 rm -r vendor/tikv-jemalloc-sys/jemalloc
 %{python} %{SOURCE200} vendor/tikv-jemalloc-sys '^jemalloc/.*'
-rm -r vendor/librocksdb-sys/lz4
 rm -r vendor/librocksdb-sys/rocksdb
 rm -r vendor/librocksdb-sys/snappy
 mkdir vendor/librocksdb-sys/rocksdb
@@ -567,6 +569,9 @@ exit 0
 
 
 %changelog
+* Sat Jun 10 2023 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.14.17-101
+- Update rocksdb to match testnet/1.16.0
+
 * Tue May 23 2023 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.14.17-100
 - Update to 1.14.17
 
