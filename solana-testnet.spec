@@ -25,8 +25,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      2
-# git e0fcdbb0b0cc9bb61f8f3832310a850fd0452694
-Version:    1.16.0
+# git 65dbce6446e9e3571f9fd3cfded90fc65cf290b8
+Version:    1.16.1
 Release:    1%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -61,6 +61,7 @@ Source301:  https://static.rust-lang.org/dist/rust-%{rust_version}-aarch64-unkno
 
 Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch2002: 0002-Manually-vendor-the-patched-crossbeam.patch
+Patch2003: 0003-Do-not-patch-ntapi-as-it-breaks-isolated-build.patch
 Patch3001: rocksdb-dynamic-linking.patch
 Patch3002: rocksdb-new-gcc-support.patch
 
@@ -217,6 +218,8 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
 
 %patch2002 -p1
 ln -sv ../crossbeam-%{solana_crossbeam_commit} ./solana-crossbeam
+
+%patch2003 -p1
 
 %if %{without bundled_libs}
 # Remove bundled C/C++ source code.
@@ -560,6 +563,9 @@ exit 0
 
 
 %changelog
+* Fri Jun 16 2023 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.16.1-1
+- Update to 1.16.1
+
 * Fri Jun 09 2023 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.16.0-1
 - Update to 1.16.0
 
