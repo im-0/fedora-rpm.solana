@@ -24,9 +24,9 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      2
-# git b29a37cf4c4c85ee74fa26544e2bbcc92738d8ea
-Version:    1.14.17
-Release:    101%{?dist}
+# git 5704dd6e37a324186787991aad5ee7806cf066fd
+Version:    1.14.19
+Release:    100%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -419,6 +419,7 @@ rm \
         ./_release/libsolana_zk_token_sdk.so
 rm ./_release/gen-syscall-list
 rm ./_release/gen-headers
+rm ./_release/proto
 
 mv ./_release/*.so \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/deps/
@@ -569,6 +570,9 @@ exit 0
 
 
 %changelog
+* Fri Jun 16 2023 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.14.19-100
+- Update to 1.14.19
+
 * Sat Jun 10 2023 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.14.17-101
 - Update rocksdb to match testnet/1.16.0
 

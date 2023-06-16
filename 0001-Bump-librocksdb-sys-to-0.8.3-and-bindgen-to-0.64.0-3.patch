@@ -1,4 +1,4 @@
-From 0f3f311dd60bc7b3364a1eb38f3a139f1b09254f Mon Sep 17 00:00:00 2001
+From ac335ebb52de0d41f68095f8ee7e04c213c4d5c1 Mon Sep 17 00:00:00 2001
 From: Dave <13626476+DaveWK@users.noreply.github.com>
 Date: Fri, 12 May 2023 02:29:43 -0400
 Subject: [PATCH 1/2] Bump librocksdb-sys to 0.8.3 and bindgen to 0.64.0
@@ -23,7 +23,7 @@ in the Cargo.lock
  1 file changed, 5 insertions(+), 4 deletions(-)
 
 diff --git a/Cargo.lock b/Cargo.lock
-index 4ae0c642d1c2..658a5032f1b1 100644
+index 1b038dda4274..b2a781ee7552 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -362,9 +362,9 @@ dependencies = [
@@ -46,7 +46,7 @@ index 4ae0c642d1c2..658a5032f1b1 100644
  ]
  
  [[package]]
-@@ -2405,9 +2406,9 @@ checksum = "c7d73b3f436185384286bd8098d17ec07c9a7d2388a6599f824d8502b529702a"
+@@ -2442,9 +2443,9 @@ checksum = "c7d73b3f436185384286bd8098d17ec07c9a7d2388a6599f824d8502b529702a"
  
  [[package]]
  name = "librocksdb-sys"
