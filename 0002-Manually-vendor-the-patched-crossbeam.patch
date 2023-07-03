@@ -1,4 +1,4 @@
-From 09e9c9f8b80c48a8b7a31e76f8625448ee443785 Mon Sep 17 00:00:00 2001
+From 5a01f0b07aab5ae908edd66f5da492d680c66547 Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Tue, 7 Feb 2023 00:07:34 +0100
 Subject: [PATCH 2/3] Manually vendor the patched crossbeam
@@ -9,7 +9,7 @@ Cargo does not support this: https://github.com/rust-lang/cargo/issues/9172
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/Cargo.toml b/Cargo.toml
-index a4b6d6ead53e..0be95fb9cdac 100644
+index 7af78952aaa1..7760af21e130 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
 @@ -402,7 +402,7 @@ zstd = "0.11.2"
@@ -22,5 +22,5 @@ index a4b6d6ead53e..0be95fb9cdac 100644
  # Rust 1.69+ broke ntapi v0.3.x, which doesn't contain proper fix:
  #   https://github.com/MSxDOS/ntapi/pull/12
 -- 
-2.40.1
+2.41.0
 

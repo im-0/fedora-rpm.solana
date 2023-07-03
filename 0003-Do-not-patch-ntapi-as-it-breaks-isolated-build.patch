@@ -1,4 +1,4 @@
-From aa8a2aaaa8b37ae14644f1a15e73ba64b4746ab2 Mon Sep 17 00:00:00 2001
+From 75b6b668dc09c2bc66118d5ecb2654f0c12bdb4b Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Fri, 16 Jun 2023 15:43:41 +0200
 Subject: [PATCH 3/3] Do not patch ntapi as it breaks isolated build
@@ -9,7 +9,7 @@ We do not build for Windows anyway.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/Cargo.toml b/Cargo.toml
-index 0be95fb9cdac..7e51bf804f4f 100644
+index 7760af21e130..0f5331bc5d9c 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
 @@ -406,7 +406,7 @@ crossbeam-epoch = { path = "./solana-crossbeam/crossbeam-epoch" }
@@ -22,5 +22,5 @@ index 0be95fb9cdac..7e51bf804f4f 100644
  # We include the following crates as our dependencies above from crates.io:
  #
 -- 
-2.40.1
+2.41.0
 
