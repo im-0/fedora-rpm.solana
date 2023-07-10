@@ -205,10 +205,6 @@ Solana tests and benchmarks (%{solana_suffix} version).
         --prefix=../rust \
         --disable-ldconfig
 
-sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE111} \
-        | patch -p1
-
 %if %{without bundled_libs}
 %patch2001 -p1
 %patch3001 -p1
