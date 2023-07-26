@@ -517,7 +517,7 @@ index aee26ec23325..a035976bd8ad 100644
  ]
 @@ -5278,8 +5290,8 @@ dependencies = [
  name = "solana-frozen-abi-macro"
- version = "1.14.20"
+ version = "1.14.21"
  dependencies = [
 - "proc-macro2 1.0.52",
 - "quote 1.0.18",
@@ -538,7 +538,7 @@ index aee26ec23325..a035976bd8ad 100644
   "syn 1.0.109",
  ]
 @@ -6194,8 +6206,8 @@ name = "solana-sdk-macro"
- version = "1.14.20"
+ version = "1.14.21"
  dependencies = [
   "bs58",
 - "proc-macro2 1.0.52",
@@ -1208,7 +1208,7 @@ index 7df1b04da734..1bf2a6bf03ae 100644
  ]
 @@ -4939,8 +4942,8 @@ dependencies = [
  name = "solana-frozen-abi-macro"
- version = "1.14.20"
+ version = "1.14.21"
  dependencies = [
 - "proc-macro2 1.0.51",
 - "quote 1.0.18",
@@ -1229,7 +1229,7 @@ index 7df1b04da734..1bf2a6bf03ae 100644
   "syn 1.0.109",
  ]
 @@ -5593,8 +5596,8 @@ name = "solana-sdk-macro"
- version = "1.14.20"
+ version = "1.14.21"
  dependencies = [
   "bs58",
 - "proc-macro2 1.0.51",
