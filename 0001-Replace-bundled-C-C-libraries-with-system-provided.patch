@@ -49,7 +49,7 @@ diff --git a/account-decoder/Cargo.toml b/account-decoder/Cargo.toml
 index 8f0b82ce39a1..9b195516222f 100644
 --- a/account-decoder/Cargo.toml
 +++ b/account-decoder/Cargo.toml
-@@ -26,7 +26,7 @@ solana-vote-program = { path = "../programs/vote", version = "=1.14.21" }
+@@ -26,7 +26,7 @@ solana-vote-program = { path = "../programs/vote", version = "=1.14.22" }
  spl-token = { version = "=3.5.0", features = ["no-entrypoint"] }
  spl-token-2022 = { version = "=0.6.1", features = ["no-entrypoint"] }
  thiserror = "1.0"
