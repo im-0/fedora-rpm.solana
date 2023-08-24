@@ -1,5 +1,6 @@
 %bcond_with bundled_libs
 %global solana_suffix mainnet
+%global solana_crossbeam_commit fd279d707025f0e60951e429bf778b4813d1b6bf
 
 %global solana_user   solana-%{solana_suffix}
 %global solana_group  solana-%{solana_suffix}
@@ -8,7 +9,7 @@
 %global solana_etc    %{_sysconfdir}/solana/%{solana_suffix}/
 
 # See ${SOLANA_SRC}/rust-toolchain.toml or ${SOLANA_SRC}/ci/rust-version.sh
-%global rust_version 1.60.0
+%global rust_version 1.69.0
 
 # Used only on x86_64:
 #
@@ -24,8 +25,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      2
-# git 605da4a30ba5296584d1e3a830bce8af3f395439
-Version:    1.14.24
+# git 2c20d87b6ec2bc647b0ad806a7f4add754444422
+Version:    1.16.9
 Release:    100%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -40,16 +41,18 @@ Source0:    https://github.com/solana-labs/solana/archive/v%{version}/solana-%{v
 #     $ tar vcJf solana-X.Y.Z.cargo-vendor.tar.xz solana-X.Y.Z
 Source1:    solana-%{version}.cargo-vendor.tar.xz
 
+# Crossbeam patched by Solana developers.
+# `cargo vendor` does not support this properly: https://github.com/rust-lang/cargo/issues/9172.
+Source2:    https://github.com/solana-labs/crossbeam/archive/%{solana_crossbeam_commit}/solana-crossbeam-%{solana_crossbeam_commit}.tar.gz
+
 Source102:  config.toml
 Source103:  activate
 Source104:  solana-validator.service
 Source105:  solana-validator
-Source106:  solana-sys-tuner.service
 Source107:  solana-watchtower.service
 Source108:  solana-watchtower
 Source109:  solana-validator.logrotate
 Source110:  jemalloc-wrapper
-Source111:  0001-Use-different-socket-path-for-sys-tuner-built-for-te.patch
 
 Source200:  filter-cargo-checksum
 
@@ -57,12 +60,10 @@ Source300:  https://static.rust-lang.org/dist/rust-%{rust_version}-x86_64-unknow
 Source301:  https://static.rust-lang.org/dist/rust-%{rust_version}-aarch64-unknown-linux-gnu.tar.gz
 
 Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
-Patch2002: 0001-Bump-librocksdb-sys-to-0.8.3-and-bindgen-to-0.64.0-3.patch
-Patch2003: 0002-Bump-rocksdb-from-0.19.0-to-0.21.0-31590.patch
+Patch2002: 0002-Manually-vendor-the-patched-crossbeam.patch
+Patch2003: 0003-Do-not-patch-ntapi-as-it-breaks-isolated-build.patch
 Patch3001: rocksdb-dynamic-linking.patch
 Patch3002: rocksdb-new-gcc-support.patch
-
-Patch5001: 0001-sys-tuner-Do-not-change-sysctl-parameters-to-smaller.patch
 
 ExclusiveArch:  x86_64 aarch64
 
@@ -192,6 +193,7 @@ Solana tests and benchmarks (%{solana_suffix} version).
 %prep
 %setup -q -D -T -b0 -n solana-%{version}
 %setup -q -D -T -b1 -n solana-%{version}
+%setup -q -D -T -b2 -n solana-%{version}
 
 %ifarch x86_64
 %setup -q -D -T -b300 -n solana-%{version}
@@ -203,13 +205,6 @@ Solana tests and benchmarks (%{solana_suffix} version).
         --prefix=../rust \
         --disable-ldconfig
 
-sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE111} \
-        | patch -p1
-
-%patch2002 -p1
-%patch2003 -p1
-
 %if %{without bundled_libs}
 %patch2001 -p1
 %patch3001 -p1
@@ -217,7 +212,10 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
 %patch3002 -p1
 %endif
 
-%patch5001 -p1
+%patch2002 -p1
+ln -sv ../crossbeam-%{solana_crossbeam_commit} ./solana-crossbeam
+
+%patch2003 -p1
 
 %if %{without bundled_libs}
 # Remove bundled C/C++ source code.
@@ -331,9 +329,6 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
         <%{SOURCE105} \
         >solana-validator
 sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE106} \
-        >solana-sys-tuner.service
-sed 's,__SUFFIX__,%{solana_suffix},g' \
         <%{SOURCE107} \
         >solana-watchtower.service
 sed 's,__SUFFIX__,%{solana_suffix},g' \
@@ -372,8 +367,6 @@ mv solana-validator.service \
         %{buildroot}/%{_unitdir}/solana-validator-%{solana_suffix}.service
 mv solana-validator \
         %{buildroot}%{_sysconfdir}/sysconfig/solana-validator-%{solana_suffix}
-mv solana-sys-tuner.service \
-        %{buildroot}/%{_unitdir}/solana-sys-tuner-%{solana_suffix}.service
 mv solana-watchtower.service \
         %{buildroot}/%{_unitdir}/solana-watchtower-%{solana_suffix}.service
 mv solana-watchtower \
@@ -463,6 +456,7 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 %dir /opt/solana/%{solana_suffix}/bin
 %dir /opt/solana/%{solana_suffix}/libexec
 /opt/solana/%{solana_suffix}/bin/solana-keygen
+/opt/solana/%{solana_suffix}/bin/solana-zk-keygen
 /opt/solana/%{solana_suffix}/bin/solana-log-analyzer
 /opt/solana/%{solana_suffix}/bin/solana-ledger-tool
 /opt/solana/%{solana_suffix}/bin/solana-genesis
@@ -487,13 +481,11 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 %dir /opt/solana/%{solana_suffix}/libexec
 /opt/solana/%{solana_suffix}/bin/solana-faucet
 /opt/solana/%{solana_suffix}/bin/solana-ip-address-server
-/opt/solana/%{solana_suffix}/bin/solana-sys-tuner
 /opt/solana/%{solana_suffix}/bin/solana-validator
 /opt/solana/%{solana_suffix}/bin/solana-watchtower
 /opt/solana/%{solana_suffix}/libexec/solana-validator
 
 %{_unitdir}/solana-validator-%{solana_suffix}.service
-%{_unitdir}/solana-sys-tuner-%{solana_suffix}.service
 %{_unitdir}/solana-watchtower-%{solana_suffix}.service
 %attr(0640,root,%{solana_group}) %config(noreplace) %{_sysconfdir}/sysconfig/solana-validator-%{solana_suffix}
 %attr(0640,root,%{solana_group}) %config(noreplace) %{_sysconfdir}/sysconfig/solana-watchtower-%{solana_suffix}
@@ -553,23 +545,23 @@ exit 0
 
 %post daemons
 %systemd_post solana-validator-%{solana_suffix}.service
-%systemd_post solana-sys-tuner-%{solana_suffix}.service
 %systemd_post solana-watchtower-%{solana_suffix}.service
 
 
 %preun daemons
 %systemd_preun solana-validator-%{solana_suffix}.service
-%systemd_preun solana-sys-tuner-%{solana_suffix}.service
 %systemd_preun solana-watchtower-%{solana_suffix}.service
 
 
 %postun daemons
 %systemd_postun solana-validator-%{solana_suffix}.service
-%systemd_postun_with_restart solana-sys-tuner-%{solana_suffix}.service
 %systemd_postun_with_restart solana-watchtower-%{solana_suffix}.service
 
 
 %changelog
+* Thu Aug 24 2023 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.16.9-100
+- Update to 1.16.9
+
 * Mon Aug 14 2023 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.14.24-100
 - Update to 1.14.24
 
