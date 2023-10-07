@@ -1,4 +1,4 @@
-From 75b6b668dc09c2bc66118d5ecb2654f0c12bdb4b Mon Sep 17 00:00:00 2001
+From 1c77678feec38ac49658e1b0f3d1cefb79fd977b Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Fri, 16 Jun 2023 15:43:41 +0200
 Subject: [PATCH 3/3] Do not patch ntapi as it breaks isolated build
@@ -9,10 +9,10 @@ We do not build for Windows anyway.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/Cargo.toml b/Cargo.toml
-index 7760af21e130..0f5331bc5d9c 100644
+index 60e80dbf6ece..4604e4b563d4 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
-@@ -406,7 +406,7 @@ crossbeam-epoch = { path = "./solana-crossbeam/crossbeam-epoch" }
+@@ -408,7 +408,7 @@ crossbeam-epoch = { path = "./solana-crossbeam/crossbeam-epoch" }
  
  # Rust 1.69+ broke ntapi v0.3.x, which doesn't contain proper fix:
  #   https://github.com/MSxDOS/ntapi/pull/12
