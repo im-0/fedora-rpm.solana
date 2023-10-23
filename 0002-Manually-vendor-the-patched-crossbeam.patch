@@ -1,7 +1,7 @@
-From 13728fd74a62d34d697b3168fd0f504dfde53764 Mon Sep 17 00:00:00 2001
+From 75a50a0e13d8da8f68f52899ee36ce2b70b3beef Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Tue, 7 Feb 2023 00:07:34 +0100
-Subject: [PATCH 2/3] Manually vendor the patched crossbeam
+Subject: [PATCH 2/2] Manually vendor the patched crossbeam
 
 Cargo does not support this: https://github.com/rust-lang/cargo/issues/9172
 ---
@@ -9,18 +9,18 @@ Cargo does not support this: https://github.com/rust-lang/cargo/issues/9172
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/Cargo.toml b/Cargo.toml
-index 4d9af820045f..60e80dbf6ece 100644
+index 845519fe0ebf..e1b41769d569 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
-@@ -404,7 +404,7 @@ zstd = "0.11.2"
+@@ -418,7 +418,7 @@ zstd = "0.11.2"
  
  [patch.crates-io]
  # for details, see https://github.com/solana-labs/crossbeam/commit/fd279d707025f0e60951e429bf778b4813d1b6bf
 -crossbeam-epoch = { git = "https://github.com/solana-labs/crossbeam", rev = "fd279d707025f0e60951e429bf778b4813d1b6bf" }
 +crossbeam-epoch = { path = "./solana-crossbeam/crossbeam-epoch" }
  
- # Rust 1.69+ broke ntapi v0.3.x, which doesn't contain proper fix:
- #   https://github.com/MSxDOS/ntapi/pull/12
+ # We include the following crates as our dependencies above from crates.io:
+ #
 -- 
 2.41.0
 
