@@ -35,6 +35,7 @@ class _Config(typing.NamedTuple):
     old_version: str
     new_version: str
     crossbeam_commit: str
+    tokio_commit: str
     rust_version: str
     author: str
 
@@ -140,6 +141,7 @@ def _main() -> None:
     }
 
     ver = list(map(int, new_version.split('.', 2)))
+
     if (ver[0] > 1) or ((ver[0] == 1) and (ver[1] >= 15)):
         # if version >= 1.15:
         crossbeam_commit = _find_spec_crossbeam_commit(spec)
@@ -147,10 +149,19 @@ def _main() -> None:
     else:
         crossbeam_commit = ''
 
+    if (ver[0] > 1) or ((ver[0] == 1) and (ver[1] > 17)) \
+            or ((ver[0] == 1) and (ver[1] == 17) and ver[2] >= 10):
+        # if version >= 1.17.10:
+        tokio_commit = _find_spec_tokio_commit(spec)
+        skip_patches.add('0003-Manually-vendor-the-patched-tokio.patch')
+    else:
+        tokio_commit = ''
+
     config = _Config(
         old_version=old_version,
         new_version=new_version,
         crossbeam_commit=crossbeam_commit,
+        tokio_commit=tokio_commit,
         rust_version=_find_spec_rust_version(spec),
         author=author)
     print('Configuration:')
@@ -283,6 +294,25 @@ def _find_spec_crossbeam_commit(spec: _Spec) -> str:
     return crossbeam_commit
 
 
+_RE_SPEC_TOKIO_COMMIT = re.compile(r'^\s*%global\s+solana_tokio_commit\s+(\S+)\s*?$')
+
+
+def _find_spec_tokio_commit(spec: _Spec) -> str:
+    tokio_commit = None
+    with open(spec.file_name, 'r') as spec_f:
+        for line in spec_f:
+            line = line.strip()
+            commit_match = _RE_SPEC_TOKIO_COMMIT.match(line)
+
+            if commit_match is not None:
+                commit = commit_match[1]
+                assert tokio_commit is None, \
+                    f'Duplicate tokio commit, previous == {tokio_commit}, new == {commit}'
+                tokio_commit = commit
+    assert tokio_commit is not None, 'Tokio commit not found in RPM SPEC'
+    return tokio_commit
+
+
 _RE_SPEC_RUST_VERSION = re.compile(r'^\s*%global\s+rust_version\s+(\S+)\s*?$')
 
 
@@ -341,6 +371,12 @@ def _download(conf: _Config) -> None:
         tarball_name = f'solana-crossbeam-{conf.crossbeam_commit}.tar.gz'
         _download_one(
                 f'https://github.com/solana-labs/crossbeam/archive/{conf.crossbeam_commit}/{tarball_name}',
+                tarball_name)
+
+    if conf.tokio_commit:
+        tarball_name = f'solana-tokio-{conf.tokio_commit}.tar.gz'
+        _download_one(
+                f'https://github.com/solana-labs/solana-tokio/archive/{conf.tokio_commit}/{tarball_name}',
                 tarball_name)
 
     if conf.old_version != conf.new_version:
@@ -594,6 +630,8 @@ def _hash_tarballs(conf: _Config) -> None:
     ]
     if conf.crossbeam_commit:
         cmd.append(f'solana-crossbeam-{conf.crossbeam_commit}.tar.gz')
+    if conf.tokio_commit:
+        cmd.append(f'solana-tokio-{conf.tokio_commit}.tar.gz')
 
     hashes = subprocess.check_output(
         cmd,

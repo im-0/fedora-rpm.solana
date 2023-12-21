@@ -1,6 +1,7 @@
 %bcond_with bundled_libs
 %global solana_suffix testnet
 %global solana_crossbeam_commit fd279d707025f0e60951e429bf778b4813d1b6bf
+%global solana_tokio_commit 7cf47705faacf7bf0e43e4131a5377b3291fce21
 
 %global solana_user   solana-%{solana_suffix}
 %global solana_group  solana-%{solana_suffix}
@@ -25,8 +26,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      2
-# git daf37308f25918adec29cfef7b19859482d29e6b
-Version:    1.17.9
+# git 5787b48b92e4f64baa3e354c6eac3e6db6375e88
+Version:    1.17.12
 Release:    1%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -45,6 +46,10 @@ Source1:    solana-%{version}.cargo-vendor.tar.xz
 # `cargo vendor` does not support this properly: https://github.com/rust-lang/cargo/issues/9172.
 Source2:    https://github.com/solana-labs/crossbeam/archive/%{solana_crossbeam_commit}/solana-crossbeam-%{solana_crossbeam_commit}.tar.gz
 
+# Tokio patched by Solana developers.
+# `cargo vendor` does not support this properly: https://github.com/rust-lang/cargo/issues/9172.
+Source3:    https://github.com/solana-labs/solana-tokio/archive/%{solana_tokio_commit}/solana-tokio-%{solana_tokio_commit}.tar.gz
+
 Source102:  config.toml
 Source103:  activate
 Source104:  solana-validator.service
@@ -61,6 +66,7 @@ Source301:  https://static.rust-lang.org/dist/rust-%{rust_version}-aarch64-unkno
 
 Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch2002: 0002-Manually-vendor-the-patched-crossbeam.patch
+Patch2003: 0003-Manually-vendor-the-patched-tokio.patch
 Patch3001: rocksdb-dynamic-linking.patch
 Patch3002: rocksdb-new-gcc-support.patch
 
@@ -193,6 +199,7 @@ Solana tests and benchmarks (%{solana_suffix} version).
 %setup -q -D -T -b0 -n solana-%{version}
 %setup -q -D -T -b1 -n solana-%{version}
 %setup -q -D -T -b2 -n solana-%{version}
+%setup -q -D -T -b3 -n solana-%{version}
 
 %ifarch x86_64
 %setup -q -D -T -b300 -n solana-%{version}
@@ -213,6 +220,9 @@ Solana tests and benchmarks (%{solana_suffix} version).
 
 %patch2002 -p1
 ln -sv ../crossbeam-%{solana_crossbeam_commit} ./solana-crossbeam
+
+%patch2003 -p1
+ln -sv ../solana-tokio-%{solana_tokio_commit} ./solana-tokio
 
 %if %{without bundled_libs}
 # Remove bundled C/C++ source code.
@@ -552,6 +562,9 @@ exit 0
 
 
 %changelog
+* Thu Dec 21 2023 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.17.12-1
+- Update to 1.17.12
+
 * Mon Dec 11 2023 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.17.9-1
 - Update to 1.17.9
 

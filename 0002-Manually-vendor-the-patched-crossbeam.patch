@@ -1,7 +1,7 @@
-From 75a50a0e13d8da8f68f52899ee36ce2b70b3beef Mon Sep 17 00:00:00 2001
+From 29e93d1d11687ae1b9ad47798896fcf6d48fa1e2 Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Tue, 7 Feb 2023 00:07:34 +0100
-Subject: [PATCH 2/2] Manually vendor the patched crossbeam
+Subject: [PATCH 2/3] Manually vendor the patched crossbeam
 
 Cargo does not support this: https://github.com/rust-lang/cargo/issues/9172
 ---
@@ -9,10 +9,10 @@ Cargo does not support this: https://github.com/rust-lang/cargo/issues/9172
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/Cargo.toml b/Cargo.toml
-index 845519fe0ebf..e1b41769d569 100644
+index 0bc870f646f8..27297ca2438c 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
-@@ -418,7 +418,7 @@ zstd = "0.11.2"
+@@ -419,7 +419,7 @@ zstd = "0.11.2"
  
  [patch.crates-io]
  # for details, see https://github.com/solana-labs/crossbeam/commit/fd279d707025f0e60951e429bf778b4813d1b6bf
@@ -22,5 +22,5 @@ index 845519fe0ebf..e1b41769d569 100644
  # We include the following crates as our dependencies above from crates.io:
  #
 -- 
-2.41.0
+2.43.0
 
