@@ -1,4 +1,4 @@
-From 85495e8e00196a27006892567892e498cb893e0c Mon Sep 17 00:00:00 2001
+From cdf03ad10c83eb77827b00881f9ed3549b300af7 Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Thu, 18 Feb 2021 17:17:32 +0500
 Subject: [PATCH 1/3] Replace bundled C/C++ libraries with system provided
@@ -12,10 +12,10 @@ Subject: [PATCH 1/3] Replace bundled C/C++ libraries with system provided
  5 files changed, 6 insertions(+), 15 deletions(-)
 
 diff --git a/Cargo.lock b/Cargo.lock
-index d4ee3d04a7e7..2d098fb367c6 100644
+index a2a8c340e5af..f1a0435ae837 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
-@@ -3342,15 +3342,6 @@ version = "0.1.4"
+@@ -3520,15 +3520,6 @@ version = "0.1.4"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "28988d872ab76095a6e6ac88d99b54fd267702734fd7ffe610ca27f533ddb95a"
  
@@ -30,8 +30,8 @@ index d4ee3d04a7e7..2d098fb367c6 100644
 -
  [[package]]
  name = "openssl-sys"
- version = "0.9.89"
-@@ -3359,7 +3350,6 @@ checksum = "4026ef4fae4cd0c85aee4846e497cea7855659077108067c0d37c0d628f3e40a"
+ version = "0.9.92"
+@@ -3537,7 +3528,6 @@ checksum = "db7e971c2c2bba161b2d2fdf37080177eff520b3bc044787c7f1f5f9e78d869b"
  dependencies = [
   "cc",
   "libc",
@@ -39,31 +39,31 @@ index d4ee3d04a7e7..2d098fb367c6 100644
   "pkg-config",
   "vcpkg",
  ]
-@@ -8892,4 +8882,5 @@ checksum = "9fd07cbbc53846d9145dbffdf6dd09a7a0aa52be46741825f5c97bdd4f73f12b"
+@@ -9138,4 +9128,5 @@ checksum = "9fd07cbbc53846d9145dbffdf6dd09a7a0aa52be46741825f5c97bdd4f73f12b"
  dependencies = [
   "cc",
   "libc",
 + "pkg-config",
  ]
 diff --git a/account-decoder/Cargo.toml b/account-decoder/Cargo.toml
-index 36666d1a45b8..bf46178985e8 100644
+index 7aee8478b4f1..20398a98b51b 100644
 --- a/account-decoder/Cargo.toml
 +++ b/account-decoder/Cargo.toml
-@@ -26,7 +26,7 @@ spl-token = { workspace = true, features = ["no-entrypoint"] }
- spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
+@@ -26,7 +26,7 @@ spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
+ spl-token-group-interface = { workspace = true }
  spl-token-metadata-interface = { workspace = true }
  thiserror = { workspace = true }
 -zstd = { workspace = true }
 +zstd = { workspace = true, features = ["pkg-config"] }
  
  [dev-dependencies]
- spl-pod = { workspace = true }
+ assert_matches = { workspace = true }
 diff --git a/remote-wallet/Cargo.toml b/remote-wallet/Cargo.toml
-index b5e20d18fa2d..2ae88607d37a 100644
+index 21fecb564b21..0e963a6320db 100644
 --- a/remote-wallet/Cargo.toml
 +++ b/remote-wallet/Cargo.toml
-@@ -24,7 +24,7 @@ thiserror = { workspace = true }
- uriparse = { workspace = true }
+@@ -27,7 +27,7 @@ uriparse = { workspace = true }
+ assert_matches = { workspace = true }
  
  [features]
 -default = ["linux-static-hidraw", "hidapi"]
@@ -72,10 +72,10 @@ index b5e20d18fa2d..2ae88607d37a 100644
  linux-static-hidraw = ["hidapi/linux-static-hidraw"]
  linux-shared-libusb = ["hidapi/linux-shared-libusb"]
 diff --git a/runtime/Cargo.toml b/runtime/Cargo.toml
-index de1e86cf0533..9ae50377d3f0 100644
+index 2d15c7acbace..788c4b8626f7 100644
 --- a/runtime/Cargo.toml
 +++ b/runtime/Cargo.toml
-@@ -69,7 +69,7 @@ symlink = { workspace = true }
+@@ -77,7 +77,7 @@ symlink = { workspace = true }
  tar = { workspace = true }
  tempfile = { workspace = true }
  thiserror = { workspace = true }
@@ -105,5 +105,5 @@ index fafacf0292da..00c68836d9f9 100644
  # Perl dependency
  [target."cfg(windows)".dependencies]
 -- 
-2.41.0
+2.43.0
 

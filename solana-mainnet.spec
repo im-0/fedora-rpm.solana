@@ -1,6 +1,7 @@
 %bcond_with bundled_libs
 %global solana_suffix mainnet
 %global solana_crossbeam_commit fd279d707025f0e60951e429bf778b4813d1b6bf
+%global solana_tokio_commit 7cf47705faacf7bf0e43e4131a5377b3291fce21
 
 %global solana_user   solana-%{solana_suffix}
 %global solana_group  solana-%{solana_suffix}
@@ -9,7 +10,7 @@
 %global solana_etc    %{_sysconfdir}/solana/%{solana_suffix}/
 
 # See ${SOLANA_SRC}/rust-toolchain.toml or ${SOLANA_SRC}/ci/rust-version.sh
-%global rust_version 1.69.0
+%global rust_version 1.73.0
 
 # Used only on x86_64:
 #
@@ -25,8 +26,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      2
-# git eb1dc08da306a6bda3ada121a9e95f2d5297c863
-Version:    1.16.27
+# git 0aea75aaf57ef143e382d7c555daf5c1774835d3
+Version:    1.17.16
 Release:    100%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -45,6 +46,10 @@ Source1:    solana-%{version}.cargo-vendor.tar.xz
 # `cargo vendor` does not support this properly: https://github.com/rust-lang/cargo/issues/9172.
 Source2:    https://github.com/solana-labs/crossbeam/archive/%{solana_crossbeam_commit}/solana-crossbeam-%{solana_crossbeam_commit}.tar.gz
 
+# Tokio patched by Solana developers.
+# `cargo vendor` does not support this properly: https://github.com/rust-lang/cargo/issues/9172.
+Source3:    https://github.com/solana-labs/solana-tokio/archive/%{solana_tokio_commit}/solana-tokio-%{solana_tokio_commit}.tar.gz
+
 Source102:  config.toml
 Source103:  activate
 Source104:  solana-validator.service
@@ -61,7 +66,7 @@ Source301:  https://static.rust-lang.org/dist/rust-%{rust_version}-aarch64-unkno
 
 Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch2002: 0002-Manually-vendor-the-patched-crossbeam.patch
-Patch2003: 0003-Do-not-patch-ntapi-as-it-breaks-isolated-build.patch
+Patch2003: 0003-Manually-vendor-the-patched-tokio.patch
 Patch3001: rocksdb-dynamic-linking.patch
 Patch3002: rocksdb-new-gcc-support.patch
 
@@ -194,6 +199,7 @@ Solana tests and benchmarks (%{solana_suffix} version).
 %setup -q -D -T -b0 -n solana-%{version}
 %setup -q -D -T -b1 -n solana-%{version}
 %setup -q -D -T -b2 -n solana-%{version}
+%setup -q -D -T -b3 -n solana-%{version}
 
 %ifarch x86_64
 %setup -q -D -T -b300 -n solana-%{version}
@@ -216,6 +222,7 @@ Solana tests and benchmarks (%{solana_suffix} version).
 ln -sv ../crossbeam-%{solana_crossbeam_commit} ./solana-crossbeam
 
 %patch2003 -p1
+ln -sv ../solana-tokio-%{solana_tokio_commit} ./solana-tokio
 
 %if %{without bundled_libs}
 # Remove bundled C/C++ source code.
@@ -242,10 +249,6 @@ rm -r vendor/libz-sys/src/zlib-ng
         '^src/zlib-ng/.*'
 # TODO: Use system lz4 for lz4-sys.
 %endif
-
-rm -r vendor/prost-build-0.9.0/third-party
-%{python} %{SOURCE200} vendor/prost-build-0.9.0 \
-        '^third-party/.*'
 
 mkdir .cargo
 cp %{SOURCE102} .cargo/config.toml
@@ -559,6 +562,9 @@ exit 0
 
 
 %changelog
+* Mon Jan 15 2024 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.17.16-100
+- Update to 1.17.16
+
 * Fri Jan 12 2024 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.16.27-100
 - Update to 1.16.27
 
