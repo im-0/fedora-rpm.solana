@@ -2,6 +2,8 @@
 %global solana_suffix testnet
 %global solana_crossbeam_commit fd279d707025f0e60951e429bf778b4813d1b6bf
 %global solana_tokio_commit 7cf47705faacf7bf0e43e4131a5377b3291fce21
+%global solana_aes_gcm_siv_commit 6105d7a5591aefa646a95d12b5e8d3f55a9214ef
+%global solana_curve25519_dalek_commit b500cdc2a920cd5bff9e2dd974d7b97349d61464
 
 %global solana_user   solana-%{solana_suffix}
 %global solana_group  solana-%{solana_suffix}
@@ -10,7 +12,7 @@
 %global solana_etc    %{_sysconfdir}/solana/%{solana_suffix}/
 
 # See ${SOLANA_SRC}/rust-toolchain.toml or ${SOLANA_SRC}/ci/rust-version.sh
-%global rust_version 1.73.0
+%global rust_version 1.75.0
 
 # Used only on x86_64:
 #
@@ -26,8 +28,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      2
-# git 27a438007568eae350ea83432727f347d1aaecdc
-Version:    1.17.17
+# git 5d824a364c94d664e756bfa4f3131d203e70e338
+Version:    1.18.1
 Release:    1%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -50,6 +52,14 @@ Source2:    https://github.com/solana-labs/crossbeam/archive/%{solana_crossbeam_
 # `cargo vendor` does not support this properly: https://github.com/rust-lang/cargo/issues/9172.
 Source3:    https://github.com/solana-labs/solana-tokio/archive/%{solana_tokio_commit}/solana-tokio-%{solana_tokio_commit}.tar.gz
 
+# aes-gcm-siv patched by Solana developers.
+# `cargo vendor` does not support this properly: https://github.com/rust-lang/cargo/issues/9172.
+Source4:    https://github.com/RustCrypto/AEADs/archive/%{solana_aes_gcm_siv_commit}/AEADs-%{solana_aes_gcm_siv_commit}.tar.gz
+
+# curve25519-dalek patched by Solana developers.
+# `cargo vendor` does not support this properly: https://github.com/rust-lang/cargo/issues/9172.
+Source5:    https://github.com/solana-labs/curve25519-dalek/archive/%{solana_curve25519_dalek_commit}/curve25519-dalek-%{solana_curve25519_dalek_commit}.tar.gz
+
 Source102:  config.toml
 Source103:  activate
 Source104:  solana-validator.service
@@ -67,8 +77,11 @@ Source301:  https://static.rust-lang.org/dist/rust-%{rust_version}-aarch64-unkno
 Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch2002: 0002-Manually-vendor-the-patched-crossbeam.patch
 Patch2003: 0003-Manually-vendor-the-patched-tokio.patch
+Patch2004: 0004-Manually-vendor-the-patched-aes-gcm-siv.patch
+Patch2005: 0005-Manually-vendor-the-patched-curve25519-dalek.patch
 Patch3001: rocksdb-dynamic-linking.patch
 Patch3002: rocksdb-new-gcc-support.patch
+Patch4001: fix-proc-macro-crate.patch
 
 ExclusiveArch:  x86_64 aarch64
 
@@ -200,6 +213,8 @@ Solana tests and benchmarks (%{solana_suffix} version).
 %setup -q -D -T -b1 -n solana-%{version}
 %setup -q -D -T -b2 -n solana-%{version}
 %setup -q -D -T -b3 -n solana-%{version}
+%setup -q -D -T -b4 -n solana-%{version}
+%setup -q -D -T -b5 -n solana-%{version}
 
 %ifarch x86_64
 %setup -q -D -T -b300 -n solana-%{version}
@@ -218,11 +233,19 @@ Solana tests and benchmarks (%{solana_suffix} version).
 %patch3002 -p1
 %endif
 
+%patch4001 -p1
+
 %patch2002 -p1
 ln -sv ../crossbeam-%{solana_crossbeam_commit} ./solana-crossbeam
 
 %patch2003 -p1
 ln -sv ../solana-tokio-%{solana_tokio_commit} ./solana-tokio
+
+%patch2004 -p1
+ln -sv ../AEADs-%{solana_aes_gcm_siv_commit} ./AEADs
+
+%patch2005 -p1
+ln -sv ../curve25519-dalek-%{solana_curve25519_dalek_commit} ./curve25519-dalek
 
 %if %{without bundled_libs}
 # Remove bundled C/C++ source code.
@@ -416,6 +439,7 @@ rm \
 rm ./_release/gen-syscall-list
 rm ./_release/gen-headers
 rm ./_release/proto
+rm ./_release/solana-cargo-registry
 
 mv ./_release/*.so \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/deps/
@@ -562,6 +586,9 @@ exit 0
 
 
 %changelog
+* Wed Jan 31 2024 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.18.1-1
+- Update to 1.18.1
+
 * Sun Jan 21 2024 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.17.17-1
 - Update to 1.17.17
 

@@ -1,0 +1,51 @@
+Only in solana-1.18.1.b/vendor/proc-macro-crate: 8c83fda5d9b440e94d036395b0df666fa6998ccd.patch
+diff -ru solana-1.18.1.a/vendor/proc-macro-crate/.cargo-checksum.json solana-1.18.1.b/vendor/proc-macro-crate/.cargo-checksum.json
+--- solana-1.18.1.a/vendor/proc-macro-crate/.cargo-checksum.json	2024-01-31 18:34:34.000000000 +0100
++++ solana-1.18.1.b/vendor/proc-macro-crate/.cargo-checksum.json	2024-02-01 13:42:57.565286529 +0100
+@@ -1 +1 @@
+-{"files":{"Cargo.toml":"0f88c7d1f929e7d8e227f8a538776cb2f727d3b13d96d370c21f3cb736364d47","LICENSE-APACHE":"8ada45cd9f843acf64e4722ae262c622a2b3b3007c7310ef36ac1061a30f6adb","LICENSE-MIT":"23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3","README.md":"bf71b469e066c36321488ff63927863e13ed35dd2f433a06db930055d4720b65","src/lib.rs":"3456806fdcd8a48d9b455079149f45b9ab5848d1bd159f3fa00313112d59a98e","tests/workspace_deps.rs":"d8722fdbda99135c5291ba197fae72a5697d8a5f29103e6ee61b156e0287bc12"},"package":"7e8366a6159044a37876a2b9817124296703c586a5c92e2c53751fa06d8d43e8"}
+\ No newline at end of file
++{"files":{"Cargo.toml":"0f88c7d1f929e7d8e227f8a538776cb2f727d3b13d96d370c21f3cb736364d47","LICENSE-APACHE":"8ada45cd9f843acf64e4722ae262c622a2b3b3007c7310ef36ac1061a30f6adb","LICENSE-MIT":"23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3","README.md":"bf71b469e066c36321488ff63927863e13ed35dd2f433a06db930055d4720b65","src/lib.rs":"bf7bc6454186ea4a6976f83d219c711721e0fd20dcdc7c26fdda33831e12481f","tests/workspace_deps.rs":"d8722fdbda99135c5291ba197fae72a5697d8a5f29103e6ee61b156e0287bc12"},"package":"7e8366a6159044a37876a2b9817124296703c586a5c92e2c53751fa06d8d43e8"}
+diff -ru solana-1.18.1.a/vendor/proc-macro-crate/src/lib.rs solana-1.18.1.b/vendor/proc-macro-crate/src/lib.rs
+--- solana-1.18.1.a/vendor/proc-macro-crate/src/lib.rs	2024-01-31 18:34:34.000000000 +0100
++++ solana-1.18.1.b/vendor/proc-macro-crate/src/lib.rs	2024-02-01 13:42:02.956392730 +0100
+@@ -186,7 +186,12 @@
+     let manifest_dir = env::var("CARGO_MANIFEST_DIR").map_err(|_| Error::CargoManifestDirNotSet)?;
+     let manifest_path = Path::new(&manifest_dir).join("Cargo.toml");
+ 
+-    let workspace_manifest_path = workspace_manifest_path(&manifest_path)?;
++    // If `workspace_manifest_path` returns `None`, we are probably in a vendored deps
++    // folder and cargo complaining that we have some package inside a workspace, that isn't
++    // part of the workspace. In this case we just use the `manifest_path` as the
++    // `workspace_manifest_path`.
++    let workspace_manifest_path =
++        workspace_manifest_path(&manifest_path)?.unwrap_or_else(|| manifest_path.clone());
+ 
+     let manifest_ts = cargo_toml_timestamp(&manifest_path)?;
+     let workspace_manifest_ts = cargo_toml_timestamp(&workspace_manifest_path)?;
+@@ -232,7 +237,7 @@
+         .clone())
+ }
+ 
+-fn workspace_manifest_path(cargo_toml_manifest: &Path) -> Result<PathBuf, Error> {
++fn workspace_manifest_path(cargo_toml_manifest: &Path) -> Result<Option<PathBuf>, Error> {
+     let stdout = Command::new(env::var("CARGO").map_err(|_| Error::CargoEnvVariableNotSet)?)
+         .arg("locate-project")
+         .args(&["--workspace", "--message-format=plain"])
+@@ -243,7 +248,15 @@
+ 
+     String::from_utf8(stdout)
+         .map_err(|_| Error::FailedGettingWorkspaceManifestPath)
+-        .map(|s| s.trim().into())
++        .map(|s| {
++            let path = s.trim();
++
++            if path.is_empty() {
++                None
++            } else {
++                Some(path.into())
++            }
++        })
+ }
+ 
+ fn cargo_toml_timestamp(manifest_path: &Path) -> Result<SystemTime, Error> {

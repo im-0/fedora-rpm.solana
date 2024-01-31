@@ -1,7 +1,7 @@
-From d7e0ad9a246913445d65c65f39f635d37263c96e Mon Sep 17 00:00:00 2001
+From b9fc48e55d651c732377a35118c722854bba57a8 Mon Sep 17 00:00:00 2001
 From: Ivan Mironov <mironov.ivan@gmail.com>
 Date: Thu, 21 Dec 2023 01:17:37 +0100
-Subject: [PATCH 3/3] Manually vendor the patched tokio
+Subject: [PATCH 3/5] Manually vendor the patched tokio
 
 Cargo does not support this: https://github.com/rust-lang/cargo/issues/9172
 ---
@@ -9,10 +9,10 @@ Cargo does not support this: https://github.com/rust-lang/cargo/issues/9172
  1 file changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/Cargo.toml b/Cargo.toml
-index 6d749182c04b..3b4b97feca6a 100644
+index 678062baafb3..9739f6902d52 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
-@@ -463,5 +463,4 @@ solana-zk-token-sdk = { path = "zk-token-sdk" }
+@@ -559,5 +559,4 @@ rev = "b500cdc2a920cd5bff9e2dd974d7b97349d61464"
  # https://github.com/tokio-rs/tokio/compare/tokio-1.29.1...solana-labs:solana-tokio:tokio-1.29.1-revert-4eed411
  #
  [patch.crates-io.tokio]
