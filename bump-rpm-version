@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+import configparser
 import datetime
 import glob
 import json
@@ -254,6 +255,7 @@ def _query_spec() -> _Spec:
 
 _RE_SPEC_PATCH_NAME = re.compile(r'^\s*Patch([0-9]+)\s*:\s*(\S+)\s*$')
 _RE_SPEC_PATCH_CMD = re.compile(r'^\s*%patch([0-9]+)(\s+.*)?$')
+_RE_SPEC_GIT_PATCH_CMD = re.compile(r'^\s*git\s+am\s+%{PATCH([0-9]+)}\s*$')
 
 
 def _find_spec_patches(spec: _Spec) -> _Patches:
@@ -265,6 +267,7 @@ def _find_spec_patches(spec: _Spec) -> _Patches:
             line = line.strip()
             patch_name_match = _RE_SPEC_PATCH_NAME.match(line)
             patch_cmd_match = _RE_SPEC_PATCH_CMD.match(line)
+            git_patch_cmd_match = _RE_SPEC_GIT_PATCH_CMD.match(line)
 
             if patch_name_match is not None:
                 patch_file_num = patch_name_match[1]
@@ -276,8 +279,13 @@ def _find_spec_patches(spec: _Spec) -> _Patches:
 
                 patch_file_names.add(patch_file_name)
                 patches[patch_file_num] = patch_file_name
-            elif patch_cmd_match is not None:
-                patch_file_num = patch_cmd_match[1]
+            elif (patch_cmd_match is not None) or (git_patch_cmd_match is not None):
+                if patch_cmd_match is not None:
+                    re_match = patch_cmd_match
+                else:
+                    re_match = git_patch_cmd_match
+
+                patch_file_num = re_match[1]
                 patch_file_name = patches[patch_file_num]
                 patches[patch_file_num] = None
                 assert patch_file_name is not None, \
@@ -602,6 +610,7 @@ def _vendor(conf: _Config, patches: _Patches, skip_patches: set[str]) -> None:
             cmd,
             stdin=subprocess.DEVNULL)
         tmp_src_root = os.path.join(tmp_src, f'solana-{conf.new_version}')
+        tmp_src_root_gitm = os.path.join(tmp_src_root, '.gitmodules')
         tmp_src_root_vendor = os.path.join(tmp_src_root, 'vendor')
 
         # Apply patches.
@@ -626,12 +635,41 @@ def _vendor(conf: _Config, patches: _Patches, skip_patches: set[str]) -> None:
                     stdin=subprocess.DEVNULL,
                     cwd=tmp_src_root)
 
-            cmd = ('patch', '-p1')
+            if b'GIT binary patch' in patch_bytes:
+                if not os.path.exists(os.path.join(tmp_src_root, '.git')):
+                    cmd = ('git', 'init', '-q')
+                    subprocess.run(
+                        cmd,
+                        cwd=tmp_src_root,
+                        check=True)
+
+                cmd = ('git', 'add', '.')
+                subprocess.run(
+                    cmd,
+                    cwd=tmp_src_root,
+                    check=True)
+
+                cmd = ('git', 'commit', '-m', 'import')
+                subprocess.run(
+                    cmd,
+                    cwd=tmp_src_root,
+                    check=True)
+
+                cmd = ('git', 'am')
+            else:
+                cmd = ('patch', '-p1')
             subprocess.run(
                 cmd,
                 input=patch_bytes,
                 cwd=tmp_src_root,
                 check=True)
+
+            if os.path.exists(tmp_src_root_gitm):
+                cmd = ('git', 'submodule', 'update', '--init', '--recursive', '--depth', '1')
+                subprocess.run(
+                    cmd,
+                    cwd=tmp_src_root,
+                    check=True)
 
         assert not skip_patches, f'Some patches to skip are missing: {skip_patches}'
 
@@ -647,27 +685,29 @@ def _vendor(conf: _Config, patches: _Patches, skip_patches: set[str]) -> None:
             stdin=subprocess.DEVNULL,
             cwd=tmp_src_root)
 
-        # Remove extra files.
-        print('Removing extra files...')
-        for file_name in os.listdir(tmp_src_root):
-            if file_name != 'vendor':
-                path = os.path.join(tmp_src_root, file_name)
-                if os.path.isdir(path):
-                    shutil.rmtree(path)
-                else:
-                    os.unlink(path)
+        # Git submodules.
+        git_submodules = []
+        if os.path.exists(tmp_src_root_gitm):
+            gitm_conf = configparser.ConfigParser()
+            gitm_conf.read(tmp_src_root_gitm)
+
+            for section in gitm_conf.values():
+                submodule_path = section.get('path')
+                if submodule_path is not None:
+                    git_submodules.append(submodule_path)
 
         # Create tarball.
         print(f'Compressing "{tarball_name}"...')
-        cmd = (
+        cmd = [
             'tar',
             '--directory', tmp_src,
             '--create',
             '--xz',
             '--file', tarball_name,
             '--verbose',
-            f'solana-{conf.new_version}',
-        )
+            f'solana-{conf.new_version}/vendor',
+        ]
+        cmd.extend(os.path.join(f'solana-{conf.new_version}', p) for p in git_submodules)
         subprocess.check_call(
             cmd,
             stdin=subprocess.DEVNULL)

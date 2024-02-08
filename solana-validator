@@ -26,6 +26,13 @@ SERVICE_OPTS="
     --entrypoint entrypoint3.testnet.solana.com:8001
     --expected-genesis-hash 4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY
     --wal-recovery-mode skip_any_corrupted_record
+    --tip-payment-program-pubkey DCN82qDxJAQuSqHhv2BJuAgi41SPeKZB5ioBCTMNDrCC
+    --tip-distribution-program-pubkey F2Zu7QZiTYUhPd7u9ukRVwxh7B71oA3NMJcHuCHc29P2
+    --merkle-root-upload-authority GZctHpWXmsZC1YHACTGGcHhYxjdRqQvTpYkb9LMvxDib
+    --commission-bps 800
+    --relayer-url http://nyc.testnet.relayer.jito.wtf:8100
+    --block-engine-url https://ny.testnet.block-engine.jito.wtf
+    --shred-receiver-address 141.98.216.97:1002
     --limit-ledger-size
     --log /var/log/solana/__SUFFIX__/validator.log
 "
