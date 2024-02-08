@@ -28,7 +28,7 @@ Name:       solana-%{solana_suffix}
 Epoch:      2
 # git 09e0300b0624098ad35dfa284a37abc20c07b6a9
 Version:    1.17.20
-Release:    100%{?dist}
+Release:    100jito%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
 License:    Apache-2.0
@@ -64,6 +64,8 @@ Source200:  filter-cargo-checksum
 Source300:  https://static.rust-lang.org/dist/rust-%{rust_version}-x86_64-unknown-linux-gnu.tar.gz
 Source301:  https://static.rust-lang.org/dist/rust-%{rust_version}-aarch64-unknown-linux-gnu.tar.gz
 
+Patch1001: jito.patch
+
 Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch2002: 0002-Manually-vendor-the-patched-crossbeam.patch
 Patch2003: 0003-Manually-vendor-the-patched-tokio.patch
@@ -76,6 +78,7 @@ ExclusiveArch:  x86_64 aarch64
 BuildRequires:  %{python}
 
 BuildRequires:  findutils
+BuildRequires:  git
 BuildRequires:  rust-packaging
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  gcc
@@ -197,7 +200,7 @@ Solana tests and benchmarks (%{solana_suffix} version).
 
 %prep
 %setup -q -D -T -b0 -n solana-%{version}
-%setup -q -D -T -b1 -n solana-%{version}
+# We do not extract vendored sources here, check below.
 %setup -q -D -T -b2 -n solana-%{version}
 %setup -q -D -T -b3 -n solana-%{version}
 
@@ -211,6 +214,19 @@ Solana tests and benchmarks (%{solana_suffix} version).
         --prefix=../rust \
         --disable-ldconfig
 
+# Apply Jito patch.
+git config --global user.email "rpmbuild@example.org"
+git config --global user.name "rpmbuild"
+git init
+git add .
+git commit -m "import"
+git am %{PATCH1001}
+
+# Extract vendored sources after applying Jito patch because it contains
+# git modules.
+%setup -q -D -T -b1 -n solana-%{version}
+
+# Apply all other patches.
 %if %{without bundled_libs}
 %patch2001 -p1
 %patch3001 -p1
@@ -466,6 +482,10 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 /opt/solana/%{solana_suffix}/bin/solana-store-tool
 /opt/solana/%{solana_suffix}/bin/solana-upload-perf
 /opt/solana/%{solana_suffix}/bin/solana-net-shaper
+/opt/solana/%{solana_suffix}/bin/solana-claim-mev-tips
+/opt/solana/%{solana_suffix}/bin/solana-merkle-root-generator
+/opt/solana/%{solana_suffix}/bin/solana-merkle-root-uploader
+/opt/solana/%{solana_suffix}/bin/solana-stake-meta-generator
 /opt/solana/%{solana_suffix}/libexec/solana-ledger-tool
 
 
@@ -562,6 +582,9 @@ exit 0
 
 
 %changelog
+* Thu Feb 08 2024 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.17.20-100jito
+- Add patch from Jito Foundation
+
 * Tue Feb 06 2024 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.17.20-100
 - Update to 1.17.20
 
