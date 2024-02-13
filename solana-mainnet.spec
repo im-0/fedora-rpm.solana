@@ -26,8 +26,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      2
-# git 09e0300b0624098ad35dfa284a37abc20c07b6a9
-Version:    1.17.20
+# git dbf06e258ae418097049e845035d7d5502fe1327
+Version:    1.17.22
 Release:    100jito%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -223,7 +223,7 @@ git commit -m "import"
 git am %{PATCH1001}
 
 # Extract vendored sources after applying Jito patch because it contains
-# git modules.
+# git dbf06e258ae418097049e845035d7d5502fe1327
 %setup -q -D -T -b1 -n solana-%{version}
 
 # Apply all other patches.
@@ -582,6 +582,9 @@ exit 0
 
 
 %changelog
+* Tue Feb 13 2024 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.17.22-100jito
+- Update to 1.17.22
+
 * Thu Feb 08 2024 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.17.20-100jito
 - Add patch from Jito Foundation
 
