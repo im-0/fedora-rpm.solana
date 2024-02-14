@@ -1,4 +1,8 @@
 #!/bin/sh
 
-export LD_PRELOAD="/usr/lib64/libjemalloc.so.2"
+if [ -z "${LD_PRELOAD}" ]; then
+	export LD_PRELOAD="/usr/lib64/libjemalloc.so.2"
+else
+	export LD_PRELOAD="${LD_PRELOAD}:/usr/lib64/libjemalloc.so.2"
+fi
 exec /opt/solana/__SUFFIX__/libexec/$( basename "${0}" ) "${@}"
