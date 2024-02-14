@@ -28,8 +28,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      2
-# git 5d824a364c94d664e756bfa4f3131d203e70e338
-Version:    1.18.1
+# git 13656e3029a990487e1a4be61ce656f6c64cd3ca
+Version:    1.18.2
 Release:    1jito%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -606,6 +606,9 @@ exit 0
 
 
 %changelog
+* Wed Feb 14 2024 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.18.2-1jito
+- Update to 1.18.2
+
 * Thu Feb 08 2024 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.18.1-1jito
 - Add patch from Jito Foundation
 
