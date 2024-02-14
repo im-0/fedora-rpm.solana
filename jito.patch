@@ -3482,7 +3482,7 @@ index 000000000000..96c4c240b1ee
 +                &mut metrics.execute_timings,
 +                Some(account_overrides),
 +                *log_messages_bytes_limit,
-+                false,
++                true,
 +            ));
 +        debug!(
 +            "bundle id: {} loaded_transactions: {:?}",
