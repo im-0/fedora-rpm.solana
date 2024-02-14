@@ -223,7 +223,7 @@ git commit -m "import"
 git am %{PATCH1001}
 
 # Extract vendored sources after applying Jito patch because it contains
-# git dbf06e258ae418097049e845035d7d5502fe1327
+# git modules.
 %setup -q -D -T -b1 -n solana-%{version}
 
 # Apply all other patches.

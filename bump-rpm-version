@@ -494,7 +494,7 @@ def _patch_spec(conf: _Config, spec: _Spec) -> None:
     commit = _get_git_commit(conf)
     print(f'Commit hash: {commit}')
     new_spec_str = re.sub(
-        rf'(?m)^\s*#\s*git\s+\S+\s*$',
+        rf'(?m)^\s*#\s*git\s+[0-9a-f]+\s*$',
         f'# git {commit}',
         spec_str)
     assert new_spec_str != spec_str, \
