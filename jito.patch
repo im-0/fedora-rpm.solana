@@ -1393,7 +1393,7 @@ index 3f84901964..aae83847f8 100644
 +
 +[[package]]
 +name = "jito-protos"
-+version = "1.18.3"
++version = "1.18.4"
 +dependencies = [
 + "bytes",
 + "prost",
@@ -1778,7 +1778,7 @@ index 3f84901964..aae83847f8 100644
  
 +[[package]]
 +name = "solana-bundle"
-+version = "1.18.3"
++version = "1.18.4"
 +dependencies = [
 + "anchor-lang",
 + "assert_matches",
@@ -1799,8 +1799,8 @@ index 3f84901964..aae83847f8 100644
 +
  [[package]]
  name = "solana-cargo-build-bpf"
- version = "1.18.3"
-@@ -5687,7 +6023,7 @@ version = "1.18.3"
+ version = "1.18.4"
+@@ -5687,7 +6023,7 @@ version = "1.18.4"
  dependencies = [
   "assert_matches",
   "bincode",
@@ -1811,7 +1811,7 @@ index 3f84901964..aae83847f8 100644
   "const_format",
 @@ -5887,10 +6223,11 @@ dependencies = [
  name = "solana-core"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
 + "anchor-lang",
   "assert_matches",
@@ -1871,7 +1871,7 @@ index 3f84901964..aae83847f8 100644
   "trees",
  ]
  
-@@ -6097,7 +6444,7 @@ version = "1.18.3"
+@@ -6097,7 +6444,7 @@ version = "1.18.4"
  dependencies = [
   "bitflags 2.4.2",
   "block-buffer 0.10.4",
@@ -1882,7 +1882,7 @@ index 3f84901964..aae83847f8 100644
   "generic-array 0.14.7",
 @@ -6120,8 +6467,8 @@ dependencies = [
  name = "solana-frozen-abi-macro"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
 - "proc-macro2",
 - "quote",
@@ -1893,7 +1893,7 @@ index 3f84901964..aae83847f8 100644
  ]
 @@ -6176,7 +6523,7 @@ dependencies = [
  name = "solana-geyser-plugin-manager"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
 - "bs58",
 + "bs58 0.4.0",
@@ -1902,7 +1902,7 @@ index 3f84901964..aae83847f8 100644
   "jsonrpc-core",
 @@ -6287,7 +6634,7 @@ dependencies = [
  name = "solana-keygen"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
 - "bs58",
 + "bs58 0.4.0",
@@ -1919,7 +1919,7 @@ index 3f84901964..aae83847f8 100644
   "chrono",
   "chrono-humanize",
 @@ -6374,7 +6721,7 @@ name = "solana-ledger-tool"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
   "assert_cmd",
 - "bs58",
@@ -1936,7 +1936,7 @@ index 3f84901964..aae83847f8 100644
   "bv",
   "bytemuck",
   "cc",
-@@ -6858,7 +7205,7 @@ version = "1.18.3"
+@@ -6858,7 +7205,7 @@ version = "1.18.4"
  dependencies = [
   "base64 0.21.7",
   "bincode",
@@ -1971,7 +1971,7 @@ index 3f84901964..aae83847f8 100644
   "futures 0.3.30",
   "indicatif",
 @@ -6945,7 +7294,7 @@ name = "solana-rpc-client-api"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
   "base64 0.21.7",
 - "bs58",
@@ -1989,7 +1989,7 @@ index 3f84901964..aae83847f8 100644
   "solana-transaction-status",
   "solana-version",
 @@ -6982,13 +7333,14 @@ name = "solana-rpc-test"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
   "bincode",
 - "bs58",
@@ -2010,7 +2010,7 @@ index 3f84901964..aae83847f8 100644
  
 +[[package]]
 +name = "solana-runtime-plugin"
-+version = "1.18.3"
++version = "1.18.4"
 +dependencies = [
 + "crossbeam-channel",
 + "json5",
@@ -2028,10 +2028,10 @@ index 3f84901964..aae83847f8 100644
 +
  [[package]]
  name = "solana-runtime-transaction"
- version = "1.18.3"
+ version = "1.18.4"
 @@ -7105,13 +7475,14 @@ dependencies = [
  name = "solana-sdk"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
 + "anchor-lang",
   "anyhow",
@@ -2047,7 +2047,7 @@ index 3f84901964..aae83847f8 100644
   "chrono",
 @@ -7164,9 +7535,9 @@ dependencies = [
  name = "solana-sdk-macro"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
 - "bs58",
 - "proc-macro2",
@@ -2073,7 +2073,7 @@ index 3f84901964..aae83847f8 100644
  ]
  
 @@ -7262,7 +7635,7 @@ name = "solana-storage-proto"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
   "bincode",
 - "bs58",
@@ -2087,7 +2087,7 @@ index 3f84901964..aae83847f8 100644
  
 +[[package]]
 +name = "solana-tip-distributor"
-+version = "1.18.3"
++version = "1.18.4"
 +dependencies = [
 + "anchor-lang",
 + "clap 4.3.21",
@@ -2125,7 +2125,7 @@ index 3f84901964..aae83847f8 100644
 +
  [[package]]
  name = "solana-tokens"
- version = "1.18.3"
+ version = "1.18.4"
 @@ -7465,7 +7876,7 @@ dependencies = [
   "base64 0.21.7",
   "bincode",
@@ -2153,7 +2153,7 @@ index 3f84901964..aae83847f8 100644
  [[package]]
 @@ -7721,7 +8134,7 @@ dependencies = [
  name = "solana-zk-keygen"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
 - "bs58",
 + "bs58 0.4.0",
@@ -2551,28 +2551,28 @@ index 657068a420..fe347e0ec1 100644
      "unprefixed_malloc_on_supported_platforms",
  ] }
  js-sys = "0.3.67"
-+jito-protos = { path = "jito-protos", version = "=1.18.3" }
++jito-protos = { path = "jito-protos", version = "=1.18.4" }
 +jito-tip-distribution = { path = "jito-programs/mev-programs/programs/tip-distribution", features = ["no-entrypoint"] }
 +jito-tip-payment = { path = "jito-programs/mev-programs/programs/tip-payment", features = ["no-entrypoint"] }
  json5 = "0.4.1"
  jsonrpc-core = "18.0.0"
  jsonrpc-core-client = "18.0.0"
-@@ -317,6 +329,7 @@ solana-bench-tps = { path = "bench-tps", version = "=1.18.3" }
- solana-bloom = { path = "bloom", version = "=1.18.3" }
- solana-bpf-loader-program = { path = "programs/bpf_loader", version = "=1.18.3" }
- solana-bucket-map = { path = "bucket_map", version = "=1.18.3" }
-+solana-bundle = { path = "bundle", version = "=1.18.3" }
- solana-cargo-registry = { path = "cargo-registry", version = "=1.18.3" }
- solana-clap-utils = { path = "clap-utils", version = "=1.18.3" }
- solana-clap-v3-utils = { path = "clap-v3-utils", version = "=1.18.3" }
-@@ -365,6 +378,7 @@ solana-rpc-client = { path = "rpc-client", version = "=1.18.3", default-features
- solana-rpc-client-api = { path = "rpc-client-api", version = "=1.18.3" }
- solana-rpc-client-nonce-utils = { path = "rpc-client-nonce-utils", version = "=1.18.3" }
- solana-runtime = { path = "runtime", version = "=1.18.3" }
-+solana-runtime-plugin = { path = "runtime-plugin", version = "=1.18.3" }
- solana-runtime-transaction = { path = "runtime-transaction", version = "=1.18.3" }
- solana-sdk = { path = "sdk", version = "=1.18.3" }
- solana-sdk-macro = { path = "sdk/macro", version = "=1.18.3" }
+@@ -317,6 +329,7 @@ solana-bench-tps = { path = "bench-tps", version = "=1.18.4" }
+ solana-bloom = { path = "bloom", version = "=1.18.4" }
+ solana-bpf-loader-program = { path = "programs/bpf_loader", version = "=1.18.4" }
+ solana-bucket-map = { path = "bucket_map", version = "=1.18.4" }
++solana-bundle = { path = "bundle", version = "=1.18.4" }
+ solana-cargo-registry = { path = "cargo-registry", version = "=1.18.4" }
+ solana-clap-utils = { path = "clap-utils", version = "=1.18.4" }
+ solana-clap-v3-utils = { path = "clap-v3-utils", version = "=1.18.4" }
+@@ -365,6 +378,7 @@ solana-rpc-client = { path = "rpc-client", version = "=1.18.4", default-features
+ solana-rpc-client-api = { path = "rpc-client-api", version = "=1.18.4" }
+ solana-rpc-client-nonce-utils = { path = "rpc-client-nonce-utils", version = "=1.18.4" }
+ solana-runtime = { path = "runtime", version = "=1.18.4" }
++solana-runtime-plugin = { path = "runtime-plugin", version = "=1.18.4" }
+ solana-runtime-transaction = { path = "runtime-transaction", version = "=1.18.4" }
+ solana-sdk = { path = "sdk", version = "=1.18.4" }
+ solana-sdk-macro = { path = "sdk/macro", version = "=1.18.4" }
 diff --git a/README.md b/README.md
 index c6183f6ab6..f93147af54 100644
 --- a/README.md
@@ -3036,7 +3036,7 @@ new file mode 100644
 index 0000000000..2c42175960
 --- /dev/null
 +++ b/bundle/src/bundle_execution.rs
-@@ -0,0 +1,1187 @@
+@@ -0,0 +1,1188 @@
 +use {
 +    itertools::izip,
 +    log::*,
@@ -3386,6 +3386,7 @@ index 0000000000..2c42175960
 +                &mut metrics.execute_timings,
 +                Some(account_overrides),
 +                *log_messages_bytes_limit,
++                true,
 +            ));
 +        debug!(
 +            "bundle id: {} loaded_transactions: {:?}",
@@ -21113,7 +21114,7 @@ index 7c315a39c3..3d3e39ffe2 100644
 +
 +[[package]]
 +name = "jito-protos"
-+version = "1.18.3"
++version = "1.18.4"
 +dependencies = [
 + "bytes",
 + "prost",
@@ -21476,7 +21477,7 @@ index 7c315a39c3..3d3e39ffe2 100644
  
 +[[package]]
 +name = "solana-bundle"
-+version = "1.18.3"
++version = "1.18.4"
 +dependencies = [
 + "anchor-lang",
 + "itertools",
@@ -21496,10 +21497,10 @@ index 7c315a39c3..3d3e39ffe2 100644
 +
  [[package]]
  name = "solana-clap-utils"
- version = "1.18.3"
+ version = "1.18.4"
 @@ -4964,9 +5234,10 @@ dependencies = [
  name = "solana-core"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
 + "anchor-lang",
   "base64 0.21.7",
@@ -21553,7 +21554,7 @@ index 7c315a39c3..3d3e39ffe2 100644
  ]
  
 @@ -5116,7 +5396,7 @@ name = "solana-frozen-abi"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
   "block-buffer 0.10.4",
 - "bs58",
@@ -21563,7 +21564,7 @@ index 7c315a39c3..3d3e39ffe2 100644
   "generic-array 0.14.7",
 @@ -5138,8 +5418,8 @@ dependencies = [
  name = "solana-frozen-abi-macro"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
 - "proc-macro2",
 - "quote",
@@ -21574,7 +21575,7 @@ index 7c315a39c3..3d3e39ffe2 100644
  ]
 @@ -5169,7 +5449,7 @@ dependencies = [
  name = "solana-geyser-plugin-manager"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
 - "bs58",
 + "bs58 0.4.0",
@@ -21590,7 +21591,7 @@ index 7c315a39c3..3d3e39ffe2 100644
   "bv",
   "bytemuck",
   "cc",
-@@ -5607,7 +5887,7 @@ version = "1.18.3"
+@@ -5607,7 +5887,7 @@ version = "1.18.4"
  dependencies = [
   "base64 0.21.7",
   "bincode",
@@ -21625,7 +21626,7 @@ index 7c315a39c3..3d3e39ffe2 100644
   "log",
   "reqwest",
 @@ -5685,7 +5967,7 @@ name = "solana-rpc-client-api"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
   "base64 0.21.7",
 - "bs58",
@@ -21648,7 +21649,7 @@ index 7c315a39c3..3d3e39ffe2 100644
  
 +[[package]]
 +name = "solana-runtime-plugin"
-+version = "1.18.3"
++version = "1.18.4"
 +dependencies = [
 + "crossbeam-channel",
 + "json5",
@@ -21666,10 +21667,10 @@ index 7c315a39c3..3d3e39ffe2 100644
 +
  [[package]]
  name = "solana-sbf-programs"
- version = "1.18.3"
+ version = "1.18.4"
 @@ -6212,12 +6514,13 @@ dependencies = [
  name = "solana-sdk"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
 + "anchor-lang",
   "assert_matches",
@@ -21684,7 +21685,7 @@ index 7c315a39c3..3d3e39ffe2 100644
   "chrono",
 @@ -6265,9 +6568,9 @@ dependencies = [
  name = "solana-sdk-macro"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
 - "bs58",
 - "proc-macro2",
@@ -21704,7 +21705,7 @@ index 7c315a39c3..3d3e39ffe2 100644
   "solana-metrics",
   "solana-runtime",
 @@ -6342,7 +6646,7 @@ name = "solana-storage-proto"
- version = "1.18.3"
+ version = "1.18.4"
  dependencies = [
   "bincode",
 - "bs58",
