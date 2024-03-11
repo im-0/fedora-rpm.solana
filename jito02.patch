@@ -1,0 +1,150 @@
+From c78fdb525801ba39f5e6cfb3779a6d37f75a0f57 Mon Sep 17 00:00:00 2001
+From: buffalu <85544055+buffalu@users.noreply.github.com>
+Date: Thu, 22 Feb 2024 10:49:42 -0600
+Subject: [PATCH 2/3] Update release URLs for jito-solana (#589)
+
+---
+ RELEASE.md                                  | 12 +++----
+ ci/test-coverage.sh                         |  2 +-
+ core/src/banking_stage.rs                   | 36 ++++++++++-----------
+ docs/src/implemented-proposals/installer.md |  2 +-
+ 4 files changed, 26 insertions(+), 26 deletions(-)
+
+diff --git a/RELEASE.md b/RELEASE.md
+index c5aa5d540b11..5c32ff423e2c 100644
+--- a/RELEASE.md
++++ b/RELEASE.md
+@@ -107,7 +107,7 @@ Alternatively use the Github UI.
+ 
+ ### Create the Release Tag on GitHub
+ 
+-1. Go to [GitHub Releases](https://github.com/solana-labs/solana/releases) for tagging a release.
++1. Go to [GitHub Releases](https://github.com/jito-foundation/jito-solana/releases) for tagging a release.
+ 1. Click "Draft new release".  The release tag must exactly match the `version`
+    field in `/Cargo.toml` prefixed by `v`.
+    1.  If the Cargo.toml version field is **0.12.3**, then the release tag must be **v0.12.3**
+@@ -115,7 +115,7 @@ Alternatively use the Github UI.
+    1.  If you want to release v0.12.0, the target branch must be v0.12
+ 1. Fill the release notes.
+    1.  If this is the first release on the branch (e.g. v0.13.**0**), paste in [this
+-   template](https://raw.githubusercontent.com/solana-labs/solana/master/.github/RELEASE_TEMPLATE.md).  Engineering Lead can provide summary contents for release notes if needed.
++   template](https://raw.githubusercontent.com/jito-foundation/jito-solana/master/.github/RELEASE_TEMPLATE.md).  Engineering Lead can provide summary contents for release notes if needed.
+    1. If this is a patch release, review all the commits since the previous release on this branch and add details as needed.
+ 1. Click "Save Draft", then confirm the release notes look good and the tag name and branch are correct.
+ 1. Ensure all desired commits (usually backports) are landed on the branch by now.
+@@ -126,16 +126,16 @@ Alternatively use the Github UI.
+ 
+ ### Update release branch with the next patch version
+ 
+-[This action](https://github.com/solana-labs/solana/blob/master/.github/workflows/increment-cargo-version-on-release.yml) ensures that publishing a release will trigger the creation of a PR to update the Cargo.toml files on **release branch** to the next semantic version (e.g. 0.9.0 -> 0.9.1). Ensure that the created PR makes it through CI and gets submitted.
++[This action](https://github.com/jito-foundation/jito-solana/blob/master/.github/workflows/increment-cargo-version-on-release.yml) ensures that publishing a release will trigger the creation of a PR to update the Cargo.toml files on **release branch** to the next semantic version (e.g. 0.9.0 -> 0.9.1). Ensure that the created PR makes it through CI and gets submitted.
+ 
+ ### Prepare for the next release
+-1.  Go to [GitHub Releases](https://github.com/solana-labs/solana/releases) and create a new draft release for `X.Y.Z+1` with empty release notes.  This allows people to incrementally add new release notes until it's time for the next release
++1.  Go to [GitHub Releases](https://github.com/jito-foundation/jito-solana/releases) and create a new draft release for `X.Y.Z+1` with empty release notes.  This allows people to incrementally add new release notes until it's time for the next release
+     1. Also, point the branch field to the same branch and mark the release as **"This is a pre-release"**.
+-1.  Go to the [Github Milestones](https://github.com/solana-labs/solana/milestones).  Create a new milestone for the `X.Y.Z+1`, move over
++1.  Go to the [Github Milestones](https://github.com/jito-foundation/jito-solana/milestones).  Create a new milestone for the `X.Y.Z+1`, move over
+ unresolved issues still in the `X.Y.Z` milestone, then close the `X.Y.Z` milestone.
+ 
+ ### Verify release automation success
+-Go to [Solana Releases](https://github.com/solana-labs/solana/releases) and click on the latest release that you just published.
++Go to [Solana Releases](https://github.com/jito-foundation/jito-solana/releases) and click on the latest release that you just published.
+ Verify that all of the build artifacts are present, then uncheck **"This is a pre-release"** for the release.
+ 
+ Build artifacts can take up to 60 minutes after creating the tag before
+diff --git a/ci/test-coverage.sh b/ci/test-coverage.sh
+index 44231cd338a1..60e57c6331d0 100755
+--- a/ci/test-coverage.sh
++++ b/ci/test-coverage.sh
+@@ -32,5 +32,5 @@ else
+   codecov -t "${CODECOV_TOKEN}"
+ 
+   annotate --style success --context codecov.io \
+-    "CodeCov report: https://codecov.io/github/solana-labs/solana/commit/${CI_COMMIT:0:9}"
++    "CodeCov report: https://codecov.io/github/jito-foundation/jito-solana/commit/${CI_COMMIT:0:9}"
+ fi
+diff --git a/core/src/banking_stage.rs b/core/src/banking_stage.rs
+index 48c6bcd0432f..622c5cfdee45 100644
+--- a/core/src/banking_stage.rs
++++ b/core/src/banking_stage.rs
+@@ -122,19 +122,19 @@ impl BankingStageStats {
+             .load(Ordering::Relaxed) as u64
+             + self.dropped_packets_count.load(Ordering::Relaxed) as u64
+             + self
+-            .dropped_duplicated_packets_count
+-            .load(Ordering::Relaxed) as u64
++                .dropped_duplicated_packets_count
++                .load(Ordering::Relaxed) as u64
+             + self.dropped_forward_packets_count.load(Ordering::Relaxed) as u64
+             + self.newly_buffered_packets_count.load(Ordering::Relaxed) as u64
+             + self.current_buffered_packets_count.load(Ordering::Relaxed) as u64
+             + self.rebuffered_packets_count.load(Ordering::Relaxed) as u64
+             + self.consumed_buffered_packets_count.load(Ordering::Relaxed) as u64
+             + self
+-            .consume_buffered_packets_elapsed
+-            .load(Ordering::Relaxed)
++                .consume_buffered_packets_elapsed
++                .load(Ordering::Relaxed)
+             + self
+-            .receive_and_buffer_packets_elapsed
+-            .load(Ordering::Relaxed)
++                .receive_and_buffer_packets_elapsed
++                .load(Ordering::Relaxed)
+             + self.filter_pending_packets_elapsed.load(Ordering::Relaxed)
+             + self.packet_conversion_elapsed.load(Ordering::Relaxed)
+             + self.transaction_processing_elapsed.load(Ordering::Relaxed)
+@@ -1250,7 +1250,7 @@ mod tests {
+                     20,
+                     start_hash,
+                 ))
+-                    .unwrap();
++                .unwrap();
+             }
+ 
+             // Send a bunch of votes and transfers
+@@ -1309,17 +1309,17 @@ mod tests {
+                 (tpu_packet_batches, tpu_vote_sender),
+                 (gossip_packet_batches, gossip_vote_sender),
+             ]
+-                .into_iter()
+-                .map(|(packet_batches, sender)| {
+-                    Builder::new()
+-                        .spawn(move || {
+-                            sender
+-                                .send(BankingPacketBatch::new((packet_batches, None)))
+-                                .unwrap()
+-                        })
+-                        .unwrap()
+-                })
+-                .for_each(|handle| handle.join().unwrap());
++            .into_iter()
++            .map(|(packet_batches, sender)| {
++                Builder::new()
++                    .spawn(move || {
++                        sender
++                            .send(BankingPacketBatch::new((packet_batches, None)))
++                            .unwrap()
++                    })
++                    .unwrap()
++            })
++            .for_each(|handle| handle.join().unwrap());
+ 
+             banking_stage.join().unwrap();
+             exit.store(true, Ordering::Relaxed);
+diff --git a/docs/src/implemented-proposals/installer.md b/docs/src/implemented-proposals/installer.md
+index a3ad797171c5..48f490a75c91 100644
+--- a/docs/src/implemented-proposals/installer.md
++++ b/docs/src/implemented-proposals/installer.md
+@@ -13,7 +13,7 @@ This document proposes an easy to use software install and updater that can be u
+ The easiest install method for supported platforms:
+ 
+ ```bash
+-$ curl -sSf https://raw.githubusercontent.com/solana-labs/solana/v1.0.0/install/solana-install-init.sh | sh
++$ curl -sSf https://raw.githubusercontent.com/jito-foundation/jito-solana/v1.0.0/install/solana-install-init.sh | sh
+ ```
+ 
+ This script will check github for the latest tagged release and download and run the `solana-install-init` binary from there.
+-- 
+2.44.0
+

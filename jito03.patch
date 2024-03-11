@@ -1,0 +1,73 @@
+From 65dd30caae9ae95107d1763ec05daaa01f7bf8c5 Mon Sep 17 00:00:00 2001
+From: segfaultdoctor <17258903+segfaultdoc@users.noreply.github.com>
+Date: Tue, 27 Feb 2024 16:11:19 -0500
+Subject: [PATCH 3/3] Backports #595: correctly initialize account overrides
+ (#599)
+
+---
+ Cargo.lock                     |  4 ++--
+ bundle/src/bundle_execution.rs | 12 ++++++++++++
+ runtime/src/bank.rs            |  6 +++++-
+ 3 files changed, 19 insertions(+), 3 deletions(-)
+
+diff --git a/Cargo.lock b/Cargo.lock
+index 432d97a7d86d..ada439cf59fd 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -3414,9 +3414,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "mio"
+-version = "0.8.8"
++version = "0.8.11"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "927a765cd3fc26206e66b296465fa9d3e5ab003e651c1b3c060e7956d96b19d2"
++checksum = "a4a650543ca06a924e8b371db273b2756685faae30f8487da1b56505a8f78b0c"
+ dependencies = [
+  "libc",
+  "wasi 0.11.0+wasi-snapshot-preview1",
+diff --git a/bundle/src/bundle_execution.rs b/bundle/src/bundle_execution.rs
+index 9b438fa713fe..b3a0d51a41f7 100644
+--- a/bundle/src/bundle_execution.rs
++++ b/bundle/src/bundle_execution.rs
+@@ -251,8 +251,20 @@ pub fn load_and_execute_bundle<'a>(
+             metrics: BundleExecutionMetrics::default(),
+         };
+     }
++
+     let mut binding = AccountOverrides::default();
+     let account_overrides = account_overrides.unwrap_or(&mut binding);
++    if is_simulation {
++        bundle
++            .transactions
++            .iter()
++            .map(|tx| tx.message().account_keys())
++            .for_each(|account_keys| {
++                account_overrides.upsert_account_overrides(
++                    bank.get_account_overrides_for_simulation(&account_keys),
++                );
++            });
++    }
+ 
+     let mut chunk_start = 0;
+     let start_time = Instant::now();
+diff --git a/runtime/src/bank.rs b/runtime/src/bank.rs
+index 35ad2b087cbd..4dfadabe604c 100644
+--- a/runtime/src/bank.rs
++++ b/runtime/src/bank.rs
+@@ -4489,7 +4489,11 @@ impl Bank {
+         }
+     }
+ 
+-    fn get_account_overrides_for_simulation(&self, account_keys: &AccountKeys) -> AccountOverrides {
++    // NOTE: Do not revert this back to private during rebases.
++    pub fn get_account_overrides_for_simulation(
++        &self,
++        account_keys: &AccountKeys,
++    ) -> AccountOverrides {
+         let mut account_overrides = AccountOverrides::default();
+         let slot_history_id = sysvar::slot_history::id();
+         if account_keys.iter().any(|pubkey| *pubkey == slot_history_id) {
+-- 
+2.44.0
+
