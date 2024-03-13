@@ -1,0 +1,52 @@
+From a9ebfdd84b72e73691dfc21b7f6435defd3670a4 Mon Sep 17 00:00:00 2001
+From: segfaultdoctor <17258903+segfaultdoc@users.noreply.github.com>
+Date: Tue, 27 Feb 2024 15:18:44 -0500
+Subject: [PATCH] correctly initialize account overrides (#595)
+
+---
+ bundle/src/bundle_execution.rs | 12 ++++++++++++
+ runtime/src/bank.rs            |  6 +++++-
+ 2 files changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/bundle/src/bundle_execution.rs b/bundle/src/bundle_execution.rs
+index 23dc2f7728..6c9cf5e55b 100644
+--- a/bundle/src/bundle_execution.rs
++++ b/bundle/src/bundle_execution.rs
+@@ -251,8 +251,20 @@ pub fn load_and_execute_bundle<'a>(
+             metrics: BundleExecutionMetrics::default(),
+         };
+     }
++
+     let mut binding = AccountOverrides::default();
+     let account_overrides = account_overrides.unwrap_or(&mut binding);
++    if is_simulation {
++        bundle
++            .transactions
++            .iter()
++            .map(|tx| tx.message().account_keys())
++            .for_each(|account_keys| {
++                account_overrides.upsert_account_overrides(
++                    bank.get_account_overrides_for_simulation(&account_keys),
++                );
++            });
++    }
+ 
+     let mut chunk_start = 0;
+     let start_time = Instant::now();
+diff --git a/runtime/src/bank.rs b/runtime/src/bank.rs
+index ca0bc13718..9555c1b4cc 100644
+--- a/runtime/src/bank.rs
++++ b/runtime/src/bank.rs
+@@ -4411,7 +4411,11 @@ impl Bank {
+         }
+     }
+ 
+-    fn get_account_overrides_for_simulation(&self, account_keys: &AccountKeys) -> AccountOverrides {
++    // NOTE: Do not revert this back to private during rebases.
++    pub fn get_account_overrides_for_simulation(
++        &self,
++        account_keys: &AccountKeys,
++    ) -> AccountOverrides {
+         let mut account_overrides = AccountOverrides::default();
+         let slot_history_id = sysvar::slot_history::id();
+         if account_keys.iter().any(|pubkey| *pubkey == slot_history_id) {
