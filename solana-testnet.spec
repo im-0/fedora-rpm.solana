@@ -28,8 +28,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      2
-# git 4c418143b603582eb57d0b79712c42a8fbf6ced6
-Version:    1.17.26
+# git 928d8ac236c152fbc06762153212b92c25b4e0a3
+Version:    1.18.5
 Release:    2jito%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
