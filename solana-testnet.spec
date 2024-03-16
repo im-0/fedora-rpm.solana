@@ -66,7 +66,6 @@ Source105:  solana-validator
 Source107:  solana-watchtower.service
 Source108:  solana-watchtower
 Source109:  solana-validator.logrotate
-Source110:  jemalloc-wrapper
 
 Source300:  https://static.rust-lang.org/dist/rust-%{rust_version}-x86_64-unknown-linux-gnu.tar.gz
 Source301:  https://static.rust-lang.org/dist/rust-%{rust_version}-aarch64-unknown-linux-gnu.tar.gz
@@ -323,10 +322,6 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
 sed 's,__SUFFIX__,%{solana_suffix},g' \
         <%{SOURCE109} \
         >solana-validator.logrotate
-sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE110} \
-        >jemalloc-wrapper
-chmod a+x jemalloc-wrapper
 
 ./_release/solana completion --shell bash >solana.bash-completion
 
