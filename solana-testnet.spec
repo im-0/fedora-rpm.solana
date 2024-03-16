@@ -225,20 +225,20 @@ git am %{PATCH1003}
 %setup -q -D -T -b1 -n solana-%{version}
 
 # Apply all other patches.
-%patch3002 -p1
+%patch -P 3002 -p1
 
-%patch4001 -p1
+%patch -P 4001 -p1
 
-%patch2002 -p1
+%patch -P 2002 -p1
 ln -sv ../crossbeam-%{solana_crossbeam_commit} ./solana-crossbeam
 
-%patch2003 -p1
+%patch -P 2003 -p1
 ln -sv ../solana-tokio-%{solana_tokio_commit} ./solana-tokio
 
-%patch2004 -p1
+%patch -P 2004 -p1
 ln -sv ../AEADs-%{solana_aes_gcm_siv_commit} ./AEADs
 
-%patch2005 -p1
+%patch -P 2005 -p1
 ln -sv ../curve25519-dalek-%{solana_curve25519_dalek_commit} ./curve25519-dalek
 
 mkdir .cargo
