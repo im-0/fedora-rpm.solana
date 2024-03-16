@@ -1,8 +1,8 @@
-From 3a81119b1bf292a31b8a90f23fca0502ae30115a Mon Sep 17 00:00:00 2001
+From 10cb97fd3e6ac97c4775c124c0431baadc7d31fc Mon Sep 17 00:00:00 2001
 From: buffalu <85544055+buffalu@users.noreply.github.com>
-Date: Wed, 13 Mar 2024 18:04:24 -0700
+Date: Thu, 14 Mar 2024 13:03:21 -0700
 Subject: [PATCH] Fix: Ensure set contact info to UDP port instead of QUIC
- (#601)
+ (Backport #601 to v1.18) (#602)
 
 ---
  core/src/proxy/fetch_stage_manager.rs | 8 ++++----

@@ -1,17 +1,48 @@
-From a9ebfdd84b72e73691dfc21b7f6435defd3670a4 Mon Sep 17 00:00:00 2001
+From 4076be267cca96eecd2b55b56c790030288a982f Mon Sep 17 00:00:00 2001
 From: segfaultdoctor <17258903+segfaultdoc@users.noreply.github.com>
-Date: Tue, 27 Feb 2024 15:18:44 -0500
-Subject: [PATCH] correctly initialize account overrides (#595)
+Date: Tue, 27 Feb 2024 15:19:16 -0500
+Subject: [PATCH] Backports #595: correctly initialize account overrides (#596)
 
 ---
- bundle/src/bundle_execution.rs | 12 ++++++++++++
+ Cargo.lock                     |  4 ++--
+ bundle/src/bundle_execution.rs | 19 ++++++++++++++++---
+ programs/sbf/Cargo.lock        |  4 ++--
  runtime/src/bank.rs            |  6 +++++-
- 2 files changed, 17 insertions(+), 1 deletion(-)
+ 4 files changed, 25 insertions(+), 8 deletions(-)
 
+diff --git a/Cargo.lock b/Cargo.lock
+index fbca74998f..2e722a7f38 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -3459,9 +3459,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "mio"
+-version = "0.8.8"
++version = "0.8.11"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "927a765cd3fc26206e66b296465fa9d3e5ab003e651c1b3c060e7956d96b19d2"
++checksum = "a4a650543ca06a924e8b371db273b2756685faae30f8487da1b56505a8f78b0c"
+ dependencies = [
+  "libc",
+  "wasi 0.11.0+wasi-snapshot-preview1",
 diff --git a/bundle/src/bundle_execution.rs b/bundle/src/bundle_execution.rs
-index 23dc2f7728..6c9cf5e55b 100644
+index 2c42175960..5c6a6b7b59 100644
 --- a/bundle/src/bundle_execution.rs
 +++ b/bundle/src/bundle_execution.rs
+@@ -81,9 +81,9 @@ pub enum LoadAndExecuteBundleError {
+     ProcessingTimeExceeded(Duration),
+ 
+     #[error(
+-        "A transaction in the bundle encountered a lock error: [signature={:?}, transaction_error={:?}]",
+-        signature,
+-        transaction_error
++    "A transaction in the bundle encountered a lock error: [signature={:?}, transaction_error={:?}]",
++    signature,
++    transaction_error
+     )]
+     LockError {
+         signature: Signature,
 @@ -251,8 +251,20 @@ pub fn load_and_execute_bundle<'a>(
              metrics: BundleExecutionMetrics::default(),
          };
@@ -33,11 +64,35 @@ index 23dc2f7728..6c9cf5e55b 100644
  
      let mut chunk_start = 0;
      let start_time = Instant::now();
+@@ -347,6 +359,7 @@ pub fn load_and_execute_bundle<'a>(
+                 &mut metrics.execute_timings,
+                 Some(account_overrides),
+                 *log_messages_bytes_limit,
++                true
+             ));
+         debug!(
+             "bundle id: {} loaded_transactions: {:?}",
+diff --git a/programs/sbf/Cargo.lock b/programs/sbf/Cargo.lock
+index 0311c0236c..2e44297516 100644
+--- a/programs/sbf/Cargo.lock
++++ b/programs/sbf/Cargo.lock
+@@ -3050,9 +3050,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "mio"
+-version = "0.8.8"
++version = "0.8.11"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "927a765cd3fc26206e66b296465fa9d3e5ab003e651c1b3c060e7956d96b19d2"
++checksum = "a4a650543ca06a924e8b371db273b2756685faae30f8487da1b56505a8f78b0c"
+ dependencies = [
+  "libc",
+  "wasi 0.11.0+wasi-snapshot-preview1",
 diff --git a/runtime/src/bank.rs b/runtime/src/bank.rs
-index ca0bc13718..9555c1b4cc 100644
+index ca9d923095..8304f57735 100644
 --- a/runtime/src/bank.rs
 +++ b/runtime/src/bank.rs
-@@ -4411,7 +4411,11 @@ impl Bank {
+@@ -4412,7 +4412,11 @@ impl Bank {
          }
      }
  

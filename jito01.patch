@@ -1,4 +1,4 @@
-From ff91504106cf06d3c5695569d554c73cf06aec2d Mon Sep 17 00:00:00 2001
+From fcf4dee6fc127627c961bb5ab8cfc0c40e576cc1 Mon Sep 17 00:00:00 2001
 From: Lucas B <lucas@jito.wtf>
 Date: Thu, 25 Aug 2022 17:18:46 -0500
 Subject: [PATCH] jito patch only reroute if relayer connected (#123) feat: add
@@ -253,6 +253,8 @@ Update CI (#584)
 - Add recursive submodule checkouts.
 - Re-add solana-secondary step
 - More release fixes
+
+Fix release process
 ---
  .dockerignore                                 |    9 +
  .github/dependabot.yml                        |   23 +-
@@ -270,6 +272,7 @@ Update CI (#584)
  Cargo.lock                                    |  793 ++++++--
  Cargo.toml                                    |   16 +-
  README.md                                     |   16 +-
+ RELEASE.md                                    |   12 +-
  accounts-db/src/account_overrides.rs          |    6 +-
  accounts-db/src/accounts.rs                   |  100 +-
  anchor                                        |    1 +
@@ -288,6 +291,8 @@ Update CI (#584)
  ci/check-crates.sh                            |    3 +
  ci/publish-installer.sh                       |   10 +-
  ci/publish-tarball.sh                         |    6 +-
+ ci/test-coverage.sh                           |    2 +-
+ ci/upload-github-release-asset.sh             |    2 +-
  core/Cargo.toml                               |   13 +
  core/benches/banking_stage.rs                 |   24 +-
  core/benches/consumer.rs                      |   28 +-
@@ -331,13 +336,14 @@ Update CI (#584)
  dev/Dockerfile                                |   48 +
  docs/src/cli/install.md                       |   16 +-
  docs/src/clusters/benchmark.md                |    2 +-
+ docs/src/implemented-proposals/installer.md   |    2 +-
  entry/src/entry.rs                            |    2 +-
  entry/src/poh.rs                              |   29 +-
  f                                             |   30 +
  fetch-spl.sh                                  |   41 +-
  gossip/src/cluster_info.rs                    |    4 +
  install/solana-install-init.sh                |    4 +-
- install/src/command.rs                        |    4 +-
+ install/src/command.rs                        |    8 +-
  jito-programs                                 |    1 +
  jito-protos/Cargo.toml                        |   19 +
  jito-protos/build.rs                          |   38 +
@@ -363,7 +369,7 @@ Update CI (#584)
  program-test/src/programs.rs                  |   17 +
  .../programs/jito_tip_distribution-0.1.4.so   |  Bin 0 -> 423080 bytes
  .../src/programs/jito_tip_payment-0.1.4.so    |  Bin 0 -> 430592 bytes
- programs/sbf/Cargo.lock                       |  646 +++++--
+ programs/sbf/Cargo.lock                       |  650 +++++--
  programs/sbf/tests/programs.rs                |    4 +-
  rpc-client-api/Cargo.toml                     |    2 +
  rpc-client-api/src/bundles.rs                 |  166 ++
@@ -435,7 +441,7 @@ Update CI (#584)
  validator/src/dashboard.rs                    |    1 +
  validator/src/main.rs                         |  268 ++-
  version/src/lib.rs                            |    2 +-
- 181 files changed, 17636 insertions(+), 874 deletions(-)
+ 185 files changed, 17649 insertions(+), 887 deletions(-)
  create mode 100644 .dockerignore
  create mode 100644 .gitmodules
  create mode 160000 anchor
@@ -689,7 +695,7 @@ index 5592d76ca5..ca55af2155 100644
        # This script confirms two assumptions:
        # 1) Tag should be branch.<patch_version>
 diff --git a/.github/workflows/release-artifacts.yml b/.github/workflows/release-artifacts.yml
-index 98dc697920..fc98a5895b 100644
+index 0391a09766..e07cda6a40 100644
 --- a/.github/workflows/release-artifacts.yml
 +++ b/.github/workflows/release-artifacts.yml
 @@ -26,6 +26,7 @@ jobs:
@@ -740,7 +746,7 @@ index 0000000000..e31fc7fccd
 +	path = jito-protos/protos
 +	url = https://github.com/jito-labs/mev-protos.git
 diff --git a/Cargo.lock b/Cargo.lock
-index 3f84901964..aae83847f8 100644
+index ebfd7a1fb3..fbca74998f 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -125,6 +125,145 @@ dependencies = [
@@ -1393,7 +1399,7 @@ index 3f84901964..aae83847f8 100644
 +
 +[[package]]
 +name = "jito-protos"
-+version = "1.18.5"
++version = "1.18.6"
 +dependencies = [
 + "bytes",
 + "prost",
@@ -1778,7 +1784,7 @@ index 3f84901964..aae83847f8 100644
  
 +[[package]]
 +name = "solana-bundle"
-+version = "1.18.5"
++version = "1.18.6"
 +dependencies = [
 + "anchor-lang",
 + "assert_matches",
@@ -1799,8 +1805,8 @@ index 3f84901964..aae83847f8 100644
 +
  [[package]]
  name = "solana-cargo-build-bpf"
- version = "1.18.5"
-@@ -5687,7 +6023,7 @@ version = "1.18.5"
+ version = "1.18.6"
+@@ -5687,7 +6023,7 @@ version = "1.18.6"
  dependencies = [
   "assert_matches",
   "bincode",
@@ -1811,7 +1817,7 @@ index 3f84901964..aae83847f8 100644
   "const_format",
 @@ -5887,10 +6223,11 @@ dependencies = [
  name = "solana-core"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
 + "anchor-lang",
   "assert_matches",
@@ -1871,7 +1877,7 @@ index 3f84901964..aae83847f8 100644
   "trees",
  ]
  
-@@ -6097,7 +6444,7 @@ version = "1.18.5"
+@@ -6097,7 +6444,7 @@ version = "1.18.6"
  dependencies = [
   "bitflags 2.4.2",
   "block-buffer 0.10.4",
@@ -1882,7 +1888,7 @@ index 3f84901964..aae83847f8 100644
   "generic-array 0.14.7",
 @@ -6120,8 +6467,8 @@ dependencies = [
  name = "solana-frozen-abi-macro"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
 - "proc-macro2",
 - "quote",
@@ -1893,7 +1899,7 @@ index 3f84901964..aae83847f8 100644
  ]
 @@ -6176,7 +6523,7 @@ dependencies = [
  name = "solana-geyser-plugin-manager"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
 - "bs58",
 + "bs58 0.4.0",
@@ -1902,7 +1908,7 @@ index 3f84901964..aae83847f8 100644
   "jsonrpc-core",
 @@ -6287,7 +6634,7 @@ dependencies = [
  name = "solana-keygen"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
 - "bs58",
 + "bs58 0.4.0",
@@ -1919,7 +1925,7 @@ index 3f84901964..aae83847f8 100644
   "chrono",
   "chrono-humanize",
 @@ -6374,7 +6721,7 @@ name = "solana-ledger-tool"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
   "assert_cmd",
 - "bs58",
@@ -1936,7 +1942,7 @@ index 3f84901964..aae83847f8 100644
   "bv",
   "bytemuck",
   "cc",
-@@ -6858,7 +7205,7 @@ version = "1.18.5"
+@@ -6858,7 +7205,7 @@ version = "1.18.6"
  dependencies = [
   "base64 0.21.7",
   "bincode",
@@ -1971,7 +1977,7 @@ index 3f84901964..aae83847f8 100644
   "futures 0.3.30",
   "indicatif",
 @@ -6945,7 +7294,7 @@ name = "solana-rpc-client-api"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
   "base64 0.21.7",
 - "bs58",
@@ -1989,7 +1995,7 @@ index 3f84901964..aae83847f8 100644
   "solana-transaction-status",
   "solana-version",
 @@ -6982,13 +7333,14 @@ name = "solana-rpc-test"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
   "bincode",
 - "bs58",
@@ -2010,7 +2016,7 @@ index 3f84901964..aae83847f8 100644
  
 +[[package]]
 +name = "solana-runtime-plugin"
-+version = "1.18.5"
++version = "1.18.6"
 +dependencies = [
 + "crossbeam-channel",
 + "json5",
@@ -2028,10 +2034,10 @@ index 3f84901964..aae83847f8 100644
 +
  [[package]]
  name = "solana-runtime-transaction"
- version = "1.18.5"
+ version = "1.18.6"
 @@ -7105,13 +7475,14 @@ dependencies = [
  name = "solana-sdk"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
 + "anchor-lang",
   "anyhow",
@@ -2047,7 +2053,7 @@ index 3f84901964..aae83847f8 100644
   "chrono",
 @@ -7164,9 +7535,9 @@ dependencies = [
  name = "solana-sdk-macro"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
 - "bs58",
 - "proc-macro2",
@@ -2073,7 +2079,7 @@ index 3f84901964..aae83847f8 100644
  ]
  
 @@ -7262,7 +7635,7 @@ name = "solana-storage-proto"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
   "bincode",
 - "bs58",
@@ -2087,7 +2093,7 @@ index 3f84901964..aae83847f8 100644
  
 +[[package]]
 +name = "solana-tip-distributor"
-+version = "1.18.5"
++version = "1.18.6"
 +dependencies = [
 + "anchor-lang",
 + "clap 4.3.21",
@@ -2125,7 +2131,7 @@ index 3f84901964..aae83847f8 100644
 +
  [[package]]
  name = "solana-tokens"
- version = "1.18.5"
+ version = "1.18.6"
 @@ -7465,7 +7876,7 @@ dependencies = [
   "base64 0.21.7",
   "bincode",
@@ -2135,7 +2141,7 @@ index 3f84901964..aae83847f8 100644
   "lazy_static",
   "log",
   "serde",
-@@ -7606,6 +8017,7 @@ dependencies = [
+@@ -7607,6 +8018,7 @@ dependencies = [
   "solana-rpc-client",
   "solana-rpc-client-api",
   "solana-runtime",
@@ -2143,7 +2149,7 @@ index 3f84901964..aae83847f8 100644
   "solana-sdk",
   "solana-send-transaction-service",
   "solana-storage-bigtable",
-@@ -7618,6 +8030,7 @@ dependencies = [
+@@ -7619,6 +8031,7 @@ dependencies = [
   "symlink",
   "thiserror",
   "tikv-jemallocator",
@@ -2151,16 +2157,16 @@ index 3f84901964..aae83847f8 100644
  ]
  
  [[package]]
-@@ -7721,7 +8134,7 @@ dependencies = [
+@@ -7722,7 +8135,7 @@ dependencies = [
  name = "solana-zk-keygen"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
 - "bs58",
 + "bs58 0.4.0",
   "clap 3.2.23",
   "dirs-next",
   "num_cpus",
-@@ -7865,7 +8278,7 @@ version = "0.1.1"
+@@ -7866,7 +8279,7 @@ version = "0.1.1"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "fadbefec4f3c678215ca72bd71862697bb06b41fd77c0088902dd3203354387b"
  dependencies = [
@@ -2169,7 +2175,7 @@ index 3f84901964..aae83847f8 100644
   "spl-discriminator-syn",
   "syn 2.0.48",
  ]
-@@ -7876,8 +8289,8 @@ version = "0.1.1"
+@@ -7877,8 +8290,8 @@ version = "0.1.1"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "0e5f2044ca42c8938d54d1255ce599c79a1ffd86b677dfab695caa20f9ffc3f2"
  dependencies = [
@@ -2180,7 +2186,7 @@ index 3f84901964..aae83847f8 100644
   "sha2 0.10.8",
   "syn 2.0.48",
   "thiserror",
-@@ -7934,8 +8347,8 @@ version = "0.3.1"
+@@ -7935,8 +8348,8 @@ version = "0.3.1"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "ab5269c8e868da17b6552ef35a51355a017bd8e0eae269c201fef830d35fa52c"
  dependencies = [
@@ -2191,7 +2197,7 @@ index 3f84901964..aae83847f8 100644
   "sha2 0.10.8",
   "syn 2.0.48",
  ]
-@@ -8093,9 +8506,9 @@ version = "0.24.3"
+@@ -8094,9 +8507,9 @@ version = "0.24.3"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "1e385be0d24f186b4ce2f9982191e7101bb737312ad61c1f2f984f34bcf85d59"
  dependencies = [
@@ -2204,7 +2210,7 @@ index 3f84901964..aae83847f8 100644
   "rustversion",
   "syn 1.0.109",
  ]
-@@ -8112,14 +8525,25 @@ version = "0.1.0"
+@@ -8113,14 +8526,25 @@ version = "0.1.0"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "a7973cce6668464ea31f176d85b13c7ab3bba2cb3b77a2ed26abd7801688010a"
  
@@ -2232,7 +2238,7 @@ index 3f84901964..aae83847f8 100644
   "unicode-ident",
  ]
  
-@@ -8129,8 +8553,8 @@ version = "2.0.48"
+@@ -8130,8 +8554,8 @@ version = "2.0.48"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "0f3531638e407dfc0814761abb7c00a5b54992b849452a0646b7f65c9f770f3f"
  dependencies = [
@@ -2243,7 +2249,7 @@ index 3f84901964..aae83847f8 100644
   "unicode-ident",
  ]
  
-@@ -8141,8 +8565,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+@@ -8142,8 +8566,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "1329189c02ff984e9736652b1631330da25eaa6bc639089ed4915d25446cbe7b"
  dependencies = [
   "proc-macro-error",
@@ -2254,7 +2260,7 @@ index 3f84901964..aae83847f8 100644
   "syn 2.0.48",
  ]
  
-@@ -8158,10 +8582,10 @@ version = "0.12.6"
+@@ -8159,10 +8583,10 @@ version = "0.12.6"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "f36bdaa60a83aca3921b5259d5400cbf5e90fc51931376a9bd4a0eb79aa7210f"
  dependencies = [
@@ -2268,7 +2274,7 @@ index 3f84901964..aae83847f8 100644
  ]
  
  [[package]]
-@@ -8263,8 +8687,8 @@ version = "0.12.0"
+@@ -8264,8 +8688,8 @@ version = "0.12.0"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "0ee42b4e559f17bce0385ebf511a7beb67d5cc33c12c96b7f4e9789919d9c10f"
  dependencies = [
@@ -2279,7 +2285,7 @@ index 3f84901964..aae83847f8 100644
   "syn 1.0.109",
  ]
  
-@@ -8313,8 +8737,8 @@ checksum = "54c25e2cb8f5fcd7318157634e8838aa6f7e4715c96637f969fabaccd1ef5462"
+@@ -8314,8 +8738,8 @@ checksum = "54c25e2cb8f5fcd7318157634e8838aa6f7e4715c96637f969fabaccd1ef5462"
  dependencies = [
   "cfg-if 1.0.0",
   "proc-macro-error",
@@ -2290,7 +2296,7 @@ index 3f84901964..aae83847f8 100644
   "syn 2.0.48",
  ]
  
-@@ -8325,8 +8749,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+@@ -8326,8 +8750,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "37cfd7bbc88a0104e304229fba519bdc45501a30b760fb72240342f1289ad257"
  dependencies = [
   "proc-macro-error",
@@ -2301,7 +2307,7 @@ index 3f84901964..aae83847f8 100644
   "syn 2.0.48",
   "test-case-core",
  ]
-@@ -8361,8 +8785,8 @@ version = "1.0.56"
+@@ -8362,8 +8786,8 @@ version = "1.0.56"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "fa0faa943b50f3db30a20aa7e265dbc66076993efed8463e8de414e5d06d3471"
  dependencies = [
@@ -2312,7 +2318,7 @@ index 3f84901964..aae83847f8 100644
   "syn 2.0.48",
  ]
  
-@@ -8498,8 +8922,8 @@ name = "tokio-macros"
+@@ -8499,8 +8923,8 @@ name = "tokio-macros"
  version = "2.1.0"
  source = "git+https://github.com/solana-labs/solana-tokio.git?rev=7cf47705faacf7bf0e43e4131a5377b3291fce21#7cf47705faacf7bf0e43e4131a5377b3291fce21"
  dependencies = [
@@ -2323,7 +2329,7 @@ index 3f84901964..aae83847f8 100644
   "syn 2.0.48",
  ]
  
-@@ -8670,6 +9094,7 @@ dependencies = [
+@@ -8671,6 +9095,7 @@ dependencies = [
   "percent-encoding 2.3.1",
   "pin-project",
   "prost",
@@ -2331,7 +2337,7 @@ index 3f84901964..aae83847f8 100644
   "rustls-pemfile 1.0.0",
   "tokio",
   "tokio-rustls",
-@@ -8678,6 +9103,7 @@ dependencies = [
+@@ -8679,6 +9104,7 @@ dependencies = [
   "tower-layer",
   "tower-service",
   "tracing",
@@ -2339,7 +2345,7 @@ index 3f84901964..aae83847f8 100644
  ]
  
  [[package]]
-@@ -8687,9 +9113,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+@@ -8688,9 +9114,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "a6fdaae4c2c638bb70fe42803a26fbd6fc6ac8c72f5c59f67ecc2a2dcabf4b07"
  dependencies = [
   "prettyplease 0.1.9",
@@ -2351,7 +2357,7 @@ index 3f84901964..aae83847f8 100644
   "syn 1.0.109",
  ]
  
-@@ -8744,8 +9170,8 @@ version = "0.1.27"
+@@ -8745,8 +9171,8 @@ version = "0.1.27"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "34704c8d6ebcbc939824180af020566b01a7c01f80641264eba0999f6c2b6be7"
  dependencies = [
@@ -2362,7 +2368,7 @@ index 3f84901964..aae83847f8 100644
   "syn 2.0.48",
  ]
  
-@@ -8863,12 +9289,24 @@ dependencies = [
+@@ -8864,12 +9290,24 @@ dependencies = [
   "tinyvec",
  ]
  
@@ -2387,7 +2393,7 @@ index 3f84901964..aae83847f8 100644
  [[package]]
  name = "unicode-xid"
  version = "0.2.2"
-@@ -8956,6 +9394,12 @@ version = "0.1.5"
+@@ -8957,6 +9395,12 @@ version = "0.1.5"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "7cf7d77f457ef8dfa11e4cd5933c5ddb5dc52a94664071951219a97710f0a32b"
  
@@ -2400,7 +2406,7 @@ index 3f84901964..aae83847f8 100644
  [[package]]
  name = "valuable"
  version = "0.1.0"
-@@ -9047,8 +9491,8 @@ dependencies = [
+@@ -9048,8 +9492,8 @@ dependencies = [
   "bumpalo",
   "log",
   "once_cell",
@@ -2411,7 +2417,7 @@ index 3f84901964..aae83847f8 100644
   "syn 2.0.48",
   "wasm-bindgen-shared",
  ]
-@@ -9071,7 +9515,7 @@ version = "0.2.90"
+@@ -9072,7 +9516,7 @@ version = "0.2.90"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "3e4c238561b2d428924c49815533a8b9121c664599558a5d9ec51f8a1740a999"
  dependencies = [
@@ -2420,7 +2426,7 @@ index 3f84901964..aae83847f8 100644
   "wasm-bindgen-macro-support",
  ]
  
-@@ -9081,8 +9525,8 @@ version = "0.2.90"
+@@ -9082,8 +9526,8 @@ version = "0.2.90"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "bae1abb6806dc1ad9e560ed242107c0f6c84335f1749dd4e8ddb012ebd5e25a7"
  dependencies = [
@@ -2431,7 +2437,7 @@ index 3f84901964..aae83847f8 100644
   "syn 2.0.48",
   "wasm-bindgen-backend",
   "wasm-bindgen-shared",
-@@ -9104,13 +9548,22 @@ dependencies = [
+@@ -9105,13 +9549,22 @@ dependencies = [
   "wasm-bindgen",
  ]
  
@@ -2455,7 +2461,7 @@ index 3f84901964..aae83847f8 100644
  ]
  
  [[package]]
-@@ -9360,6 +9813,12 @@ dependencies = [
+@@ -9361,6 +9814,12 @@ dependencies = [
   "linked-hash-map",
  ]
  
@@ -2468,7 +2474,7 @@ index 3f84901964..aae83847f8 100644
  [[package]]
  name = "yasna"
  version = "0.5.0"
-@@ -9384,8 +9843,8 @@ version = "0.7.31"
+@@ -9385,8 +9844,8 @@ version = "0.7.31"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "b3c129550b3e6de3fd0ba67ba5c81818f9805e58b8d7fee80a3a59d2c9fc601a"
  dependencies = [
@@ -2479,7 +2485,7 @@ index 3f84901964..aae83847f8 100644
   "syn 2.0.48",
  ]
  
-@@ -9404,8 +9863,8 @@ version = "1.4.2"
+@@ -9405,8 +9864,8 @@ version = "1.4.2"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "ce36e65b0d2999d2aafac989fb249189a141aee1f53c612c1f37d72631959f69"
  dependencies = [
@@ -2491,7 +2497,7 @@ index 3f84901964..aae83847f8 100644
  ]
  
 diff --git a/Cargo.toml b/Cargo.toml
-index 657068a420..fe347e0ec1 100644
+index 40144614b0..1bea027436 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
 @@ -18,6 +18,7 @@ members = [
@@ -2551,28 +2557,28 @@ index 657068a420..fe347e0ec1 100644
      "unprefixed_malloc_on_supported_platforms",
  ] }
  js-sys = "0.3.67"
-+jito-protos = { path = "jito-protos", version = "=1.18.5" }
++jito-protos = { path = "jito-protos", version = "=1.18.6" }
 +jito-tip-distribution = { path = "jito-programs/mev-programs/programs/tip-distribution", features = ["no-entrypoint"] }
 +jito-tip-payment = { path = "jito-programs/mev-programs/programs/tip-payment", features = ["no-entrypoint"] }
  json5 = "0.4.1"
  jsonrpc-core = "18.0.0"
  jsonrpc-core-client = "18.0.0"
-@@ -317,6 +329,7 @@ solana-bench-tps = { path = "bench-tps", version = "=1.18.5" }
- solana-bloom = { path = "bloom", version = "=1.18.5" }
- solana-bpf-loader-program = { path = "programs/bpf_loader", version = "=1.18.5" }
- solana-bucket-map = { path = "bucket_map", version = "=1.18.5" }
-+solana-bundle = { path = "bundle", version = "=1.18.5" }
- solana-cargo-registry = { path = "cargo-registry", version = "=1.18.5" }
- solana-clap-utils = { path = "clap-utils", version = "=1.18.5" }
- solana-clap-v3-utils = { path = "clap-v3-utils", version = "=1.18.5" }
-@@ -365,6 +378,7 @@ solana-rpc-client = { path = "rpc-client", version = "=1.18.5", default-features
- solana-rpc-client-api = { path = "rpc-client-api", version = "=1.18.5" }
- solana-rpc-client-nonce-utils = { path = "rpc-client-nonce-utils", version = "=1.18.5" }
- solana-runtime = { path = "runtime", version = "=1.18.5" }
-+solana-runtime-plugin = { path = "runtime-plugin", version = "=1.18.5" }
- solana-runtime-transaction = { path = "runtime-transaction", version = "=1.18.5" }
- solana-sdk = { path = "sdk", version = "=1.18.5" }
- solana-sdk-macro = { path = "sdk/macro", version = "=1.18.5" }
+@@ -317,6 +329,7 @@ solana-bench-tps = { path = "bench-tps", version = "=1.18.6" }
+ solana-bloom = { path = "bloom", version = "=1.18.6" }
+ solana-bpf-loader-program = { path = "programs/bpf_loader", version = "=1.18.6" }
+ solana-bucket-map = { path = "bucket_map", version = "=1.18.6" }
++solana-bundle = { path = "bundle", version = "=1.18.6" }
+ solana-cargo-registry = { path = "cargo-registry", version = "=1.18.6" }
+ solana-clap-utils = { path = "clap-utils", version = "=1.18.6" }
+ solana-clap-v3-utils = { path = "clap-v3-utils", version = "=1.18.6" }
+@@ -365,6 +378,7 @@ solana-rpc-client = { path = "rpc-client", version = "=1.18.6", default-features
+ solana-rpc-client-api = { path = "rpc-client-api", version = "=1.18.6" }
+ solana-rpc-client-nonce-utils = { path = "rpc-client-nonce-utils", version = "=1.18.6" }
+ solana-runtime = { path = "runtime", version = "=1.18.6" }
++solana-runtime-plugin = { path = "runtime-plugin", version = "=1.18.6" }
+ solana-runtime-transaction = { path = "runtime-transaction", version = "=1.18.6" }
+ solana-sdk = { path = "sdk", version = "=1.18.6" }
+ solana-sdk-macro = { path = "sdk/macro", version = "=1.18.6" }
 diff --git a/README.md b/README.md
 index c6183f6ab6..f93147af54 100644
 --- a/README.md
@@ -2613,6 +2619,49 @@ index c6183f6ab6..f93147af54 100644
 -controls and sanctions law.
 +controls and sanctions law.
 \ No newline at end of file
+diff --git a/RELEASE.md b/RELEASE.md
+index c5aa5d540b..5c32ff423e 100644
+--- a/RELEASE.md
++++ b/RELEASE.md
+@@ -107,7 +107,7 @@ Alternatively use the Github UI.
+ 
+ ### Create the Release Tag on GitHub
+ 
+-1. Go to [GitHub Releases](https://github.com/solana-labs/solana/releases) for tagging a release.
++1. Go to [GitHub Releases](https://github.com/jito-foundation/jito-solana/releases) for tagging a release.
+ 1. Click "Draft new release".  The release tag must exactly match the `version`
+    field in `/Cargo.toml` prefixed by `v`.
+    1.  If the Cargo.toml version field is **0.12.3**, then the release tag must be **v0.12.3**
+@@ -115,7 +115,7 @@ Alternatively use the Github UI.
+    1.  If you want to release v0.12.0, the target branch must be v0.12
+ 1. Fill the release notes.
+    1.  If this is the first release on the branch (e.g. v0.13.**0**), paste in [this
+-   template](https://raw.githubusercontent.com/solana-labs/solana/master/.github/RELEASE_TEMPLATE.md).  Engineering Lead can provide summary contents for release notes if needed.
++   template](https://raw.githubusercontent.com/jito-foundation/jito-solana/master/.github/RELEASE_TEMPLATE.md).  Engineering Lead can provide summary contents for release notes if needed.
+    1. If this is a patch release, review all the commits since the previous release on this branch and add details as needed.
+ 1. Click "Save Draft", then confirm the release notes look good and the tag name and branch are correct.
+ 1. Ensure all desired commits (usually backports) are landed on the branch by now.
+@@ -126,16 +126,16 @@ Alternatively use the Github UI.
+ 
+ ### Update release branch with the next patch version
+ 
+-[This action](https://github.com/solana-labs/solana/blob/master/.github/workflows/increment-cargo-version-on-release.yml) ensures that publishing a release will trigger the creation of a PR to update the Cargo.toml files on **release branch** to the next semantic version (e.g. 0.9.0 -> 0.9.1). Ensure that the created PR makes it through CI and gets submitted.
++[This action](https://github.com/jito-foundation/jito-solana/blob/master/.github/workflows/increment-cargo-version-on-release.yml) ensures that publishing a release will trigger the creation of a PR to update the Cargo.toml files on **release branch** to the next semantic version (e.g. 0.9.0 -> 0.9.1). Ensure that the created PR makes it through CI and gets submitted.
+ 
+ ### Prepare for the next release
+-1.  Go to [GitHub Releases](https://github.com/solana-labs/solana/releases) and create a new draft release for `X.Y.Z+1` with empty release notes.  This allows people to incrementally add new release notes until it's time for the next release
++1.  Go to [GitHub Releases](https://github.com/jito-foundation/jito-solana/releases) and create a new draft release for `X.Y.Z+1` with empty release notes.  This allows people to incrementally add new release notes until it's time for the next release
+     1. Also, point the branch field to the same branch and mark the release as **"This is a pre-release"**.
+-1.  Go to the [Github Milestones](https://github.com/solana-labs/solana/milestones).  Create a new milestone for the `X.Y.Z+1`, move over
++1.  Go to the [Github Milestones](https://github.com/jito-foundation/jito-solana/milestones).  Create a new milestone for the `X.Y.Z+1`, move over
+ unresolved issues still in the `X.Y.Z` milestone, then close the `X.Y.Z` milestone.
+ 
+ ### Verify release automation success
+-Go to [Solana Releases](https://github.com/solana-labs/solana/releases) and click on the latest release that you just published.
++Go to [Solana Releases](https://github.com/jito-foundation/jito-solana/releases) and click on the latest release that you just published.
+ Verify that all of the build artifacts are present, then uncheck **"This is a pre-release"** for the release.
+ 
+ Build artifacts can take up to 60 minutes after creating the tag before
 diff --git a/accounts-db/src/account_overrides.rs b/accounts-db/src/account_overrides.rs
 index ee8e7ec9e2..d5d3286426 100644
 --- a/accounts-db/src/account_overrides.rs
@@ -3036,7 +3085,7 @@ new file mode 100644
 index 0000000000..2c42175960
 --- /dev/null
 +++ b/bundle/src/bundle_execution.rs
-@@ -0,0 +1,1188 @@
+@@ -0,0 +1,1187 @@
 +use {
 +    itertools::izip,
 +    log::*,
@@ -3386,7 +3435,6 @@ index 0000000000..2c42175960
 +                &mut metrics.execute_timings,
 +                Some(account_overrides),
 +                *log_messages_bytes_limit,
-+                true,
 +            ));
 +        debug!(
 +            "bundle id: {} loaded_transactions: {:?}",
@@ -4502,6 +4550,30 @@ index ff72bb7da2..ea132a73e1 100755
      mkdir -p travis-s3-upload/"$CHANNEL_OR_TAG"
      cp -v "$file" travis-s3-upload/"$CHANNEL_OR_TAG"/
  
+diff --git a/ci/test-coverage.sh b/ci/test-coverage.sh
+index 44231cd338..60e57c6331 100755
+--- a/ci/test-coverage.sh
++++ b/ci/test-coverage.sh
+@@ -32,5 +32,5 @@ else
+   codecov -t "${CODECOV_TOKEN}"
+ 
+   annotate --style success --context codecov.io \
+-    "CodeCov report: https://codecov.io/github/solana-labs/solana/commit/${CI_COMMIT:0:9}"
++    "CodeCov report: https://codecov.io/github/jito-foundation/jito-solana/commit/${CI_COMMIT:0:9}"
+ fi
+diff --git a/ci/upload-github-release-asset.sh b/ci/upload-github-release-asset.sh
+index ca2ae2a8f6..fb4de1af9e 100755
+--- a/ci/upload-github-release-asset.sh
++++ b/ci/upload-github-release-asset.sh
+@@ -26,7 +26,7 @@ fi
+ # Force CI_REPO_SLUG since sometimes
+ # BUILDKITE_TRIGGERED_FROM_BUILD_PIPELINE_SLUG is not set correctly, causing the
+ # artifact upload to fail
+-CI_REPO_SLUG=solana-labs/solana
++CI_REPO_SLUG=jito-foundation/jito-solana
+ #if [[ -z $CI_REPO_SLUG ]]; then
+ #  echo Error: CI_REPO_SLUG not defined
+ #  exit 1
 diff --git a/core/Cargo.toml b/core/Cargo.toml
 index bc1bd4549f..9c9fc45173 100644
 --- a/core/Cargo.toml
@@ -5184,7 +5256,7 @@ index d3a53aa42e..b111a6a106 100644
          let (consume_sender, consume_receiver) = unbounded();
          let (consumed_sender, consumed_receiver) = unbounded();
 diff --git a/core/src/banking_stage/consumer.rs b/core/src/banking_stage/consumer.rs
-index 64b6888974..e2fa50e746 100644
+index 093ee533aa..a181b62a94 100644
 --- a/core/src/banking_stage/consumer.rs
 +++ b/core/src/banking_stage/consumer.rs
 @@ -1,6 +1,6 @@
@@ -5313,7 +5385,7 @@ index 64b6888974..e2fa50e746 100644
              }
          });
          execute_and_commit_timings.collect_balances_us = collect_balances_us;
-@@ -620,7 +636,7 @@ impl Consumer {
+@@ -621,7 +637,7 @@ impl Consumer {
  
          let (record_transactions_summary, record_us) = measure_us!(self
              .transaction_recorder
@@ -5322,7 +5394,7 @@ index 64b6888974..e2fa50e746 100644
          execute_and_commit_timings.record_us = record_us;
  
          let RecordTransactionsSummary {
-@@ -737,18 +753,6 @@ impl Consumer {
+@@ -738,18 +754,6 @@ impl Consumer {
          )
      }
  
@@ -5341,7 +5413,7 @@ index 64b6888974..e2fa50e746 100644
      /// This function filters pending packets that are still valid
      /// # Arguments
      /// * `transactions` - a batch of transactions deserialized from packets
-@@ -814,7 +818,7 @@ mod tests {
+@@ -815,7 +819,7 @@ mod tests {
          },
          solana_perf::packet::Packet,
          solana_poh::poh_recorder::{PohRecorder, Record, WorkingBankEntry},
@@ -5350,7 +5422,7 @@ index 64b6888974..e2fa50e746 100644
          solana_rpc::transaction_status_service::TransactionStatusService,
          solana_runtime::prioritization_fee_cache::PrioritizationFeeCache,
          solana_sdk::{
-@@ -890,7 +894,14 @@ mod tests {
+@@ -891,7 +895,14 @@ mod tests {
              replay_vote_sender,
              Arc::new(PrioritizationFeeCache::new(0u64)),
          );
@@ -5366,7 +5438,7 @@ index 64b6888974..e2fa50e746 100644
          let process_transactions_summary =
              consumer.process_transactions(&bank, &Instant::now(), &transactions);
  
-@@ -1065,7 +1076,14 @@ mod tests {
+@@ -1066,7 +1077,14 @@ mod tests {
                  replay_vote_sender,
                  Arc::new(PrioritizationFeeCache::new(0u64)),
              );
@@ -5382,7 +5454,7 @@ index 64b6888974..e2fa50e746 100644
  
              let process_transactions_batch_output =
                  consumer.process_and_record_transactions(&bank, &transactions, 0);
-@@ -1090,7 +1108,13 @@ mod tests {
+@@ -1091,7 +1109,13 @@ mod tests {
  
              let mut done = false;
              // read entries until I find mine, might be ticks...
@@ -5397,7 +5469,7 @@ index 64b6888974..e2fa50e746 100644
                  if !entry.is_tick() {
                      trace!("got entry");
                      assert_eq!(entry.transactions.len(), transactions.len());
-@@ -1209,11 +1233,10 @@ mod tests {
+@@ -1210,11 +1234,10 @@ mod tests {
                          let timeout = Duration::from_millis(10);
                          let record = record_receiver.recv_timeout(timeout);
                          if let Ok(record) = record {
@@ -5413,7 +5485,7 @@ index 64b6888974..e2fa50e746 100644
                              poh_recorder.write().unwrap().tick();
                              if record.sender.send(record_response).is_err() {
                                  panic!("Error returning mixin hash");
-@@ -1250,7 +1273,14 @@ mod tests {
+@@ -1251,7 +1274,14 @@ mod tests {
                  replay_vote_sender,
                  Arc::new(PrioritizationFeeCache::new(0u64)),
              );
@@ -5429,7 +5501,7 @@ index 64b6888974..e2fa50e746 100644
  
              let process_transactions_batch_output =
                  consumer.process_and_record_transactions(&bank, &transactions, 0);
-@@ -1275,9 +1305,13 @@ mod tests {
+@@ -1276,9 +1306,13 @@ mod tests {
  
              let mut done = false;
              // read entries until I find mine, might be ticks...
@@ -5446,7 +5518,7 @@ index 64b6888974..e2fa50e746 100644
                      done = true;
                      break;
                  }
-@@ -1352,7 +1386,14 @@ mod tests {
+@@ -1353,7 +1387,14 @@ mod tests {
                  replay_vote_sender,
                  Arc::new(PrioritizationFeeCache::new(0u64)),
              );
@@ -5462,7 +5534,7 @@ index 64b6888974..e2fa50e746 100644
  
              let process_transactions_batch_output =
                  consumer.process_and_record_transactions(&bank, &transactions, 0);
-@@ -1442,7 +1483,14 @@ mod tests {
+@@ -1443,7 +1484,14 @@ mod tests {
                  replay_vote_sender,
                  Arc::new(PrioritizationFeeCache::new(0u64)),
              );
@@ -5478,7 +5550,7 @@ index 64b6888974..e2fa50e746 100644
  
              let get_block_cost = || bank.read_cost_tracker().unwrap().block_cost();
              let get_tx_count = || bank.read_cost_tracker().unwrap().transaction_count();
-@@ -1597,7 +1645,14 @@ mod tests {
+@@ -1598,7 +1646,14 @@ mod tests {
                  replay_vote_sender,
                  Arc::new(PrioritizationFeeCache::new(0u64)),
              );
@@ -5494,7 +5566,7 @@ index 64b6888974..e2fa50e746 100644
  
              let process_transactions_batch_output =
                  consumer.process_and_record_transactions(&bank, &transactions, 0);
-@@ -1794,7 +1849,14 @@ mod tests {
+@@ -1795,7 +1850,14 @@ mod tests {
                  replay_vote_sender,
                  Arc::new(PrioritizationFeeCache::new(0u64)),
              );
@@ -5510,7 +5582,7 @@ index 64b6888974..e2fa50e746 100644
  
              let process_transactions_summary =
                  consumer.process_transactions(&bank, &Instant::now(), &transactions);
-@@ -1922,7 +1984,14 @@ mod tests {
+@@ -1923,7 +1985,14 @@ mod tests {
                  replay_vote_sender,
                  Arc::new(PrioritizationFeeCache::new(0u64)),
              );
@@ -5526,7 +5598,7 @@ index 64b6888974..e2fa50e746 100644
  
              let _ = consumer.process_and_record_transactions(&bank, &transactions, 0);
  
-@@ -2067,7 +2136,14 @@ mod tests {
+@@ -2068,7 +2137,14 @@ mod tests {
                  replay_vote_sender,
                  Arc::new(PrioritizationFeeCache::new(0u64)),
              );
@@ -5542,7 +5614,7 @@ index 64b6888974..e2fa50e746 100644
  
              let _ = consumer.process_and_record_transactions(&bank, &[sanitized_tx.clone()], 0);
  
-@@ -2127,7 +2203,14 @@ mod tests {
+@@ -2128,7 +2204,14 @@ mod tests {
                  replay_vote_sender,
                  Arc::new(PrioritizationFeeCache::new(0u64)),
              );
@@ -5558,7 +5630,7 @@ index 64b6888974..e2fa50e746 100644
  
              // When the working bank in poh_recorder is None, no packets should be processed (consume will not be called)
              assert!(!poh_recorder.read().unwrap().has_bank());
-@@ -2205,7 +2288,14 @@ mod tests {
+@@ -2206,7 +2289,14 @@ mod tests {
                  replay_vote_sender,
                  Arc::new(PrioritizationFeeCache::new(0u64)),
              );
@@ -5574,7 +5646,7 @@ index 64b6888974..e2fa50e746 100644
  
              // When the working bank in poh_recorder is None, no packets should be processed
              assert!(!poh_recorder.read().unwrap().has_bank());
-@@ -2257,7 +2347,14 @@ mod tests {
+@@ -2258,7 +2348,14 @@ mod tests {
                  replay_vote_sender,
                  Arc::new(PrioritizationFeeCache::new(0u64)),
              );
@@ -5590,7 +5662,7 @@ index 64b6888974..e2fa50e746 100644
  
              // When the working bank in poh_recorder is None, no packets should be processed (consume will not be called)
              assert!(!poh_recorder.read().unwrap().has_bank());
-@@ -2382,7 +2479,14 @@ mod tests {
+@@ -2383,7 +2480,14 @@ mod tests {
                  replay_vote_sender,
                  Arc::new(PrioritizationFeeCache::new(0u64)),
              );
@@ -5606,7 +5678,7 @@ index 64b6888974..e2fa50e746 100644
  
              // When the working bank in poh_recorder is None, no packets should be processed (consume will not be called)
              assert!(!poh_recorder.read().unwrap().has_bank());
-@@ -2451,7 +2555,7 @@ mod tests {
+@@ -2452,7 +2556,7 @@ mod tests {
              expected_units += n * 1000;
          }
  
@@ -14003,7 +14075,7 @@ index d498ab405d..fc6e361c35 100644
          .expect("assume success");
          exit.store(true, Ordering::Relaxed);
 diff --git a/core/src/validator.rs b/core/src/validator.rs
-index 4e96a3c2b5..81870c1d2f 100644
+index 3fd24d1017..0642cb6330 100644
 --- a/core/src/validator.rs
 +++ b/core/src/validator.rs
 @@ -15,6 +15,7 @@ use {
@@ -14116,7 +14188,7 @@ index 4e96a3c2b5..81870c1d2f 100644
          );
  
          datapoint_info!(
-@@ -1394,6 +1432,9 @@ impl Validator {
+@@ -1396,6 +1434,9 @@ impl Validator {
              repair_socket: Arc::new(node.sockets.repair),
              outstanding_repair_requests,
              cluster_slots,
@@ -14126,7 +14198,7 @@ index 4e96a3c2b5..81870c1d2f 100644
          });
  
          Ok(Self {
-@@ -1860,6 +1901,7 @@ fn load_blockstore(
+@@ -1862,6 +1903,7 @@ fn load_blockstore(
                  .map(|service| service.sender()),
              accounts_update_notifier,
              exit,
@@ -14134,7 +14206,7 @@ index 4e96a3c2b5..81870c1d2f 100644
          )
          .map_err(|err| err.to_string())?;
  
-@@ -2552,6 +2594,7 @@ mod tests {
+@@ -2554,6 +2596,7 @@ mod tests {
              DEFAULT_TPU_CONNECTION_POOL_SIZE,
              DEFAULT_TPU_ENABLE_UDP,
              Arc::new(RwLock::new(None)),
@@ -14142,7 +14214,7 @@ index 4e96a3c2b5..81870c1d2f 100644
          )
          .expect("assume successful validator start");
          assert_eq!(
-@@ -2629,7 +2672,7 @@ mod tests {
+@@ -2631,7 +2674,7 @@ mod tests {
                      Arc::new(RwLock::new(vec![Arc::new(vote_account_keypair)])),
                      vec![LegacyContactInfo::try_from(&leader_node.info).unwrap()],
                      &config,
@@ -14151,7 +14223,7 @@ index 4e96a3c2b5..81870c1d2f 100644
                      None, // rpc_to_plugin_manager_receiver
                      Arc::new(RwLock::new(ValidatorStartProgress::default())),
                      SocketAddrSpace::Unspecified,
-@@ -2637,6 +2680,7 @@ mod tests {
+@@ -2639,6 +2682,7 @@ mod tests {
                      DEFAULT_TPU_CONNECTION_POOL_SIZE,
                      DEFAULT_TPU_ENABLE_UDP,
                      Arc::new(RwLock::new(None)),
@@ -14208,10 +14280,10 @@ index 83af4558df..44e399a686 100644
              {
                  assert!(
 diff --git a/cost-model/src/cost_tracker.rs b/cost-model/src/cost_tracker.rs
-index 9d2b3b624a..fb10ed9a61 100644
+index 002cf1476a..f7f2522328 100644
 --- a/cost-model/src/cost_tracker.rs
 +++ b/cost-model/src/cost_tracker.rs
-@@ -94,6 +94,10 @@ impl CostTracker {
+@@ -100,6 +100,10 @@ impl CostTracker {
          self.vote_cost_limit = vote_cost_limit;
      }
  
@@ -14222,7 +14294,7 @@ index 9d2b3b624a..fb10ed9a61 100644
      pub fn try_add(&mut self, tx_cost: &TransactionCost) -> Result<u64, CostTrackerError> {
          self.would_fit(tx_cost)?;
          self.add_transaction_cost(tx_cost);
-@@ -131,6 +135,10 @@ impl CostTracker {
+@@ -137,6 +141,10 @@ impl CostTracker {
          self.block_cost
      }
  
@@ -14311,10 +14383,10 @@ index 0000000000..bab9a1c02f
 +      RUSTFLAGS='-g -C force-frame-pointers=yes' ./cargo stable build --release && cp target/release/solana* ./docker-output; \
 +    fi
 diff --git a/docs/src/cli/install.md b/docs/src/cli/install.md
-index 7773631dda..7984af3f4a 100644
+index 3667c733e3..3aee8b4727 100644
 --- a/docs/src/cli/install.md
 +++ b/docs/src/cli/install.md
-@@ -19,11 +19,11 @@ on your preferred workflow:
+@@ -20,11 +20,11 @@ on your preferred workflow:
  - Open your favorite Terminal application
  
  - Install the Solana release
@@ -14328,7 +14400,7 @@ index 7773631dda..7984af3f4a 100644
  ```
  
  - You can replace `LATEST_SOLANA_RELEASE_VERSION` with the release tag matching
-@@ -37,7 +37,7 @@ downloading LATEST_SOLANA_RELEASE_VERSION installer
+@@ -38,7 +38,7 @@ downloading LATEST_SOLANA_RELEASE_VERSION installer
  Configuration: /home/solana/.config/solana/install/config.yml
  Active release directory: /home/solana/.local/share/solana/install/active_release
  * Release version: LATEST_SOLANA_RELEASE_VERSION
@@ -14337,7 +14409,7 @@ index 7773631dda..7984af3f4a 100644
  Update successful
  ```
  
-@@ -73,7 +73,7 @@ solana --version
+@@ -74,7 +74,7 @@ solana --version
    installer into a temporary directory:
  
  ```bash
@@ -14346,7 +14418,7 @@ index 7773631dda..7984af3f4a 100644
  ```
  
  - Copy and paste the following command, then press Enter to install the latest
-@@ -107,7 +107,7 @@ manually download and install the binaries.
+@@ -108,7 +108,7 @@ manually download and install the binaries.
  ### Linux
  
  Download the binaries by navigating to
@@ -14355,7 +14427,7 @@ index 7773631dda..7984af3f4a 100644
  download **solana-release-x86_64-unknown-linux-gnu.tar.bz2**, then extract the
  archive:
  
-@@ -120,7 +120,7 @@ export PATH=$PWD/bin:$PATH
+@@ -121,7 +121,7 @@ export PATH=$PWD/bin:$PATH
  ### MacOS
  
  Download the binaries by navigating to
@@ -14364,7 +14436,7 @@ index 7773631dda..7984af3f4a 100644
  download **solana-release-x86_64-apple-darwin.tar.bz2**, then extract the
  archive:
  
-@@ -133,7 +133,7 @@ export PATH=$PWD/bin:$PATH
+@@ -134,7 +134,7 @@ export PATH=$PWD/bin:$PATH
  ### Windows
  
  - Download the binaries by navigating to
@@ -14373,7 +14445,7 @@ index 7773631dda..7984af3f4a 100644
    download **solana-release-x86_64-pc-windows-msvc.tar.bz2**, then extract the
    archive using WinZip or similar.
  
-@@ -241,7 +241,7 @@ above.
+@@ -242,7 +242,7 @@ above.
  
  After installing the prerequisites, proceed with building Solana from source,
  navigate to
@@ -14395,6 +14467,19 @@ index d913f9e5f1..09af5ca3a1 100644
  
  Now checkout the code from github:
  
+diff --git a/docs/src/implemented-proposals/installer.md b/docs/src/implemented-proposals/installer.md
+index a3ad797171..48f490a75c 100644
+--- a/docs/src/implemented-proposals/installer.md
++++ b/docs/src/implemented-proposals/installer.md
+@@ -13,7 +13,7 @@ This document proposes an easy to use software install and updater that can be u
+ The easiest install method for supported platforms:
+ 
+ ```bash
+-$ curl -sSf https://raw.githubusercontent.com/solana-labs/solana/v1.0.0/install/solana-install-init.sh | sh
++$ curl -sSf https://raw.githubusercontent.com/jito-foundation/jito-solana/v1.0.0/install/solana-install-init.sh | sh
+ ```
+ 
+ This script will check github for the latest tagged release and download and run the `solana-install-init` binary from there.
 diff --git a/entry/src/entry.rs b/entry/src/entry.rs
 index af3fdca951..aa23d02b75 100644
 --- a/entry/src/entry.rs
@@ -14597,9 +14682,18 @@ index db36dc61e2..0c228a8b59 100755
  set -e
  
 diff --git a/install/src/command.rs b/install/src/command.rs
-index d7b92c1769..09f8742148 100644
+index d7b92c1769..9870a27f7e 100644
 --- a/install/src/command.rs
 +++ b/install/src/command.rs
+@@ -572,7 +572,7 @@ pub fn init(
+ 
+ fn github_release_download_url(release_semver: &str) -> String {
+     format!(
+-        "https://github.com/solana-labs/solana/releases/download/v{}/solana-release-{}.tar.bz2",
++        "https://github.com/jito-foundation/jito-solana/releases/download/v{}/solana-release-{}.tar.bz2",
+         release_semver,
+         crate::build_env::TARGET
+     )
 @@ -580,7 +580,7 @@ fn github_release_download_url(release_semver: &str) -> String {
  
  fn release_channel_download_url(release_channel: &str) -> String {
@@ -14618,6 +14712,15 @@ index d7b92c1769..09f8742148 100644
          release_channel,
          crate::build_env::TARGET
      )
+@@ -905,7 +905,7 @@ fn check_for_newer_github_release(
+ 
+     while page == 1 || releases.len() == PER_PAGE {
+         let url = reqwest::Url::parse_with_params(
+-            "https://api.github.com/repos/solana-labs/solana/releases",
++            "https://api.github.com/repos/jito-foundation/jito-solana/releases",
+             &[
+                 ("per_page", &format!("{PER_PAGE}")),
+                 ("page", &format!("{page}")),
 diff --git a/jito-programs b/jito-programs
 new file mode 160000
 index 0000000000..4a23d81bd6
@@ -14801,7 +14904,7 @@ index 82797146d3..86ff4a5c09 100644
          .map_err(LoadAndProcessLedgerError::LoadBankForks)?;
      let block_verification_method = value_t!(
 diff --git a/ledger-tool/src/main.rs b/ledger-tool/src/main.rs
-index d81d9c212b..e9a740e65a 100644
+index d4fd8a3b25..779b2d8d12 100644
 --- a/ledger-tool/src/main.rs
 +++ b/ledger-tool/src/main.rs
 @@ -1565,6 +1565,7 @@ fn main() {
@@ -14873,7 +14976,7 @@ index 732c2e8fe3..b7420ce3a8 100644
      let bank = bank_forks.read().unwrap().working_bank();
      bank
 diff --git a/ledger/src/bank_forks_utils.rs b/ledger/src/bank_forks_utils.rs
-index 993f6d2c2f..46b24cbf38 100644
+index 7d174e9bbb..4dc8aab66e 100644
 --- a/ledger/src/bank_forks_utils.rs
 +++ b/ledger/src/bank_forks_utils.rs
 @@ -22,7 +22,7 @@ use {
@@ -15206,7 +15309,7 @@ index 3479422c2f..732b0bdd05 100644
  }
  
 diff --git a/local-cluster/tests/local_cluster.rs b/local-cluster/tests/local_cluster.rs
-index 1e15d6f79c..46f5527760 100644
+index c958820e77..f5f2b4826d 100644
 --- a/local-cluster/tests/local_cluster.rs
 +++ b/local-cluster/tests/local_cluster.rs
 @@ -872,6 +872,7 @@ fn test_incremental_snapshot_download_with_crossing_full_snapshot_interval_at_st
@@ -20601,7 +20704,7 @@ literal 0
 HcmV?d00001
 
 diff --git a/programs/sbf/Cargo.lock b/programs/sbf/Cargo.lock
-index 7c315a39c3..3d3e39ffe2 100644
+index dfb020f057..0311c0236c 100644
 --- a/programs/sbf/Cargo.lock
 +++ b/programs/sbf/Cargo.lock
 @@ -126,6 +126,145 @@ dependencies = [
@@ -21114,7 +21217,7 @@ index 7c315a39c3..3d3e39ffe2 100644
 +
 +[[package]]
 +name = "jito-protos"
-+version = "1.18.5"
++version = "1.18.6"
 +dependencies = [
 + "bytes",
 + "prost",
@@ -21477,7 +21580,7 @@ index 7c315a39c3..3d3e39ffe2 100644
  
 +[[package]]
 +name = "solana-bundle"
-+version = "1.18.5"
++version = "1.18.6"
 +dependencies = [
 + "anchor-lang",
 + "itertools",
@@ -21497,10 +21600,10 @@ index 7c315a39c3..3d3e39ffe2 100644
 +
  [[package]]
  name = "solana-clap-utils"
- version = "1.18.5"
+ version = "1.18.6"
 @@ -4964,9 +5234,10 @@ dependencies = [
  name = "solana-core"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
 + "anchor-lang",
   "base64 0.21.7",
@@ -21554,7 +21657,7 @@ index 7c315a39c3..3d3e39ffe2 100644
  ]
  
 @@ -5116,7 +5396,7 @@ name = "solana-frozen-abi"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
   "block-buffer 0.10.4",
 - "bs58",
@@ -21564,7 +21667,7 @@ index 7c315a39c3..3d3e39ffe2 100644
   "generic-array 0.14.7",
 @@ -5138,8 +5418,8 @@ dependencies = [
  name = "solana-frozen-abi-macro"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
 - "proc-macro2",
 - "quote",
@@ -21573,9 +21676,18 @@ index 7c315a39c3..3d3e39ffe2 100644
   "rustc_version",
   "syn 2.0.48",
  ]
+@@ -5157,7 +5437,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "solana-geyser-plugin-interface"
+-version = "1.18.5"
++version = "1.18.6"
+ dependencies = [
+  "log",
+  "solana-sdk",
 @@ -5169,7 +5449,7 @@ dependencies = [
  name = "solana-geyser-plugin-manager"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
 - "bs58",
 + "bs58 0.4.0",
@@ -21591,7 +21703,7 @@ index 7c315a39c3..3d3e39ffe2 100644
   "bv",
   "bytemuck",
   "cc",
-@@ -5607,7 +5887,7 @@ version = "1.18.5"
+@@ -5607,7 +5887,7 @@ version = "1.18.6"
  dependencies = [
   "base64 0.21.7",
   "bincode",
@@ -21626,7 +21738,7 @@ index 7c315a39c3..3d3e39ffe2 100644
   "log",
   "reqwest",
 @@ -5685,7 +5967,7 @@ name = "solana-rpc-client-api"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
   "base64 0.21.7",
 - "bs58",
@@ -21649,7 +21761,7 @@ index 7c315a39c3..3d3e39ffe2 100644
  
 +[[package]]
 +name = "solana-runtime-plugin"
-+version = "1.18.5"
++version = "1.18.6"
 +dependencies = [
 + "crossbeam-channel",
 + "json5",
@@ -21667,10 +21779,10 @@ index 7c315a39c3..3d3e39ffe2 100644
 +
  [[package]]
  name = "solana-sbf-programs"
- version = "1.18.5"
+ version = "1.18.6"
 @@ -6212,12 +6514,13 @@ dependencies = [
  name = "solana-sdk"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
 + "anchor-lang",
   "assert_matches",
@@ -21685,7 +21797,7 @@ index 7c315a39c3..3d3e39ffe2 100644
   "chrono",
 @@ -6265,9 +6568,9 @@ dependencies = [
  name = "solana-sdk-macro"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
 - "bs58",
 - "proc-macro2",
@@ -21705,7 +21817,7 @@ index 7c315a39c3..3d3e39ffe2 100644
   "solana-metrics",
   "solana-runtime",
 @@ -6342,7 +6646,7 @@ name = "solana-storage-proto"
- version = "1.18.5"
+ version = "1.18.6"
  dependencies = [
   "bincode",
 - "bs58",
@@ -21722,6 +21834,15 @@ index 7c315a39c3..3d3e39ffe2 100644
   "lazy_static",
   "log",
   "serde",
+@@ -6548,7 +6852,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "solana-validator"
+-version = "1.18.5"
++version = "1.18.6"
+ dependencies = [
+  "chrono",
+  "clap 2.33.3",
 @@ -6595,6 +6899,7 @@ dependencies = [
   "solana-rpc-client",
   "solana-rpc-client-api",
@@ -22056,10 +22177,10 @@ index 7c315a39c3..3d3e39ffe2 100644
  ]
  
 diff --git a/programs/sbf/tests/programs.rs b/programs/sbf/tests/programs.rs
-index 8f8f9d2ffe..903d585b1b 100644
+index d67b576414..53fbfd67f7 100644
 --- a/programs/sbf/tests/programs.rs
 +++ b/programs/sbf/tests/programs.rs
-@@ -145,7 +145,7 @@ fn execute_transactions(
+@@ -138,7 +138,7 @@ fn execute_transactions(
      let batch = bank.prepare_batch_for_tests(txs.clone());
      let mut timings = ExecuteTimings::default();
      let mut mint_decimals = HashMap::new();
@@ -22068,7 +22189,7 @@ index 8f8f9d2ffe..903d585b1b 100644
      let (
          TransactionResults {
              execution_results, ..
-@@ -165,7 +165,7 @@ fn execute_transactions(
+@@ -158,7 +158,7 @@ fn execute_transactions(
          &mut timings,
          None,
      );
@@ -22925,10 +23046,10 @@ index 98d9ee572f..a3b8e66fc8 100644
  solana-rpc-client-api = { workspace = true }
  solana-runtime = { workspace = true }
 diff --git a/rpc/src/rpc.rs b/rpc/src/rpc.rs
-index 16d78a913b..b01ea51f90 100644
+index 78869d4ad9..e3cb32731c 100644
 --- a/rpc/src/rpc.rs
 +++ b/rpc/src/rpc.rs
-@@ -235,6 +235,13 @@ impl JsonRpcRequestProcessor {
+@@ -231,6 +231,13 @@ impl JsonRpcRequestProcessor {
          Ok(bank)
      }
  
@@ -22942,7 +23063,7 @@ index 16d78a913b..b01ea51f90 100644
      #[allow(deprecated)]
      fn bank(&self, commitment: Option<CommitmentConfig>) -> Arc<Bank> {
          debug!("RPC commitment_config: {:?}", commitment);
-@@ -367,13 +374,10 @@ impl JsonRpcRequestProcessor {
+@@ -363,13 +370,10 @@ impl JsonRpcRequestProcessor {
              );
              ClusterInfo::new(contact_info, keypair, socket_addr_space)
          });
@@ -22958,7 +23079,7 @@ index 16d78a913b..b01ea51f90 100644
              &bank_forks,
              None,
              receiver,
-@@ -2743,13 +2747,16 @@ pub mod rpc_minimal {
+@@ -2648,13 +2652,16 @@ pub mod rpc_minimal {
                  })
                  .unwrap();
  
@@ -22978,7 +23099,7 @@ index 16d78a913b..b01ea51f90 100644
                  );
  
              Ok(RpcSnapshotSlotInfo {
-@@ -3355,14 +3362,169 @@ pub mod rpc_accounts_scan {
+@@ -3238,14 +3245,169 @@ pub mod rpc_accounts_scan {
      }
  }
  
@@ -23149,7 +23270,7 @@ index 16d78a913b..b01ea51f90 100644
      #[rpc]
      pub trait Full {
          type Metadata;
-@@ -3424,6 +3586,14 @@ pub mod rpc_full {
+@@ -3307,6 +3469,14 @@ pub mod rpc_full {
              config: Option<RpcSimulateTransactionConfig>,
          ) -> Result<RpcResponse<RpcSimulateTransactionResult>>;
  
@@ -23164,7 +23285,7 @@ index 16d78a913b..b01ea51f90 100644
          #[rpc(meta, name = "minimumLedgerSlot")]
          fn minimum_ledger_slot(&self, meta: Self::Metadata) -> Result<Slot>;
  
-@@ -3930,6 +4100,146 @@ pub mod rpc_full {
+@@ -3813,6 +3983,146 @@ pub mod rpc_full {
              ))
          }
  
@@ -23311,7 +23432,7 @@ index 16d78a913b..b01ea51f90 100644
          fn minimum_ledger_slot(&self, meta: Self::Metadata) -> Result<Slot> {
              debug!("minimum_ledger_slot rpc request received");
              meta.minimum_ledger_slot()
-@@ -4260,6 +4570,7 @@ pub mod rpc_deprecated_v1_9 {
+@@ -4179,6 +4489,7 @@ pub mod rpc_deprecated_v1_9 {
                  .and_then(|snapshot_config| {
                      snapshot_utils::get_highest_full_snapshot_archive_slot(
                          snapshot_config.full_snapshot_archives_dir,
@@ -23319,7 +23440,7 @@ index 16d78a913b..b01ea51f90 100644
                      )
                  })
                  .ok_or_else(|| RpcCustomError::NoSnapshot.into())
-@@ -4743,6 +5054,7 @@ pub mod tests {
+@@ -4662,6 +4973,7 @@ pub mod tests {
              },
              rpc_subscriptions::RpcSubscriptions,
          },
@@ -23327,7 +23448,7 @@ index 16d78a913b..b01ea51f90 100644
          bincode::deserialize,
          jsonrpc_core::{futures, ErrorCode, MetaIoHandler, Output, Response, Value},
          jsonrpc_core_client::transports::local,
-@@ -5963,6 +6275,146 @@ pub mod tests {
+@@ -5882,6 +6194,146 @@ pub mod tests {
          assert_eq!(result.len(), 0);
      }
  
@@ -23474,7 +23595,7 @@ index 16d78a913b..b01ea51f90 100644
      #[test]
      fn test_rpc_simulate_transaction() {
          let rpc = RpcHandler::start();
-@@ -6904,10 +7356,7 @@ pub mod tests {
+@@ -6823,10 +7275,7 @@ pub mod tests {
              ClusterInfo::new(contact_info, keypair, SocketAddrSpace::Unspecified)
          });
          let connection_cache = Arc::new(ConnectionCache::new("connection_cache_test"));
@@ -23486,7 +23607,7 @@ index 16d78a913b..b01ea51f90 100644
          let (meta, receiver) = JsonRpcRequestProcessor::new(
              JsonRpcConfig::default(),
              None,
-@@ -6916,7 +7365,7 @@ pub mod tests {
+@@ -6835,7 +7284,7 @@ pub mod tests {
              blockstore,
              validator_exit,
              health.clone(),
@@ -23495,7 +23616,7 @@ index 16d78a913b..b01ea51f90 100644
              Hash::default(),
              None,
              optimistically_confirmed_bank,
-@@ -6928,7 +7377,7 @@ pub mod tests {
+@@ -6847,7 +7296,7 @@ pub mod tests {
              Arc::new(PrioritizationFeeCache::default()),
          );
          SendTransactionService::new::<NullTpuInfo>(
@@ -23504,7 +23625,7 @@ index 16d78a913b..b01ea51f90 100644
              &bank_forks,
              None,
              receiver,
-@@ -7176,12 +7625,10 @@ pub mod tests {
+@@ -7095,12 +7544,10 @@ pub mod tests {
  
          let cluster_info = Arc::new(new_test_cluster_info());
          let connection_cache = Arc::new(ConnectionCache::new("connection_cache_test"));
@@ -23519,7 +23640,7 @@ index 16d78a913b..b01ea51f90 100644
          let (request_processor, receiver) = JsonRpcRequestProcessor::new(
              JsonRpcConfig::default(),
              None,
-@@ -7190,7 +7637,7 @@ pub mod tests {
+@@ -7109,7 +7556,7 @@ pub mod tests {
              blockstore.clone(),
              validator_exit,
              RpcHealth::stub(optimistically_confirmed_bank.clone(), blockstore),
@@ -23528,7 +23649,7 @@ index 16d78a913b..b01ea51f90 100644
              Hash::default(),
              None,
              optimistically_confirmed_bank,
-@@ -7202,7 +7649,7 @@ pub mod tests {
+@@ -7121,7 +7568,7 @@ pub mod tests {
              Arc::new(PrioritizationFeeCache::default()),
          );
          SendTransactionService::new::<NullTpuInfo>(
@@ -23538,10 +23659,10 @@ index 16d78a913b..b01ea51f90 100644
              None,
              receiver,
 diff --git a/rpc/src/rpc_service.rs b/rpc/src/rpc_service.rs
-index 8597394f10..477db6d880 100644
+index d8791ab6c3..4fb43ed189 100644
 --- a/rpc/src/rpc_service.rs
 +++ b/rpc/src/rpc_service.rs
-@@ -255,6 +255,7 @@ impl RequestMiddleware for RpcRequestMiddleware {
+@@ -256,6 +256,7 @@ impl RequestMiddleware for RpcRequestMiddleware {
                  let full_snapshot_archive_info =
                      snapshot_utils::get_highest_full_snapshot_archive_info(
                          &snapshot_config.full_snapshot_archives_dir,
@@ -23549,7 +23670,7 @@ index 8597394f10..477db6d880 100644
                      );
                  let snapshot_archive_info =
                      if let Some(full_snapshot_archive_info) = full_snapshot_archive_info {
-@@ -264,6 +265,7 @@ impl RequestMiddleware for RpcRequestMiddleware {
+@@ -265,6 +266,7 @@ impl RequestMiddleware for RpcRequestMiddleware {
                              snapshot_utils::get_highest_incremental_snapshot_archive_info(
                                  &snapshot_config.incremental_snapshot_archives_dir,
                                  full_snapshot_archive_info.slot(),
@@ -23557,7 +23678,7 @@ index 8597394f10..477db6d880 100644
                              )
                              .map(|incremental_snapshot_archive_info| {
                                  incremental_snapshot_archive_info
-@@ -377,11 +379,6 @@ impl JsonRpcService {
+@@ -378,11 +380,6 @@ impl JsonRpcService {
              LARGEST_ACCOUNTS_CACHE_DURATION,
          )));
  
@@ -23569,7 +23690,7 @@ index 8597394f10..477db6d880 100644
          // sadly, some parts of our current rpc implemention block the jsonrpc's
          // _socket-listening_ event loop for too long, due to (blocking) long IO or intesive CPU,
          // causing no further processing of incoming requests and ultimatily innocent clients timing-out.
-@@ -480,7 +477,7 @@ impl JsonRpcService {
+@@ -481,7 +478,7 @@ impl JsonRpcService {
          let leader_info =
              poh_recorder.map(|recorder| ClusterTpuInfo::new(cluster_info.clone(), recorder));
          let _send_transaction_service = Arc::new(SendTransactionService::new_with_config(
@@ -24408,7 +24529,7 @@ index 0000000000..5fcb625a26
 +    }
 +}
 diff --git a/runtime/src/bank.rs b/runtime/src/bank.rs
-index e620c0b803..6112ab9eb5 100644
+index b15f3f6229..ca9d923095 100644
 --- a/runtime/src/bank.rs
 +++ b/runtime/src/bank.rs
 @@ -74,7 +74,7 @@ use {
@@ -24420,7 +24541,7 @@ index e620c0b803..6112ab9eb5 100644
              TransactionLoadResult,
          },
          accounts_db::{
-@@ -319,6 +319,7 @@ enum ProgramAccountLoadResult {
+@@ -315,6 +315,7 @@ enum ProgramAccountLoadResult {
      ProgramOfLoaderV4(AccountSharedData, Slot),
  }
  
@@ -24428,7 +24549,7 @@ index e620c0b803..6112ab9eb5 100644
  pub struct LoadAndExecuteTransactionsOutput {
      pub loaded_transactions: Vec<TransactionLoadResult>,
      // Vector of results indicating whether a transaction was executed or could not
-@@ -336,6 +337,29 @@ pub struct LoadAndExecuteTransactionsOutput {
+@@ -332,6 +333,29 @@ pub struct LoadAndExecuteTransactionsOutput {
      pub error_counters: TransactionErrorMetrics,
  }
  
@@ -24458,7 +24579,7 @@ index e620c0b803..6112ab9eb5 100644
  pub struct TransactionSimulationResult {
      pub result: Result<()>,
      pub logs: TransactionLogMessages,
-@@ -769,7 +793,7 @@ pub struct Bank {
+@@ -765,7 +789,7 @@ pub struct Bank {
      inflation: Arc<RwLock<Inflation>>,
  
      /// cache of vote_account and stake_account state for this fork
@@ -24467,7 +24588,7 @@ index e620c0b803..6112ab9eb5 100644
  
      /// staked nodes on epoch boundaries, saved off when a bank.slot() is at
      ///   a leader schedule calculation boundary
-@@ -4258,17 +4282,61 @@ impl Bank {
+@@ -4220,17 +4244,61 @@ impl Bank {
          &'a self,
          transactions: &'b [SanitizedTransaction],
          transaction_results: impl Iterator<Item = Result<()>>,
@@ -24530,7 +24651,7 @@ index e620c0b803..6112ab9eb5 100644
      /// Prepare a transaction batch from a single transaction without locking accounts
      pub fn prepare_unlocked_batch_from_single_tx<'a>(
          &'a self,
-@@ -4592,6 +4660,29 @@ impl Bank {
+@@ -4558,6 +4626,29 @@ impl Bank {
          }
      }
  
@@ -24560,7 +24681,7 @@ index e620c0b803..6112ab9eb5 100644
      fn load_program_accounts(
          &self,
          pubkey: &Pubkey,
-@@ -5652,6 +5743,26 @@ impl Bank {
+@@ -5649,6 +5740,26 @@ impl Bank {
          }
      }
  
@@ -24961,7 +25082,7 @@ index 0000000000..3c02a59f9f
 +    format!("{:x}", hasher.finalize())
 +}
 diff --git a/sdk/src/lib.rs b/sdk/src/lib.rs
-index e64d6ddc57..7f471f4867 100644
+index 4bf36a5d27..77bf0d772d 100644
 --- a/sdk/src/lib.rs
 +++ b/sdk/src/lib.rs
 @@ -60,6 +60,7 @@ pub use solana_program::{
@@ -28721,10 +28842,10 @@ index 1f15137175..fffca1126f 100644
          .unwrap();
      });
 diff --git a/turbine/benches/retransmit_stage.rs b/turbine/benches/retransmit_stage.rs
-index bfd68239fe..44b3f918d1 100644
+index c5490d5670..56c672c7c8 100644
 --- a/turbine/benches/retransmit_stage.rs
 +++ b/turbine/benches/retransmit_stage.rs
-@@ -32,7 +32,7 @@ use {
+@@ -33,7 +33,7 @@ use {
          net::{Ipv4Addr, UdpSocket},
          sync::{
              atomic::{AtomicUsize, Ordering},
@@ -28733,7 +28854,7 @@ index bfd68239fe..44b3f918d1 100644
          },
          thread::{sleep, Builder},
          time::Duration,
-@@ -123,6 +123,7 @@ fn bench_retransmitter(bencher: &mut Bencher) {
+@@ -126,6 +126,7 @@ fn bench_retransmitter(bencher: &mut Bencher) {
          shreds_receiver,
          Arc::default(), // solana_rpc::max_slots::MaxSlots
          None,
@@ -28742,10 +28863,10 @@ index bfd68239fe..44b3f918d1 100644
  
      let mut index = 0;
 diff --git a/turbine/src/broadcast_stage.rs b/turbine/src/broadcast_stage.rs
-index 98566dfa24..d3c39ff497 100644
+index 7538754539..c4b89255a6 100644
 --- a/turbine/src/broadcast_stage.rs
 +++ b/turbine/src/broadcast_stage.rs
-@@ -108,6 +108,7 @@ impl BroadcastStageType {
+@@ -116,6 +116,7 @@ impl BroadcastStageType {
          bank_forks: Arc<RwLock<BankForks>>,
          shred_version: u16,
          quic_endpoint_sender: AsyncSender<(SocketAddr, Bytes)>,
@@ -28753,7 +28874,7 @@ index 98566dfa24..d3c39ff497 100644
      ) -> BroadcastStage {
          match self {
              BroadcastStageType::Standard => BroadcastStage::new(
-@@ -120,6 +121,7 @@ impl BroadcastStageType {
+@@ -128,6 +129,7 @@ impl BroadcastStageType {
                  bank_forks,
                  quic_endpoint_sender,
                  StandardBroadcastRun::new(shred_version),
@@ -28761,7 +28882,7 @@ index 98566dfa24..d3c39ff497 100644
              ),
  
              BroadcastStageType::FailEntryVerification => BroadcastStage::new(
-@@ -132,6 +134,7 @@ impl BroadcastStageType {
+@@ -140,6 +142,7 @@ impl BroadcastStageType {
                  bank_forks,
                  quic_endpoint_sender,
                  FailEntryVerificationBroadcastRun::new(shred_version),
@@ -28769,7 +28890,7 @@ index 98566dfa24..d3c39ff497 100644
              ),
  
              BroadcastStageType::BroadcastFakeShreds => BroadcastStage::new(
-@@ -144,6 +147,7 @@ impl BroadcastStageType {
+@@ -152,6 +155,7 @@ impl BroadcastStageType {
                  bank_forks,
                  quic_endpoint_sender,
                  BroadcastFakeShredsRun::new(0, shred_version),
@@ -28777,7 +28898,7 @@ index 98566dfa24..d3c39ff497 100644
              ),
  
              BroadcastStageType::BroadcastDuplicates(config) => BroadcastStage::new(
-@@ -156,6 +160,7 @@ impl BroadcastStageType {
+@@ -164,6 +168,7 @@ impl BroadcastStageType {
                  bank_forks,
                  quic_endpoint_sender,
                  BroadcastDuplicatesRun::new(shred_version, config.clone()),
@@ -28785,7 +28906,7 @@ index 98566dfa24..d3c39ff497 100644
              ),
          }
      }
-@@ -177,6 +182,7 @@ trait BroadcastRun {
+@@ -185,6 +190,7 @@ trait BroadcastRun {
          sock: &UdpSocket,
          bank_forks: &RwLock<BankForks>,
          quic_endpoint_sender: &AsyncSender<(SocketAddr, Bytes)>,
@@ -28793,7 +28914,7 @@ index 98566dfa24..d3c39ff497 100644
      ) -> Result<()>;
      fn record(&mut self, receiver: &RecordReceiver, blockstore: &Blockstore) -> Result<()>;
  }
-@@ -272,6 +278,7 @@ impl BroadcastStage {
+@@ -280,6 +286,7 @@ impl BroadcastStage {
          bank_forks: Arc<RwLock<BankForks>>,
          quic_endpoint_sender: AsyncSender<(SocketAddr, Bytes)>,
          broadcast_stage_run: impl BroadcastRun + Send + 'static + Clone,
@@ -28801,7 +28922,7 @@ index 98566dfa24..d3c39ff497 100644
      ) -> Self {
          let (socket_sender, socket_receiver) = unbounded();
          let (blockstore_sender, blockstore_receiver) = unbounded();
-@@ -303,6 +310,8 @@ impl BroadcastStage {
+@@ -311,6 +318,8 @@ impl BroadcastStage {
              let cluster_info = cluster_info.clone();
              let bank_forks = bank_forks.clone();
              let quic_endpoint_sender = quic_endpoint_sender.clone();
@@ -28810,7 +28931,7 @@ index 98566dfa24..d3c39ff497 100644
              let run_transmit = move || loop {
                  let res = bs_transmit.transmit(
                      &socket_receiver,
-@@ -310,6 +319,7 @@ impl BroadcastStage {
+@@ -318,6 +327,7 @@ impl BroadcastStage {
                      &sock,
                      &bank_forks,
                      &quic_endpoint_sender,
@@ -28818,7 +28939,7 @@ index 98566dfa24..d3c39ff497 100644
                  );
                  let res = Self::handle_error(res, "solana-broadcaster-transmit");
                  if let Some(res) = res {
-@@ -420,6 +430,7 @@ fn update_peer_stats(
+@@ -428,6 +438,7 @@ fn update_peer_stats(
  
  /// Broadcasts shreds from the leader (i.e. this node) to the root of the
  /// turbine retransmit tree for each shred.
@@ -28826,7 +28947,7 @@ index 98566dfa24..d3c39ff497 100644
  pub fn broadcast_shreds(
      s: &UdpSocket,
      shreds: &[Shred],
-@@ -430,6 +441,7 @@ pub fn broadcast_shreds(
+@@ -438,6 +449,7 @@ pub fn broadcast_shreds(
      bank_forks: &RwLock<BankForks>,
      socket_addr_space: &SocketAddrSpace,
      quic_endpoint_sender: &AsyncSender<(SocketAddr, Bytes)>,
@@ -28834,7 +28955,7 @@ index 98566dfa24..d3c39ff497 100644
  ) -> Result<()> {
      let mut result = Ok(());
      let mut shred_select = Measure::start("shred_select");
-@@ -445,15 +457,34 @@ pub fn broadcast_shreds(
+@@ -453,15 +465,34 @@ pub fn broadcast_shreds(
              let cluster_nodes =
                  cluster_nodes_cache.get(slot, &root_bank, &working_bank, cluster_info);
              update_peer_stats(&cluster_nodes, last_datapoint_submit);
@@ -28876,7 +28997,7 @@ index 98566dfa24..d3c39ff497 100644
                          (match protocol {
                              Protocol::QUIC => Either::Right,
                              Protocol::UDP => Either::Left,
-@@ -685,6 +716,7 @@ pub mod test {
+@@ -696,6 +727,7 @@ pub mod test {
              bank_forks,
              quic_endpoint_sender,
              StandardBroadcastRun::new(0),
@@ -28884,7 +29005,7 @@ index 98566dfa24..d3c39ff497 100644
          );
  
          MockBroadcastStage {
-@@ -723,7 +755,10 @@ pub mod test {
+@@ -734,7 +766,10 @@ pub mod test {
              let ticks = create_ticks(max_tick_height - start_tick_height, 0, Hash::default());
              for (i, tick) in ticks.into_iter().enumerate() {
                  entry_sender
@@ -28897,10 +29018,10 @@ index 98566dfa24..d3c39ff497 100644
              }
          }
 diff --git a/turbine/src/broadcast_stage/broadcast_duplicates_run.rs b/turbine/src/broadcast_stage/broadcast_duplicates_run.rs
-index bae5945aea..70ba97ec4b 100644
+index adca69ed49..3dcf3a4c90 100644
 --- a/turbine/src/broadcast_stage/broadcast_duplicates_run.rs
 +++ b/turbine/src/broadcast_stage/broadcast_duplicates_run.rs
-@@ -280,6 +280,7 @@ impl BroadcastRun for BroadcastDuplicatesRun {
+@@ -300,6 +300,7 @@ impl BroadcastRun for BroadcastDuplicatesRun {
          sock: &UdpSocket,
          bank_forks: &RwLock<BankForks>,
          _quic_endpoint_sender: &AsyncSender<(SocketAddr, Bytes)>,
@@ -28909,10 +29030,10 @@ index bae5945aea..70ba97ec4b 100644
          let (shreds, _) = receiver.recv()?;
          if shreds.is_empty() {
 diff --git a/turbine/src/broadcast_stage/broadcast_fake_shreds_run.rs b/turbine/src/broadcast_stage/broadcast_fake_shreds_run.rs
-index 1464d46493..60795a85bf 100644
+index b82ca324b6..649e8d0383 100644
 --- a/turbine/src/broadcast_stage/broadcast_fake_shreds_run.rs
 +++ b/turbine/src/broadcast_stage/broadcast_fake_shreds_run.rs
-@@ -133,6 +133,7 @@ impl BroadcastRun for BroadcastFakeShredsRun {
+@@ -150,6 +150,7 @@ impl BroadcastRun for BroadcastFakeShredsRun {
          sock: &UdpSocket,
          _bank_forks: &RwLock<BankForks>,
          _quic_endpoint_sender: &AsyncSender<(SocketAddr, Bytes)>,
@@ -28921,10 +29042,10 @@ index 1464d46493..60795a85bf 100644
          for (data_shreds, batch_info) in receiver {
              let fake = batch_info.is_some();
 diff --git a/turbine/src/broadcast_stage/broadcast_utils.rs b/turbine/src/broadcast_stage/broadcast_utils.rs
-index fe99077091..283104e826 100644
+index be231581e7..a51bb639f4 100644
 --- a/turbine/src/broadcast_stage/broadcast_utils.rs
 +++ b/turbine/src/broadcast_stage/broadcast_utils.rs
-@@ -36,13 +36,23 @@ pub(super) fn recv_slot_entries(receiver: &Receiver<WorkingBankEntry>) -> Result
+@@ -40,13 +40,23 @@ pub(super) fn recv_slot_entries(receiver: &Receiver<WorkingBankEntry>) -> Result
          32 * ShredData::capacity(/*merkle_proof_size*/ None).unwrap() as u64;
      let timer = Duration::new(1, 0);
      let recv_start = Instant::now();
@@ -28951,7 +29072,7 @@ index fe99077091..283104e826 100644
              break;
          };
          // If the bank changed, that implies the previous slot was interrupted and we do not have to
-@@ -52,8 +62,8 @@ pub(super) fn recv_slot_entries(receiver: &Receiver<WorkingBankEntry>) -> Result
+@@ -56,8 +66,8 @@ pub(super) fn recv_slot_entries(receiver: &Receiver<WorkingBankEntry>) -> Result
              entries.clear();
              bank = try_bank;
          }
@@ -28962,7 +29083,7 @@ index fe99077091..283104e826 100644
          assert!(last_tick_height <= bank.max_tick_height());
      }
  
-@@ -64,8 +74,10 @@ pub(super) fn recv_slot_entries(receiver: &Receiver<WorkingBankEntry>) -> Result
+@@ -68,8 +78,10 @@ pub(super) fn recv_slot_entries(receiver: &Receiver<WorkingBankEntry>) -> Result
      while last_tick_height != bank.max_tick_height()
          && serialized_batch_byte_count < target_serialized_batch_byte_count
      {
@@ -28975,7 +29096,7 @@ index fe99077091..283104e826 100644
          else {
              break;
          };
-@@ -78,10 +90,12 @@ pub(super) fn recv_slot_entries(receiver: &Receiver<WorkingBankEntry>) -> Result
+@@ -82,10 +94,12 @@ pub(super) fn recv_slot_entries(receiver: &Receiver<WorkingBankEntry>) -> Result
              bank = try_bank;
              coalesce_start = Instant::now();
          }
@@ -28992,7 +29113,7 @@ index fe99077091..283104e826 100644
          assert!(last_tick_height <= bank.max_tick_height());
      }
      let time_coalesced = coalesce_start.elapsed();
-@@ -138,7 +152,11 @@ mod tests {
+@@ -170,7 +184,11 @@ mod tests {
              .map(|i| {
                  let entry = Entry::new(&last_hash, 1, vec![tx.clone()]);
                  last_hash = entry.hash;
@@ -29005,7 +29126,7 @@ index fe99077091..283104e826 100644
                  entry
              })
              .collect();
-@@ -172,11 +190,18 @@ mod tests {
+@@ -204,11 +222,18 @@ mod tests {
                  last_hash = entry.hash;
                  // Interrupt slot 1 right before the last tick
                  if tick_height == expected_last_height {
@@ -29028,7 +29149,7 @@ index fe99077091..283104e826 100644
                  }
              })
 diff --git a/turbine/src/broadcast_stage/fail_entry_verification_broadcast_run.rs b/turbine/src/broadcast_stage/fail_entry_verification_broadcast_run.rs
-index 1dda981e69..215e619a5a 100644
+index e9ed6a1a6e..c0fa09ce7d 100644
 --- a/turbine/src/broadcast_stage/fail_entry_verification_broadcast_run.rs
 +++ b/turbine/src/broadcast_stage/fail_entry_verification_broadcast_run.rs
 @@ -3,7 +3,7 @@ use {
@@ -29040,7 +29161,7 @@ index 1dda981e69..215e619a5a 100644
      tokio::sync::mpsc::Sender as AsyncSender,
  };
  
-@@ -164,6 +164,7 @@ impl BroadcastRun for FailEntryVerificationBroadcastRun {
+@@ -180,6 +180,7 @@ impl BroadcastRun for FailEntryVerificationBroadcastRun {
          sock: &UdpSocket,
          bank_forks: &RwLock<BankForks>,
          quic_endpoint_sender: &AsyncSender<(SocketAddr, Bytes)>,
@@ -29048,7 +29169,7 @@ index 1dda981e69..215e619a5a 100644
      ) -> Result<()> {
          let (shreds, _) = receiver.recv()?;
          broadcast_shreds(
-@@ -176,6 +177,7 @@ impl BroadcastRun for FailEntryVerificationBroadcastRun {
+@@ -192,6 +193,7 @@ impl BroadcastRun for FailEntryVerificationBroadcastRun {
              bank_forks,
              cluster_info.socket_addr_space(),
              quic_endpoint_sender,
@@ -29057,10 +29178,10 @@ index 1dda981e69..215e619a5a 100644
      }
      fn record(&mut self, receiver: &RecordReceiver, blockstore: &Blockstore) -> Result<()> {
 diff --git a/turbine/src/broadcast_stage/standard_broadcast_run.rs b/turbine/src/broadcast_stage/standard_broadcast_run.rs
-index 82bd7f940c..f672ea69c1 100644
+index 6378c0df40..cc852cb162 100644
 --- a/turbine/src/broadcast_stage/standard_broadcast_run.rs
 +++ b/turbine/src/broadcast_stage/standard_broadcast_run.rs
-@@ -17,7 +17,7 @@ use {
+@@ -19,7 +19,7 @@ use {
          signature::Keypair,
          timing::{duration_as_us, AtomicInterval},
      },
@@ -29069,7 +29190,7 @@ index 82bd7f940c..f672ea69c1 100644
      tokio::sync::mpsc::Sender as AsyncSender,
  };
  
-@@ -190,10 +190,24 @@ impl StandardBroadcastRun {
+@@ -216,10 +216,24 @@ impl StandardBroadcastRun {
          let (ssend, srecv) = unbounded();
          self.process_receive_results(keypair, blockstore, &ssend, &bsend, receive_results)?;
          //data
@@ -29096,7 +29217,7 @@ index 82bd7f940c..f672ea69c1 100644
          let _ = self.record(&brecv, blockstore);
          Ok(())
      }
-@@ -391,6 +405,7 @@ impl StandardBroadcastRun {
+@@ -423,6 +437,7 @@ impl StandardBroadcastRun {
          broadcast_shred_batch_info: Option<BroadcastShredBatchInfo>,
          bank_forks: &RwLock<BankForks>,
          quic_endpoint_sender: &AsyncSender<(SocketAddr, Bytes)>,
@@ -29104,7 +29225,7 @@ index 82bd7f940c..f672ea69c1 100644
      ) -> Result<()> {
          trace!("Broadcasting {:?} shreds", shreds.len());
          let mut transmit_stats = TransmitShredsStats::default();
-@@ -407,6 +422,7 @@ impl StandardBroadcastRun {
+@@ -439,6 +454,7 @@ impl StandardBroadcastRun {
              bank_forks,
              cluster_info.socket_addr_space(),
              quic_endpoint_sender,
@@ -29112,7 +29233,7 @@ index 82bd7f940c..f672ea69c1 100644
          )?;
          transmit_time.stop();
  
-@@ -477,6 +493,7 @@ impl BroadcastRun for StandardBroadcastRun {
+@@ -509,6 +525,7 @@ impl BroadcastRun for StandardBroadcastRun {
          sock: &UdpSocket,
          bank_forks: &RwLock<BankForks>,
          quic_endpoint_sender: &AsyncSender<(SocketAddr, Bytes)>,
@@ -29120,7 +29241,7 @@ index 82bd7f940c..f672ea69c1 100644
      ) -> Result<()> {
          let (shreds, batch_info) = receiver.recv()?;
          self.broadcast(
-@@ -486,6 +503,7 @@ impl BroadcastRun for StandardBroadcastRun {
+@@ -518,6 +535,7 @@ impl BroadcastRun for StandardBroadcastRun {
              batch_info,
              bank_forks,
              quic_endpoint_sender,
