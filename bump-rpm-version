@@ -254,7 +254,7 @@ def _query_spec() -> _Spec:
 
 
 _RE_SPEC_PATCH_NAME = re.compile(r'^\s*Patch([0-9]+)\s*:\s*(\S+)\s*$')
-_RE_SPEC_PATCH_CMD = re.compile(r'^\s*%patch([0-9]+)(\s+.*)?$')
+_RE_SPEC_PATCH_CMD = re.compile(r'^\s*%patch\s+-P\s+([0-9]+)(\s+.*)?$')
 _RE_SPEC_GIT_PATCH_CMD = re.compile(r'^\s*git\s+am\s+%{PATCH([0-9]+)}\s*$')
 
 
