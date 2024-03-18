@@ -1,7 +1,7 @@
-From 10cb97fd3e6ac97c4775c124c0431baadc7d31fc Mon Sep 17 00:00:00 2001
+From 771b0cc7732848669e9bc38ed22891cee6ea75d2 Mon Sep 17 00:00:00 2001
 From: buffalu <85544055+buffalu@users.noreply.github.com>
 Date: Thu, 14 Mar 2024 13:03:21 -0700
-Subject: [PATCH] Fix: Ensure set contact info to UDP port instead of QUIC
+Subject: [PATCH 3/3] Fix: Ensure set contact info to UDP port instead of QUIC
  (Backport #601 to v1.18) (#602)
 
 ---
@@ -9,7 +9,7 @@ Subject: [PATCH] Fix: Ensure set contact info to UDP port instead of QUIC
  1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/core/src/proxy/fetch_stage_manager.rs b/core/src/proxy/fetch_stage_manager.rs
-index 38471fc512..0d26c001a7 100644
+index 38471fc512e0..0d26c001a767 100644
 --- a/core/src/proxy/fetch_stage_manager.rs
 +++ b/core/src/proxy/fetch_stage_manager.rs
 @@ -108,10 +108,10 @@ impl FetchStageManager {
@@ -27,3 +27,6 @@ index 38471fc512..0d26c001a7 100644
                              }
                              heartbeats_received = 0;
                          }
+-- 
+2.44.0
+
