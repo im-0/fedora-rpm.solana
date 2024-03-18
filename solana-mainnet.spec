@@ -1,4 +1,3 @@
-%bcond_with bundled_libs
 %global solana_suffix mainnet
 %global solana_crossbeam_commit fd279d707025f0e60951e429bf778b4813d1b6bf
 %global solana_tokio_commit 7cf47705faacf7bf0e43e4131a5377b3291fce21
@@ -57,9 +56,6 @@ Source105:  solana-validator
 Source107:  solana-watchtower.service
 Source108:  solana-watchtower
 Source109:  solana-validator.logrotate
-Source110:  jemalloc-wrapper
-
-Source200:  filter-cargo-checksum
 
 Source300:  https://static.rust-lang.org/dist/rust-%{rust_version}-x86_64-unknown-linux-gnu.tar.gz
 Source301:  https://static.rust-lang.org/dist/rust-%{rust_version}-aarch64-unknown-linux-gnu.tar.gz
@@ -69,16 +65,11 @@ Patch1002: jito02.patch
 Patch1003: jito03.patch
 Patch1004: jito04.patch
 
-Patch2001: 0001-Replace-bundled-C-C-libraries-with-system-provided.patch
 Patch2002: 0002-Manually-vendor-the-patched-crossbeam.patch
 Patch2003: 0003-Manually-vendor-the-patched-tokio.patch
-Patch3001: rocksdb-dynamic-linking.patch
 Patch3002: rocksdb-new-gcc-support.patch
 
 ExclusiveArch:  x86_64 aarch64
-
-%global python python3
-BuildRequires:  %{python}
 
 BuildRequires:  findutils
 BuildRequires:  git
@@ -91,20 +82,7 @@ BuildRequires:  pkgconf-pkg-config
 BuildRequires:  protobuf-compiler >= 3.15.0
 BuildRequires:  protobuf-devel >= 3.15.0
 
-%if %{without bundled_libs}
-BuildRequires:  openssl-devel
-BuildRequires:  zlib-ng-devel
-BuildRequires:  bzip2-devel
-BuildRequires:  lz4-devel
-BuildRequires:  hidapi-devel
-BuildRequires:  jemalloc-devel
-BuildRequires:  rocksdb-devel >= 7.4.0
-BuildRequires:  libzstd-devel
-%endif
-
-%if %{with bundled_libs}
 BuildRequires:  perl
-%endif
 
 # libudev-devel
 BuildRequires:  systemd-devel
@@ -233,44 +211,13 @@ git am %{PATCH1004}
 %setup -q -D -T -b1 -n solana-%{version}
 
 # Apply all other patches.
-%if %{without bundled_libs}
-%patch2001 -p1
-%patch3001 -p1
-%else
 %patch3002 -p1
-%endif
 
 %patch2002 -p1
 ln -sv ../crossbeam-%{solana_crossbeam_commit} ./solana-crossbeam
 
 %patch2003 -p1
 ln -sv ../solana-tokio-%{solana_tokio_commit} ./solana-tokio
-
-%if %{without bundled_libs}
-# Remove bundled C/C++ source code.
-rm -r vendor/bzip2-sys/bzip2-*
-%{python} %{SOURCE200} vendor/bzip2-sys '^bzip2-.*'
-rm -r vendor/hidapi/etc/hidapi
-%{python} %{SOURCE200} vendor/hidapi '^etc/hidapi/.*'
-rm -r vendor/tikv-jemalloc-sys/jemalloc
-%{python} %{SOURCE200} vendor/tikv-jemalloc-sys '^jemalloc/.*'
-rm -r vendor/librocksdb-sys/rocksdb
-rm -r vendor/librocksdb-sys/snappy
-mkdir vendor/librocksdb-sys/rocksdb
-touch vendor/librocksdb-sys/rocksdb/AUTHORS
-%{python} %{SOURCE200} vendor/librocksdb-sys \
-        '^lz4/.*' \
-        '^rocksdb/.*' \
-        '^snappy/.*'
-rm -r vendor/zstd-sys/zstd
-%{python} %{SOURCE200} vendor/zstd-sys '^zstd/.*'
-rm -r vendor/libz-sys/src/zlib
-rm -r vendor/libz-sys/src/zlib-ng
-%{python} %{SOURCE200} vendor/libz-sys \
-        '^src/zlib/.*' \
-        '^src/zlib-ng/.*'
-# TODO: Use system lz4 for lz4-sys.
-%endif
 
 mkdir .cargo
 cp %{SOURCE102} .cargo/config.toml
@@ -282,14 +229,6 @@ find . -type f -name "*.rs" -exec chmod 0644 "{}" ";"
 
 %build
 export PATH="$( pwd )/../rust/bin:${PATH}"
-
-%if %{without bundled_libs}
-export JEMALLOC_OVERRIDE=%{_libdir}/libjemalloc.so
-export ROCKSDB_INCLUDE_DIR=%{_includedir}
-export ROCKSDB_LIB_DIR=%{_libdir}
-export LZ4_INCLUDE_DIR=%{_includedir}
-export LZ4_LIB_DIR=%{_libdir}
-%endif
 
 export PROTOC=/usr/bin/protoc
 export PROTOC_INCLUDE=/usr/include
@@ -362,10 +301,6 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
 sed 's,__SUFFIX__,%{solana_suffix},g' \
         <%{SOURCE109} \
         >solana-validator.logrotate
-sed 's,__SUFFIX__,%{solana_suffix},g' \
-        <%{SOURCE110} \
-        >jemalloc-wrapper
-chmod a+x jemalloc-wrapper
 
 ./_release/solana completion --shell bash >solana.bash-completion
 
@@ -399,17 +334,10 @@ mv solana-watchtower \
 mv solana-validator.logrotate \
         %{buildroot}%{_sysconfdir}/logrotate.d/solana-validator-%{solana_suffix}
 
-%if %{without bundled_libs}
-cp jemalloc-wrapper \
-        %{buildroot}/opt/solana/%{solana_suffix}/bin/solana-ledger-tool
-cp jemalloc-wrapper \
-        %{buildroot}/opt/solana/%{solana_suffix}/bin/solana-validator
-%else
 ln -s ../libexec/solana-ledger-tool \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/
 ln -s ../libexec/solana-validator \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/
-%endif
 
 %ifarch x86_64
 # Use binaries optimized for newer CPUs for running validator and local benchmarks.
