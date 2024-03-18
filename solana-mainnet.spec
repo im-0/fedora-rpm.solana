@@ -211,12 +211,12 @@ git am %{PATCH1004}
 %setup -q -D -T -b1 -n solana-%{version}
 
 # Apply all other patches.
-%patch3002 -p1
+%patch -P 3002 -p1
 
-%patch2002 -p1
+%patch -P 2002 -p1
 ln -sv ../crossbeam-%{solana_crossbeam_commit} ./solana-crossbeam
 
-%patch2003 -p1
+%patch -P 2003 -p1
 ln -sv ../solana-tokio-%{solana_tokio_commit} ./solana-tokio
 
 mkdir .cargo
