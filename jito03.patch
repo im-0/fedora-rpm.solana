@@ -1,8 +1,7 @@
-From 65dd30caae9ae95107d1763ec05daaa01f7bf8c5 Mon Sep 17 00:00:00 2001
+From 37eed3a7f471544ac77d1ebe9158683a0f75397f Mon Sep 17 00:00:00 2001
 From: segfaultdoctor <17258903+segfaultdoc@users.noreply.github.com>
 Date: Tue, 27 Feb 2024 16:11:19 -0500
-Subject: [PATCH 3/3] Backports #595: correctly initialize account overrides
- (#599)
+Subject: [PATCH] Backports #595: correctly initialize account overrides (#599)
 
 ---
  Cargo.lock                     |  4 ++--
@@ -11,7 +10,7 @@ Subject: [PATCH 3/3] Backports #595: correctly initialize account overrides
  3 files changed, 19 insertions(+), 3 deletions(-)
 
 diff --git a/Cargo.lock b/Cargo.lock
-index 432d97a7d86d..ada439cf59fd 100644
+index dba87f1e74..22016a15b0 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -3414,9 +3414,9 @@ dependencies = [
@@ -27,7 +26,7 @@ index 432d97a7d86d..ada439cf59fd 100644
   "libc",
   "wasi 0.11.0+wasi-snapshot-preview1",
 diff --git a/bundle/src/bundle_execution.rs b/bundle/src/bundle_execution.rs
-index 9b438fa713fe..b3a0d51a41f7 100644
+index 9b438fa713..b3a0d51a41 100644
 --- a/bundle/src/bundle_execution.rs
 +++ b/bundle/src/bundle_execution.rs
 @@ -251,8 +251,20 @@ pub fn load_and_execute_bundle<'a>(
@@ -52,7 +51,7 @@ index 9b438fa713fe..b3a0d51a41f7 100644
      let mut chunk_start = 0;
      let start_time = Instant::now();
 diff --git a/runtime/src/bank.rs b/runtime/src/bank.rs
-index 35ad2b087cbd..4dfadabe604c 100644
+index 35ad2b087c..4dfadabe60 100644
 --- a/runtime/src/bank.rs
 +++ b/runtime/src/bank.rs
 @@ -4489,7 +4489,11 @@ impl Bank {
@@ -68,6 +67,3 @@ index 35ad2b087cbd..4dfadabe604c 100644
          let mut account_overrides = AccountOverrides::default();
          let slot_history_id = sysvar::slot_history::id();
          if account_keys.iter().any(|pubkey| *pubkey == slot_history_id) {
--- 
-2.44.0
-

@@ -1,7 +1,7 @@
-From c78fdb525801ba39f5e6cfb3779a6d37f75a0f57 Mon Sep 17 00:00:00 2001
+From b54fd30dc2b653d259de99d2a25cf559698637a6 Mon Sep 17 00:00:00 2001
 From: buffalu <85544055+buffalu@users.noreply.github.com>
 Date: Thu, 22 Feb 2024 10:49:42 -0600
-Subject: [PATCH 2/3] Update release URLs for jito-solana (#589)
+Subject: [PATCH] Update release URLs for jito-solana (#589)
 
 ---
  RELEASE.md                                  | 12 +++----
@@ -11,7 +11,7 @@ Subject: [PATCH 2/3] Update release URLs for jito-solana (#589)
  4 files changed, 26 insertions(+), 26 deletions(-)
 
 diff --git a/RELEASE.md b/RELEASE.md
-index c5aa5d540b11..5c32ff423e2c 100644
+index c5aa5d540b..5c32ff423e 100644
 --- a/RELEASE.md
 +++ b/RELEASE.md
 @@ -107,7 +107,7 @@ Alternatively use the Github UI.
@@ -54,7 +54,7 @@ index c5aa5d540b11..5c32ff423e2c 100644
  
  Build artifacts can take up to 60 minutes after creating the tag before
 diff --git a/ci/test-coverage.sh b/ci/test-coverage.sh
-index 44231cd338a1..60e57c6331d0 100755
+index 44231cd338..60e57c6331 100755
 --- a/ci/test-coverage.sh
 +++ b/ci/test-coverage.sh
 @@ -32,5 +32,5 @@ else
@@ -65,7 +65,7 @@ index 44231cd338a1..60e57c6331d0 100755
 +    "CodeCov report: https://codecov.io/github/jito-foundation/jito-solana/commit/${CI_COMMIT:0:9}"
  fi
 diff --git a/core/src/banking_stage.rs b/core/src/banking_stage.rs
-index 48c6bcd0432f..622c5cfdee45 100644
+index 48c6bcd043..622c5cfdee 100644
 --- a/core/src/banking_stage.rs
 +++ b/core/src/banking_stage.rs
 @@ -122,19 +122,19 @@ impl BankingStageStats {
@@ -133,7 +133,7 @@ index 48c6bcd0432f..622c5cfdee45 100644
              banking_stage.join().unwrap();
              exit.store(true, Ordering::Relaxed);
 diff --git a/docs/src/implemented-proposals/installer.md b/docs/src/implemented-proposals/installer.md
-index a3ad797171c5..48f490a75c91 100644
+index a3ad797171..48f490a75c 100644
 --- a/docs/src/implemented-proposals/installer.md
 +++ b/docs/src/implemented-proposals/installer.md
 @@ -13,7 +13,7 @@ This document proposes an easy to use software install and updater that can be u
@@ -145,6 +145,3 @@ index a3ad797171c5..48f490a75c91 100644
  ```
  
  This script will check github for the latest tagged release and download and run the `solana-install-init` binary from there.
--- 
-2.44.0
-
