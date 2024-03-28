@@ -17,6 +17,18 @@ import xml.etree.ElementTree
 
 _HTTP_TIMEOUT = 15  # seconds
 
+_DOWNLOADABLE_SOURCE_FILE_PATTERNS = [
+    'solana-*.*.*.tar.gz',
+    'solana-crossbeam-*.tar.gz',
+    'solana-tokio-*.tar.gz',
+    'AEADs-*.tar.gz',
+    'curve25519-dalek-*.tar.gz',
+    'rust-*-*-unknown-linux-gnu.tar.gz',
+]
+_GENERATED_SOURCE_FILE_PATTERNS = [
+    'solana-*.*.*.cargo-vendor.tar.xz',
+]
+
 
 class _Spec(typing.NamedTuple):
     file_name: str
@@ -143,28 +155,22 @@ def _main() -> None:
         'rocksdb-new-gcc-support.patch',
     }
 
-    ver = list(map(int, new_version.split('.', 2)))
-
-    if (ver[0] > 1) or ((ver[0] == 1) and (ver[1] >= 15)):
-        # if version >= 1.15:
-        crossbeam_commit = _find_spec_crossbeam_commit(spec)
+    if _ver_gt_e(new_version, '1.15.0'):
+        crossbeam_commit = _find_spec_global(spec, 'solana_crossbeam_commit')
         skip_patches.add('0002-Manually-vendor-the-patched-crossbeam.patch')
     else:
         crossbeam_commit = ''
 
-    if (ver[0] > 1) or ((ver[0] == 1) and (ver[1] > 17)) \
-            or ((ver[0] == 1) and (ver[1] == 17) and ver[2] >= 10):
-        # if version >= 1.17.10:
-        tokio_commit = _find_spec_tokio_commit(spec)
+    if _ver_gt_e(new_version, '1.17.10'):
+        tokio_commit = _find_spec_global(spec, 'solana_tokio_commit')
         skip_patches.add('0003-Manually-vendor-the-patched-tokio.patch')
     else:
         tokio_commit = ''
 
-    if (ver[0] > 1) or ((ver[0] == 1) and (ver[1] > 17)):
-        # if version > 1.17:
-        aes_gcm_siv_commit = _find_spec_aes_gcm_siv_commit(spec)
+    if _ver_gt_e(new_version, '1.18.0'):
+        aes_gcm_siv_commit = _find_spec_global(spec, 'solana_aes_gcm_siv_commit')
         skip_patches.add('0004-Manually-vendor-the-patched-aes-gcm-siv.patch')
-        curve25519_dalek_commit = _find_spec_curve25519_dalek_commit(spec)
+        curve25519_dalek_commit = _find_spec_global(spec, 'solana_curve25519_dalek_commit')
         skip_patches.add('0005-Manually-vendor-the-patched-curve25519-dalek.patch')
     else:
         aes_gcm_siv_commit = ''
@@ -177,7 +183,7 @@ def _main() -> None:
         tokio_commit=tokio_commit,
         aes_gcm_siv_commit=aes_gcm_siv_commit,
         curve25519_dalek_commit=curve25519_dalek_commit,
-        rust_version=_find_spec_rust_version(spec),
+        rust_version=_find_spec_global(spec, 'rust_version'),
         author=author)
     print('Configuration:')
     pprint.pp(config._asdict(), indent=4)
@@ -206,6 +212,27 @@ def _main() -> None:
         _hash_tarballs(config)
 
     print('All done!')
+
+
+def _ver_gt_e(va: str, vb: str) -> bool:
+    return _ver_cmp(va, vb) >= 0
+
+
+def _ver_cmp(vas: str, vbs: str) -> int:
+    va = [int(part) for part in vas.split('.')]
+    vb = [int(part) for part in vbs.split('.')]
+
+    if len(va) < len(vb):
+        va += [0] * (len(vb) - len(va))
+    elif len(vb) < len(va):
+        vb += [0] * (len(va) - len(vb))
+
+    for part_a, part_b in zip(va, vb):
+        if part_a < part_b:
+            return -1
+        elif part_a > part_b:
+            return 1
+    return 0
 
 
 def _query_spec() -> _Spec:
@@ -240,9 +267,12 @@ def _query_spec() -> _Spec:
 
     try:
         last_changelog_name = next(xml_first_rpm.iterfind('./rpmTag[@name="Changelogname"]/string')).text
-        last_changelog_name = last_changelog_name.split('-', 1)[0].strip()
     except StopIteration:
+        last_changelog_name = None
+    if last_changelog_name is None:
         last_changelog_name = 'Unknown <unknown@example.org>'
+    else:
+        last_changelog_name = last_changelog_name.split('-', 1)[0].strip()
 
     return _Spec(
         file_name=file_name,
@@ -297,99 +327,21 @@ def _find_spec_patches(spec: _Spec) -> _Patches:
         ordered_patches=ordered_patches)
 
 
-_RE_SPEC_CROSSBEAM_COMMIT = re.compile(r'^\s*%global\s+solana_crossbeam_commit\s+(\S+)\s*?$')
-
-
-def _find_spec_crossbeam_commit(spec: _Spec) -> str:
-    crossbeam_commit = None
+def _find_spec_global(spec: _Spec, global_name: str) -> str:
+    cre = re.compile(fr'^\s*%global\s+{global_name}\s+(\S+)\s*?$')
+    global_val = None
     with open(spec.file_name, 'r') as spec_f:
         for line in spec_f:
             line = line.strip()
-            commit_match = _RE_SPEC_CROSSBEAM_COMMIT.match(line)
+            global_match = cre.match(line)
 
-            if commit_match is not None:
-                commit = commit_match[1]
-                assert crossbeam_commit is None, \
-                    f'Duplicate crossbeam commit, previous == {crossbeam_commit}, new == {commit}'
-                crossbeam_commit = commit
-    assert crossbeam_commit is not None, 'Crossbeam commit not found in RPM SPEC'
-    return crossbeam_commit
-
-
-_RE_SPEC_TOKIO_COMMIT = re.compile(r'^\s*%global\s+solana_tokio_commit\s+(\S+)\s*?$')
-
-
-def _find_spec_tokio_commit(spec: _Spec) -> str:
-    tokio_commit = None
-    with open(spec.file_name, 'r') as spec_f:
-        for line in spec_f:
-            line = line.strip()
-            commit_match = _RE_SPEC_TOKIO_COMMIT.match(line)
-
-            if commit_match is not None:
-                commit = commit_match[1]
-                assert tokio_commit is None, \
-                    f'Duplicate tokio commit, previous == {tokio_commit}, new == {commit}'
-                tokio_commit = commit
-    assert tokio_commit is not None, 'Tokio commit not found in RPM SPEC'
-    return tokio_commit
-
-
-_RE_SPEC_AES_GCM_SIV_COMMIT = re.compile(r'^\s*%global\s+solana_aes_gcm_siv_commit\s+(\S+)\s*?$')
-
-
-def _find_spec_aes_gcm_siv_commit(spec: _Spec) -> str:
-    aes_gcm_siv_commit = None
-    with open(spec.file_name, 'r') as spec_f:
-        for line in spec_f:
-            line = line.strip()
-            commit_match = _RE_SPEC_AES_GCM_SIV_COMMIT.match(line)
-
-            if commit_match is not None:
-                commit = commit_match[1]
-                assert aes_gcm_siv_commit is None, \
-                    f'Duplicate aes-gcm-siv commit, previous == {aes_gcm_siv_commit}, new == {commit}'
-                aes_gcm_siv_commit = commit
-    assert aes_gcm_siv_commit is not None, 'aes-gcm-siv commit not found in RPM SPEC'
-    return aes_gcm_siv_commit
-
-
-_RE_SPEC_CURVE25519_DALEK_COMMIT = re.compile(r'^\s*%global\s+solana_curve25519_dalek_commit\s+(\S+)\s*?$')
-
-
-def _find_spec_curve25519_dalek_commit(spec: _Spec) -> str:
-    curve25519_dalek_commit = None
-    with open(spec.file_name, 'r') as spec_f:
-        for line in spec_f:
-            line = line.strip()
-            commit_match = _RE_SPEC_CURVE25519_DALEK_COMMIT.match(line)
-
-            if commit_match is not None:
-                commit = commit_match[1]
-                assert curve25519_dalek_commit is None, \
-                    f'Duplicate curve25519-dalek commit, previous == {curve25519_dalek_commit}, new == {commit}'
-                curve25519_dalek_commit = commit
-    assert curve25519_dalek_commit is not None, 'curve25519-dalek commit not found in RPM SPEC'
-    return curve25519_dalek_commit
-
-
-_RE_SPEC_RUST_VERSION = re.compile(r'^\s*%global\s+rust_version\s+(\S+)\s*?$')
-
-
-def _find_spec_rust_version(spec: _Spec) -> str:
-    rust_version = None
-    with open(spec.file_name, 'r') as spec_f:
-        for line in spec_f:
-            line = line.strip()
-            version_match = _RE_SPEC_RUST_VERSION.match(line)
-
-            if version_match is not None:
-                version = version_match[1]
-                assert rust_version is None, \
-                    f'Duplicate rust version, previous == {rust_version}, new == {version}'
-                rust_version = version
-    assert rust_version is not None, 'Rust version not found in RPM SPEC'
-    return rust_version
+            if global_match is not None:
+                val = global_match[1]
+                assert global_val is None, \
+                    f'Duplicate {global_name}, previous == {global_val}, new == {val}'
+                global_val = val
+    assert global_val is not None, f'{global_name} not found in RPM SPEC'
+    return global_val
 
 
 def _xml_get_rpm_tag_str(tree: xml.etree.ElementTree, name: str) -> str:
@@ -422,52 +374,35 @@ def _xml_get_rpm_tag(tree: xml.etree.ElementTree, name: str) -> xml.etree.Elemen
 
 
 def _download(conf: _Config) -> None:
-    tarball_name = f'solana-{conf.new_version}.tar.gz'
-    _download_one(
-            f'https://github.com/solana-labs/solana/archive/v{conf.new_version}/{tarball_name}',
-            tarball_name)
+    urls = _generate_urls(conf)
+
+    new_source_files = set()
+    for url in urls:
+        source_name = os.path.basename(url)
+        _download_one(url, source_name)
+        new_source_files.add(source_name)
+
+    _rm_old_source_files(new_source_files, _DOWNLOADABLE_SOURCE_FILE_PATTERNS)
+
+
+def _generate_urls(conf: _Config) -> list[str]:
+    urls = [
+        f'https://github.com/solana-labs/solana/archive/v{conf.new_version}/solana-{conf.new_version}.tar.gz',
+    ]
 
     if conf.crossbeam_commit:
-        tarball_name = f'solana-crossbeam-{conf.crossbeam_commit}.tar.gz'
-        _download_one(
-                f'https://github.com/solana-labs/crossbeam/archive/{conf.crossbeam_commit}/{tarball_name}',
-                tarball_name)
-
+        urls.append(f'https://github.com/solana-labs/crossbeam/archive/{conf.crossbeam_commit}/solana-crossbeam-{conf.crossbeam_commit}.tar.gz')
     if conf.tokio_commit:
-        tarball_name = f'solana-tokio-{conf.tokio_commit}.tar.gz'
-        _download_one(
-                f'https://github.com/solana-labs/solana-tokio/archive/{conf.tokio_commit}/{tarball_name}',
-                tarball_name)
-
+        urls.append(f'https://github.com/solana-labs/solana-tokio/archive/{conf.tokio_commit}/solana-tokio-{conf.tokio_commit}.tar.gz')
     if conf.aes_gcm_siv_commit:
-        tarball_name = f'AEADs-{conf.aes_gcm_siv_commit}.tar.gz'
-        _download_one(
-                f'https://github.com/RustCrypto/AEADs/archive/{conf.aes_gcm_siv_commit}/{tarball_name}',
-                tarball_name)
-
+        urls.append(f'https://github.com/RustCrypto/AEADs/archive/{conf.aes_gcm_siv_commit}/AEADs-{conf.aes_gcm_siv_commit}.tar.gz')
     if conf.curve25519_dalek_commit:
-        tarball_name = f'curve25519-dalek-{conf.curve25519_dalek_commit}.tar.gz'
-        _download_one(
-                f'https://github.com/solana-labs/curve25519-dalek/archive/{conf.curve25519_dalek_commit}/{tarball_name}',
-                tarball_name)
+        urls.append(f'https://github.com/solana-labs/curve25519-dalek/archive/{conf.curve25519_dalek_commit}/curve25519-dalek-{conf.curve25519_dalek_commit}.tar.gz')
 
-    if conf.old_version != conf.new_version:
-        old_tarball_name = f'solana-{conf.old_version}.tar.gz'
-        if os.path.exists(old_tarball_name):
-            print(f'Removing old source tarball: {old_tarball_name}')
-            os.unlink(old_tarball_name)
-
-    rust_tarballs = set()
     for rust_arch in 'x86_64', 'aarch64':
-        tarball_name = f'rust-{conf.rust_version}-{rust_arch}-unknown-linux-gnu.tar.gz'
-        rust_tarballs.add(tarball_name)
-        _download_one(
-                f'https://static.rust-lang.org/dist/{tarball_name}',
-                tarball_name)
-    existing_rust_tarballs = set(glob.glob('rust-*-*-unknown-linux-gnu.tar.gz'))
-    for old_rust_tarball in existing_rust_tarballs - rust_tarballs:
-        print(f'Removing old source tarball: {old_rust_tarball}')
-        os.unlink(old_rust_tarball)
+        urls.append(f'https://static.rust-lang.org/dist/rust-{conf.rust_version}-{rust_arch}-unknown-linux-gnu.tar.gz')
+
+    return urls
 
 
 def _download_one(url: str, tarball_name: str) -> None:
@@ -600,12 +535,12 @@ def _vendor(conf: _Config, patches: _Patches, skip_patches: set[str]) -> None:
         # Unpack source code.
         src_tarball_name = f'solana-{conf.new_version}.tar.gz'
         print(f'Unpacking "{src_tarball_name}"...')
-        cmd = (
+        cmd = [
             'tar',
             '--directory', tmp_src,
             '--extract',
             '--file', src_tarball_name,
-        )
+        ]
         subprocess.check_call(
             cmd,
             stdin=subprocess.DEVNULL)
@@ -626,10 +561,10 @@ def _vendor(conf: _Config, patches: _Patches, skip_patches: set[str]) -> None:
 
             if b'vendor/' in patch_bytes:
                 # Run `cargo vendor` to allow patches for dependencies.
-                cmd = (
+                cmd = [
                     'cargo',
                     'vendor',
-                )
+                ]
                 subprocess.check_call(
                     cmd,
                     stdin=subprocess.DEVNULL,
@@ -637,27 +572,27 @@ def _vendor(conf: _Config, patches: _Patches, skip_patches: set[str]) -> None:
 
             if b'GIT binary patch' in patch_bytes:
                 if not os.path.exists(os.path.join(tmp_src_root, '.git')):
-                    cmd = ('git', 'init', '-q')
+                    cmd = ['git', 'init', '-q']
                     subprocess.run(
                         cmd,
                         cwd=tmp_src_root,
                         check=True)
 
-                cmd = ('git', 'add', '.')
+                cmd = ['git', 'add', '.']
                 subprocess.run(
                     cmd,
                     cwd=tmp_src_root,
                     check=True)
 
-                cmd = ('git', 'commit', '-m', 'import')
+                cmd = ['git', 'commit', '-m', 'import']
                 subprocess.run(
                     cmd,
                     cwd=tmp_src_root,
                     check=True)
 
-                cmd = ('git', 'am')
+                cmd = ['git', 'am']
             else:
-                cmd = ('patch', '-p1')
+                cmd = ['patch', '-p1']
             subprocess.run(
                 cmd,
                 input=patch_bytes,
@@ -665,7 +600,7 @@ def _vendor(conf: _Config, patches: _Patches, skip_patches: set[str]) -> None:
                 check=True)
 
             if os.path.exists(tmp_src_root_gitm):
-                cmd = ('git', 'submodule', 'update', '--init', '--recursive', '--depth', '1')
+                cmd = ['git', 'submodule', 'update', '--init', '--recursive', '--depth', '1']
                 subprocess.run(
                     cmd,
                     cwd=tmp_src_root,
@@ -676,10 +611,10 @@ def _vendor(conf: _Config, patches: _Patches, skip_patches: set[str]) -> None:
         # Final run of `cargo vendor`.
         if os.path.exists(tmp_src_root_vendor):
             shutil.rmtree(tmp_src_root_vendor)
-        cmd = (
+        cmd = [
             'cargo',
             'vendor',
-        )
+        ]
         subprocess.check_call(
             cmd,
             stdin=subprocess.DEVNULL,
@@ -715,11 +650,17 @@ def _vendor(conf: _Config, patches: _Patches, skip_patches: set[str]) -> None:
         # Remove temporary directory.
         shutil.rmtree(tmp)
 
-    if conf.old_version != conf.new_version:
-        old_tarball_name = f'solana-{conf.old_version}.cargo-vendor.tar.xz'
-        if os.path.exists(old_tarball_name):
-            print(f'Removing old dependencies tarball: {old_tarball_name}')
-            os.unlink(old_tarball_name)
+    _rm_old_source_files(set((tarball_name, )), _GENERATED_SOURCE_FILE_PATTERNS)
+
+
+def _rm_old_source_files(new_source_files: set[str], rm_patterns: list[str]) -> None:
+    existing_source_files: set[str] = set()
+    for rm_pattern in rm_patterns:
+        existing_source_files |= frozenset(glob.glob(rm_pattern))
+
+    for outdated_source_file in existing_source_files - new_source_files:
+        print(f'Removing old source file: {outdated_source_file}')
+        os.unlink(outdated_source_file)
 
 
 def _hash_tarballs(conf: _Config) -> None:
@@ -727,19 +668,9 @@ def _hash_tarballs(conf: _Config) -> None:
     cmd = [
         'sha512sum',
         '--tag',
-        f'solana-{conf.new_version}.tar.gz',
-        f'solana-{conf.new_version}.cargo-vendor.tar.xz',
-        f'rust-{conf.rust_version}-x86_64-unknown-linux-gnu.tar.gz',
-        f'rust-{conf.rust_version}-aarch64-unknown-linux-gnu.tar.gz',
     ]
-    if conf.crossbeam_commit:
-        cmd.append(f'solana-crossbeam-{conf.crossbeam_commit}.tar.gz')
-    if conf.tokio_commit:
-        cmd.append(f'solana-tokio-{conf.tokio_commit}.tar.gz')
-    if conf.aes_gcm_siv_commit:
-        cmd.append(f'AEADs-{conf.aes_gcm_siv_commit}.tar.gz')
-    if conf.curve25519_dalek_commit:
-        cmd.append(f'curve25519-dalek-{conf.curve25519_dalek_commit}.tar.gz')
+    for pattern in _DOWNLOADABLE_SOURCE_FILE_PATTERNS + _GENERATED_SOURCE_FILE_PATTERNS:
+        cmd += list(glob.glob(pattern))
 
     hashes = subprocess.check_output(
         cmd,
