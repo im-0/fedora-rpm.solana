@@ -1,9 +1,9 @@
-From 7b6c3f30dc7eb562726775c779225efdbae61f19 Mon Sep 17 00:00:00 2001
+From 036a5f8a05853eb6420f6ddc7e50c518375eafbf Mon Sep 17 00:00:00 2001
 From: Lucas B <lucas@jito.wtf>
 Date: Thu, 25 Aug 2022 17:18:46 -0500
-Subject: [PATCH 1/3] jito patch only reroute if relayer connected (#123) feat:
- add client tls config (#121) remove extra val (#129) fix clippy (#130) copy
- all binaries to docker-output (#131) Ledger tool halts at slot passed to
+Subject: [PATCH] jito patch only reroute if relayer connected (#123) feat: add
+ client tls config (#121) remove extra val (#129) fix clippy (#130) copy all
+ binaries to docker-output (#131) Ledger tool halts at slot passed to
  create-snapshot (#118) update program submodule (#133) quick fix for tips and
  clearing old bundles (#135) update submodule to new program (#136) Improve
  stake-meta-generator usability (#134) pinning submodule head (#140) Use
@@ -281,7 +281,7 @@ Fix release process
  banks-server/src/banks_server.rs              |    5 +-
  bootstrap                                     |   26 +
  bundle/Cargo.toml                             |   36 +
- bundle/src/bundle_execution.rs                | 1187 ++++++++++++
+ bundle/src/bundle_execution.rs                | 1188 ++++++++++++
  bundle/src/lib.rs                             |   60 +
  ci/buildkite-pipeline-in-disk.sh              |    4 +-
  ci/buildkite-pipeline.sh                      |    4 +-
@@ -441,7 +441,7 @@ Fix release process
  validator/src/dashboard.rs                    |    1 +
  validator/src/main.rs                         |  268 ++-
  version/src/lib.rs                            |    2 +-
- 185 files changed, 17647 insertions(+), 885 deletions(-)
+ 185 files changed, 17648 insertions(+), 885 deletions(-)
  create mode 100644 .dockerignore
  create mode 100644 .gitmodules
  create mode 160000 anchor
@@ -504,7 +504,7 @@ Fix release process
 
 diff --git a/.dockerignore b/.dockerignore
 new file mode 100644
-index 000000000000..99262ca8942e
+index 0000000000..99262ca894
 --- /dev/null
 +++ b/.dockerignore
 @@ -0,0 +1,9 @@
@@ -518,7 +518,7 @@ index 000000000000..99262ca8942e
 +f
 +target/
 diff --git a/.github/dependabot.yml b/.github/dependabot.yml
-index 95e3fb34445e..91cf374c791c 100644
+index 95e3fb3444..91cf374c79 100644
 --- a/.github/dependabot.yml
 +++ b/.github/dependabot.yml
 @@ -3,14 +3,15 @@
@@ -549,7 +549,7 @@ index 95e3fb34445e..91cf374c791c 100644
 +#  #  - "automerge"
 +#  open-pull-requests-limit: 6
 diff --git a/.github/workflows/cargo.yml b/.github/workflows/cargo.yml
-index 3d7b1371b657..6476681f7555 100644
+index 3d7b1371b6..6476681f75 100644
 --- a/.github/workflows/cargo.yml
 +++ b/.github/workflows/cargo.yml
 @@ -34,6 +34,8 @@ jobs:
@@ -571,7 +571,7 @@ index 3d7b1371b657..6476681f7555 100644
        - uses: mozilla-actions/sccache-action@v0.0.3
          with:
 diff --git a/.github/workflows/changelog-label.yml b/.github/workflows/changelog-label.yml
-index c63f7821c260..0e82899203ae 100644
+index c63f7821c2..0e82899203 100644
 --- a/.github/workflows/changelog-label.yml
 +++ b/.github/workflows/changelog-label.yml
 @@ -13,6 +13,7 @@ jobs:
@@ -583,7 +583,7 @@ index c63f7821c260..0e82899203ae 100644
        shell: bash
        env:
 diff --git a/.github/workflows/client-targets.yml b/.github/workflows/client-targets.yml
-index 97118918ef84..aacb52629d2a 100644
+index 97118918ef..aacb52629d 100644
 --- a/.github/workflows/client-targets.yml
 +++ b/.github/workflows/client-targets.yml
 @@ -32,6 +32,8 @@ jobs:
@@ -605,7 +605,7 @@ index 97118918ef84..aacb52629d2a 100644
        - name: Setup Rust
          run: |
 diff --git a/.github/workflows/crate-check.yml b/.github/workflows/crate-check.yml
-index a47e7cde5fb2..9b57d633ade5 100644
+index a47e7cde5f..9b57d633ad 100644
 --- a/.github/workflows/crate-check.yml
 +++ b/.github/workflows/crate-check.yml
 @@ -18,6 +18,7 @@ jobs:
@@ -617,7 +617,7 @@ index a47e7cde5fb2..9b57d633ade5 100644
        - name: Get commit range (push)
          if: ${{ github.event_name == 'push' }}
 diff --git a/.github/workflows/docs.yml b/.github/workflows/docs.yml
-index fb2096bd33b1..e5ac907ea1f8 100644
+index fb2096bd33..e5ac907ea1 100644
 --- a/.github/workflows/docs.yml
 +++ b/.github/workflows/docs.yml
 @@ -22,6 +22,7 @@ jobs:
@@ -638,7 +638,7 @@ index fb2096bd33b1..e5ac907ea1f8 100644
        - name: Setup Node
          uses: actions/setup-node@v3
 diff --git a/.github/workflows/downstream-project-anchor.yml b/.github/workflows/downstream-project-anchor.yml
-index 516a0fdc56ae..b653e18958a4 100644
+index 516a0fdc56..b653e18958 100644
 --- a/.github/workflows/downstream-project-anchor.yml
 +++ b/.github/workflows/downstream-project-anchor.yml
 @@ -42,6 +42,8 @@ jobs:
@@ -651,7 +651,7 @@ index 516a0fdc56ae..b653e18958a4 100644
        - shell: bash
          run: |
 diff --git a/.github/workflows/downstream-project-spl.yml b/.github/workflows/downstream-project-spl.yml
-index 690a312b7994..2956fa6bc15d 100644
+index 690a312b79..2956fa6bc1 100644
 --- a/.github/workflows/downstream-project-spl.yml
 +++ b/.github/workflows/downstream-project-spl.yml
 @@ -41,6 +41,8 @@ jobs:
@@ -682,7 +682,7 @@ index 690a312b7994..2956fa6bc15d 100644
        - shell: bash
          run: |
 diff --git a/.github/workflows/increment-cargo-version-on-release.yml b/.github/workflows/increment-cargo-version-on-release.yml
-index 5592d76ca52d..ca55af215510 100644
+index 5592d76ca5..ca55af2155 100644
 --- a/.github/workflows/increment-cargo-version-on-release.yml
 +++ b/.github/workflows/increment-cargo-version-on-release.yml
 @@ -11,6 +11,8 @@ jobs:
@@ -695,7 +695,7 @@ index 5592d76ca52d..ca55af215510 100644
        # This script confirms two assumptions:
        # 1) Tag should be branch.<patch_version>
 diff --git a/.github/workflows/release-artifacts.yml b/.github/workflows/release-artifacts.yml
-index 0391a09766e9..e07cda6a40ac 100644
+index 0391a09766..e07cda6a40 100644
 --- a/.github/workflows/release-artifacts.yml
 +++ b/.github/workflows/release-artifacts.yml
 @@ -26,6 +26,7 @@ jobs:
@@ -707,7 +707,7 @@ index 0391a09766e9..e07cda6a40ac 100644
        - name: Setup Rust
          shell: bash
 diff --git a/.gitignore b/.gitignore
-index 393ff1f496df..cf61e973418d 100644
+index 393ff1f496..cf61e97341 100644
 --- a/.gitignore
 +++ b/.gitignore
 @@ -4,6 +4,7 @@ target/
@@ -732,7 +732,7 @@ index 393ff1f496df..cf61e973418d 100644
 +docker-output/
 diff --git a/.gitmodules b/.gitmodules
 new file mode 100644
-index 000000000000..e31fc7fccd92
+index 0000000000..e31fc7fccd
 --- /dev/null
 +++ b/.gitmodules
 @@ -0,0 +1,9 @@
@@ -746,7 +746,7 @@ index 000000000000..e31fc7fccd92
 +	path = jito-protos/protos
 +	url = https://github.com/jito-labs/mev-protos.git
 diff --git a/Cargo.lock b/Cargo.lock
-index 4cceedf4dcf3..454dad5a17d1 100644
+index 4e7c62d4b6..c7df3d43b1 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -125,6 +125,145 @@ dependencies = [
@@ -1399,7 +1399,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
 +
 +[[package]]
 +name = "jito-protos"
-+version = "1.18.7"
++version = "1.18.8"
 +dependencies = [
 + "bytes",
 + "prost",
@@ -1784,7 +1784,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
  
 +[[package]]
 +name = "solana-bundle"
-+version = "1.18.7"
++version = "1.18.8"
 +dependencies = [
 + "anchor-lang",
 + "assert_matches",
@@ -1805,8 +1805,8 @@ index 4cceedf4dcf3..454dad5a17d1 100644
 +
  [[package]]
  name = "solana-cargo-build-bpf"
- version = "1.18.7"
-@@ -5687,7 +6023,7 @@ version = "1.18.7"
+ version = "1.18.8"
+@@ -5687,7 +6023,7 @@ version = "1.18.8"
  dependencies = [
   "assert_matches",
   "bincode",
@@ -1815,9 +1815,9 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "clap 2.33.3",
   "console",
   "const_format",
-@@ -5887,10 +6223,11 @@ dependencies = [
+@@ -5888,10 +6224,11 @@ dependencies = [
  name = "solana-core"
- version = "1.18.7"
+ version = "1.18.8"
  dependencies = [
 + "anchor-lang",
   "assert_matches",
@@ -1828,7 +1828,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "bytes",
   "chrono",
   "crossbeam-channel",
-@@ -5901,12 +6238,17 @@ dependencies = [
+@@ -5902,12 +6239,17 @@ dependencies = [
   "futures 0.3.30",
   "histogram",
   "itertools",
@@ -1846,7 +1846,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "quinn",
   "rand 0.8.5",
   "rand_chacha 0.3.1",
-@@ -5923,6 +6265,7 @@ dependencies = [
+@@ -5924,6 +6266,7 @@ dependencies = [
   "serial_test",
   "solana-accounts-db",
   "solana-bloom",
@@ -1854,7 +1854,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "solana-client",
   "solana-core",
   "solana-cost-model",
-@@ -5939,11 +6282,13 @@ dependencies = [
+@@ -5940,11 +6283,13 @@ dependencies = [
   "solana-perf",
   "solana-poh",
   "solana-program-runtime",
@@ -1868,7 +1868,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "solana-sdk",
   "solana-send-transaction-service",
   "solana-stake-program",
-@@ -5966,6 +6311,8 @@ dependencies = [
+@@ -5967,6 +6312,8 @@ dependencies = [
   "test-case",
   "thiserror",
   "tokio",
@@ -1877,7 +1877,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "trees",
  ]
  
-@@ -6097,7 +6444,7 @@ version = "1.18.7"
+@@ -6098,7 +6445,7 @@ version = "1.18.8"
  dependencies = [
   "bitflags 2.4.2",
   "block-buffer 0.10.4",
@@ -1886,9 +1886,9 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "bv",
   "either",
   "generic-array 0.14.7",
-@@ -6120,8 +6467,8 @@ dependencies = [
+@@ -6121,8 +6468,8 @@ dependencies = [
  name = "solana-frozen-abi-macro"
- version = "1.18.7"
+ version = "1.18.8"
  dependencies = [
 - "proc-macro2",
 - "quote",
@@ -1897,25 +1897,25 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "rustc_version 0.4.0",
   "syn 2.0.48",
  ]
-@@ -6176,7 +6523,7 @@ dependencies = [
+@@ -6177,7 +6524,7 @@ dependencies = [
  name = "solana-geyser-plugin-manager"
- version = "1.18.7"
+ version = "1.18.8"
  dependencies = [
 - "bs58",
 + "bs58 0.4.0",
   "crossbeam-channel",
   "json5",
   "jsonrpc-core",
-@@ -6287,7 +6634,7 @@ dependencies = [
+@@ -6288,7 +6635,7 @@ dependencies = [
  name = "solana-keygen"
- version = "1.18.7"
+ version = "1.18.8"
  dependencies = [
 - "bs58",
 + "bs58 0.4.0",
   "clap 3.2.23",
   "dirs-next",
   "num_cpus",
-@@ -6307,7 +6654,7 @@ dependencies = [
+@@ -6308,7 +6655,7 @@ dependencies = [
   "assert_matches",
   "bincode",
   "bitflags 2.4.2",
@@ -1924,8 +1924,8 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "byteorder",
   "chrono",
   "chrono-humanize",
-@@ -6374,7 +6721,7 @@ name = "solana-ledger-tool"
- version = "1.18.7"
+@@ -6375,7 +6722,7 @@ name = "solana-ledger-tool"
+ version = "1.18.8"
  dependencies = [
   "assert_cmd",
 - "bs58",
@@ -1933,7 +1933,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "bytecount",
   "chrono",
   "clap 2.33.3",
-@@ -6675,7 +7022,7 @@ dependencies = [
+@@ -6676,7 +7023,7 @@ dependencies = [
   "borsh 0.10.3",
   "borsh 0.9.3",
   "borsh 1.2.1",
@@ -1942,7 +1942,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "bv",
   "bytemuck",
   "cc",
-@@ -6858,7 +7205,7 @@ version = "1.18.7"
+@@ -6859,7 +7206,7 @@ version = "1.18.8"
  dependencies = [
   "base64 0.21.7",
   "bincode",
@@ -1951,7 +1951,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "crossbeam-channel",
   "dashmap",
   "itertools",
-@@ -6878,6 +7225,7 @@ dependencies = [
+@@ -6879,6 +7226,7 @@ dependencies = [
   "soketto",
   "solana-account-decoder",
   "solana-accounts-db",
@@ -1959,7 +1959,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "solana-client",
   "solana-entry",
   "solana-faucet",
-@@ -6888,6 +7236,7 @@ dependencies = [
+@@ -6889,6 +7237,7 @@ dependencies = [
   "solana-net-utils",
   "solana-perf",
   "solana-poh",
@@ -1967,7 +1967,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "solana-rayon-threadlimit",
   "solana-rpc-client-api",
   "solana-runtime",
-@@ -6919,7 +7268,7 @@ dependencies = [
+@@ -6920,7 +7269,7 @@ dependencies = [
   "async-trait",
   "base64 0.21.7",
   "bincode",
@@ -1976,8 +1976,8 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "crossbeam-channel",
   "futures 0.3.30",
   "indicatif",
-@@ -6945,7 +7294,7 @@ name = "solana-rpc-client-api"
- version = "1.18.7"
+@@ -6946,7 +7295,7 @@ name = "solana-rpc-client-api"
+ version = "1.18.8"
  dependencies = [
   "base64 0.21.7",
 - "bs58",
@@ -1985,7 +1985,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "jsonrpc-core",
   "reqwest",
   "semver 1.0.21",
-@@ -6953,6 +7302,8 @@ dependencies = [
+@@ -6954,6 +7303,8 @@ dependencies = [
   "serde_derive",
   "serde_json",
   "solana-account-decoder",
@@ -1994,8 +1994,8 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "solana-sdk",
   "solana-transaction-status",
   "solana-version",
-@@ -6982,13 +7333,14 @@ name = "solana-rpc-test"
- version = "1.18.7"
+@@ -6983,13 +7334,14 @@ name = "solana-rpc-test"
+ version = "1.18.8"
  dependencies = [
   "bincode",
 - "bs58",
@@ -2010,13 +2010,13 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "solana-account-decoder",
   "solana-client",
   "solana-logger",
-@@ -7087,6 +7439,24 @@ dependencies = [
+@@ -7088,6 +7440,24 @@ dependencies = [
   "zstd",
  ]
  
 +[[package]]
 +name = "solana-runtime-plugin"
-+version = "1.18.7"
++version = "1.18.8"
 +dependencies = [
 + "crossbeam-channel",
 + "json5",
@@ -2034,10 +2034,10 @@ index 4cceedf4dcf3..454dad5a17d1 100644
 +
  [[package]]
  name = "solana-runtime-transaction"
- version = "1.18.7"
-@@ -7105,13 +7475,14 @@ dependencies = [
+ version = "1.18.8"
+@@ -7106,13 +7476,14 @@ dependencies = [
  name = "solana-sdk"
- version = "1.18.7"
+ version = "1.18.8"
  dependencies = [
 + "anchor-lang",
   "anyhow",
@@ -2051,9 +2051,9 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "bytemuck",
   "byteorder",
   "chrono",
-@@ -7164,9 +7535,9 @@ dependencies = [
+@@ -7165,9 +7536,9 @@ dependencies = [
  name = "solana-sdk-macro"
- version = "1.18.7"
+ version = "1.18.8"
  dependencies = [
 - "bs58",
 - "proc-macro2",
@@ -2064,7 +2064,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "rustversion",
   "syn 2.0.48",
  ]
-@@ -7184,11 +7555,13 @@ dependencies = [
+@@ -7185,11 +7556,13 @@ dependencies = [
   "crossbeam-channel",
   "log",
   "solana-client",
@@ -2078,8 +2078,8 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "solana-tpu-client",
  ]
  
-@@ -7262,7 +7635,7 @@ name = "solana-storage-proto"
- version = "1.18.7"
+@@ -7263,7 +7636,7 @@ name = "solana-storage-proto"
+ version = "1.18.8"
  dependencies = [
   "bincode",
 - "bs58",
@@ -2087,13 +2087,13 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "enum-iterator",
   "prost",
   "protobuf-src",
-@@ -7375,6 +7748,44 @@ dependencies = [
+@@ -7376,6 +7749,44 @@ dependencies = [
   "solana-sdk",
  ]
  
 +[[package]]
 +name = "solana-tip-distributor"
-+version = "1.18.7"
++version = "1.18.8"
 +dependencies = [
 + "anchor-lang",
 + "clap 4.3.21",
@@ -2131,8 +2131,8 @@ index 4cceedf4dcf3..454dad5a17d1 100644
 +
  [[package]]
  name = "solana-tokens"
- version = "1.18.7"
-@@ -7465,7 +7876,7 @@ dependencies = [
+ version = "1.18.8"
+@@ -7466,7 +7877,7 @@ dependencies = [
   "base64 0.21.7",
   "bincode",
   "borsh 0.10.3",
@@ -2141,7 +2141,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "lazy_static",
   "log",
   "serde",
-@@ -7607,6 +8018,7 @@ dependencies = [
+@@ -7608,6 +8019,7 @@ dependencies = [
   "solana-rpc-client",
   "solana-rpc-client-api",
   "solana-runtime",
@@ -2149,7 +2149,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "solana-sdk",
   "solana-send-transaction-service",
   "solana-storage-bigtable",
-@@ -7619,6 +8031,7 @@ dependencies = [
+@@ -7620,6 +8032,7 @@ dependencies = [
   "symlink",
   "thiserror",
   "tikv-jemallocator",
@@ -2157,16 +2157,16 @@ index 4cceedf4dcf3..454dad5a17d1 100644
  ]
  
  [[package]]
-@@ -7722,7 +8135,7 @@ dependencies = [
+@@ -7723,7 +8136,7 @@ dependencies = [
  name = "solana-zk-keygen"
- version = "1.18.7"
+ version = "1.18.8"
  dependencies = [
 - "bs58",
 + "bs58 0.4.0",
   "clap 3.2.23",
   "dirs-next",
   "num_cpus",
-@@ -7866,7 +8279,7 @@ version = "0.1.1"
+@@ -7867,7 +8280,7 @@ version = "0.1.1"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "fadbefec4f3c678215ca72bd71862697bb06b41fd77c0088902dd3203354387b"
  dependencies = [
@@ -2175,7 +2175,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "spl-discriminator-syn",
   "syn 2.0.48",
  ]
-@@ -7877,8 +8290,8 @@ version = "0.1.1"
+@@ -7878,8 +8291,8 @@ version = "0.1.1"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "0e5f2044ca42c8938d54d1255ce599c79a1ffd86b677dfab695caa20f9ffc3f2"
  dependencies = [
@@ -2186,7 +2186,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "sha2 0.10.8",
   "syn 2.0.48",
   "thiserror",
-@@ -7935,8 +8348,8 @@ version = "0.3.1"
+@@ -7936,8 +8349,8 @@ version = "0.3.1"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "ab5269c8e868da17b6552ef35a51355a017bd8e0eae269c201fef830d35fa52c"
  dependencies = [
@@ -2197,7 +2197,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "sha2 0.10.8",
   "syn 2.0.48",
  ]
-@@ -8094,9 +8507,9 @@ version = "0.24.3"
+@@ -8095,9 +8508,9 @@ version = "0.24.3"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "1e385be0d24f186b4ce2f9982191e7101bb737312ad61c1f2f984f34bcf85d59"
  dependencies = [
@@ -2210,7 +2210,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "rustversion",
   "syn 1.0.109",
  ]
-@@ -8113,14 +8526,25 @@ version = "0.1.0"
+@@ -8114,14 +8527,25 @@ version = "0.1.0"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "a7973cce6668464ea31f176d85b13c7ab3bba2cb3b77a2ed26abd7801688010a"
  
@@ -2238,7 +2238,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "unicode-ident",
  ]
  
-@@ -8130,8 +8554,8 @@ version = "2.0.48"
+@@ -8131,8 +8555,8 @@ version = "2.0.48"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "0f3531638e407dfc0814761abb7c00a5b54992b849452a0646b7f65c9f770f3f"
  dependencies = [
@@ -2249,7 +2249,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "unicode-ident",
  ]
  
-@@ -8142,8 +8566,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+@@ -8143,8 +8567,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "1329189c02ff984e9736652b1631330da25eaa6bc639089ed4915d25446cbe7b"
  dependencies = [
   "proc-macro-error",
@@ -2260,7 +2260,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "syn 2.0.48",
  ]
  
-@@ -8159,10 +8583,10 @@ version = "0.12.6"
+@@ -8160,10 +8584,10 @@ version = "0.12.6"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "f36bdaa60a83aca3921b5259d5400cbf5e90fc51931376a9bd4a0eb79aa7210f"
  dependencies = [
@@ -2274,7 +2274,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
  ]
  
  [[package]]
-@@ -8264,8 +8688,8 @@ version = "0.12.0"
+@@ -8265,8 +8689,8 @@ version = "0.12.0"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "0ee42b4e559f17bce0385ebf511a7beb67d5cc33c12c96b7f4e9789919d9c10f"
  dependencies = [
@@ -2285,7 +2285,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "syn 1.0.109",
  ]
  
-@@ -8314,8 +8738,8 @@ checksum = "54c25e2cb8f5fcd7318157634e8838aa6f7e4715c96637f969fabaccd1ef5462"
+@@ -8315,8 +8739,8 @@ checksum = "54c25e2cb8f5fcd7318157634e8838aa6f7e4715c96637f969fabaccd1ef5462"
  dependencies = [
   "cfg-if 1.0.0",
   "proc-macro-error",
@@ -2296,7 +2296,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "syn 2.0.48",
  ]
  
-@@ -8326,8 +8750,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+@@ -8327,8 +8751,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "37cfd7bbc88a0104e304229fba519bdc45501a30b760fb72240342f1289ad257"
  dependencies = [
   "proc-macro-error",
@@ -2307,7 +2307,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "syn 2.0.48",
   "test-case-core",
  ]
-@@ -8362,8 +8786,8 @@ version = "1.0.56"
+@@ -8363,8 +8787,8 @@ version = "1.0.56"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "fa0faa943b50f3db30a20aa7e265dbc66076993efed8463e8de414e5d06d3471"
  dependencies = [
@@ -2318,7 +2318,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "syn 2.0.48",
  ]
  
-@@ -8499,8 +8923,8 @@ name = "tokio-macros"
+@@ -8500,8 +8924,8 @@ name = "tokio-macros"
  version = "2.1.0"
  source = "git+https://github.com/solana-labs/solana-tokio.git?rev=7cf47705faacf7bf0e43e4131a5377b3291fce21#7cf47705faacf7bf0e43e4131a5377b3291fce21"
  dependencies = [
@@ -2329,7 +2329,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "syn 2.0.48",
  ]
  
-@@ -8671,6 +9095,7 @@ dependencies = [
+@@ -8672,6 +9096,7 @@ dependencies = [
   "percent-encoding 2.3.1",
   "pin-project",
   "prost",
@@ -2337,7 +2337,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "rustls-pemfile 1.0.0",
   "tokio",
   "tokio-rustls",
-@@ -8679,6 +9104,7 @@ dependencies = [
+@@ -8680,6 +9105,7 @@ dependencies = [
   "tower-layer",
   "tower-service",
   "tracing",
@@ -2345,7 +2345,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
  ]
  
  [[package]]
-@@ -8688,9 +9114,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+@@ -8689,9 +9115,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "a6fdaae4c2c638bb70fe42803a26fbd6fc6ac8c72f5c59f67ecc2a2dcabf4b07"
  dependencies = [
   "prettyplease 0.1.9",
@@ -2357,7 +2357,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "syn 1.0.109",
  ]
  
-@@ -8745,8 +9171,8 @@ version = "0.1.27"
+@@ -8746,8 +9172,8 @@ version = "0.1.27"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "34704c8d6ebcbc939824180af020566b01a7c01f80641264eba0999f6c2b6be7"
  dependencies = [
@@ -2368,7 +2368,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "syn 2.0.48",
  ]
  
-@@ -8864,12 +9290,24 @@ dependencies = [
+@@ -8865,12 +9291,24 @@ dependencies = [
   "tinyvec",
  ]
  
@@ -2393,7 +2393,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
  [[package]]
  name = "unicode-xid"
  version = "0.2.2"
-@@ -8957,6 +9395,12 @@ version = "0.1.5"
+@@ -8958,6 +9396,12 @@ version = "0.1.5"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "7cf7d77f457ef8dfa11e4cd5933c5ddb5dc52a94664071951219a97710f0a32b"
  
@@ -2406,7 +2406,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
  [[package]]
  name = "valuable"
  version = "0.1.0"
-@@ -9048,8 +9492,8 @@ dependencies = [
+@@ -9049,8 +9493,8 @@ dependencies = [
   "bumpalo",
   "log",
   "once_cell",
@@ -2417,7 +2417,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "syn 2.0.48",
   "wasm-bindgen-shared",
  ]
-@@ -9072,7 +9516,7 @@ version = "0.2.90"
+@@ -9073,7 +9517,7 @@ version = "0.2.90"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "3e4c238561b2d428924c49815533a8b9121c664599558a5d9ec51f8a1740a999"
  dependencies = [
@@ -2426,7 +2426,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "wasm-bindgen-macro-support",
  ]
  
-@@ -9082,8 +9526,8 @@ version = "0.2.90"
+@@ -9083,8 +9527,8 @@ version = "0.2.90"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "bae1abb6806dc1ad9e560ed242107c0f6c84335f1749dd4e8ddb012ebd5e25a7"
  dependencies = [
@@ -2437,7 +2437,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "syn 2.0.48",
   "wasm-bindgen-backend",
   "wasm-bindgen-shared",
-@@ -9105,13 +9549,22 @@ dependencies = [
+@@ -9106,13 +9550,22 @@ dependencies = [
   "wasm-bindgen",
  ]
  
@@ -2461,7 +2461,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
  ]
  
  [[package]]
-@@ -9361,6 +9814,12 @@ dependencies = [
+@@ -9362,6 +9815,12 @@ dependencies = [
   "linked-hash-map",
  ]
  
@@ -2474,7 +2474,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
  [[package]]
  name = "yasna"
  version = "0.5.0"
-@@ -9385,8 +9844,8 @@ version = "0.7.31"
+@@ -9386,8 +9845,8 @@ version = "0.7.31"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "b3c129550b3e6de3fd0ba67ba5c81818f9805e58b8d7fee80a3a59d2c9fc601a"
  dependencies = [
@@ -2485,7 +2485,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
   "syn 2.0.48",
  ]
  
-@@ -9405,8 +9864,8 @@ version = "1.4.2"
+@@ -9406,8 +9865,8 @@ version = "1.4.2"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "ce36e65b0d2999d2aafac989fb249189a141aee1f53c612c1f37d72631959f69"
  dependencies = [
@@ -2497,7 +2497,7 @@ index 4cceedf4dcf3..454dad5a17d1 100644
  ]
  
 diff --git a/Cargo.toml b/Cargo.toml
-index 2634b6fc78d4..691d663d55d1 100644
+index f192fbb8c1..512b27beda 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
 @@ -18,6 +18,7 @@ members = [
@@ -2557,30 +2557,30 @@ index 2634b6fc78d4..691d663d55d1 100644
      "unprefixed_malloc_on_supported_platforms",
  ] }
  js-sys = "0.3.67"
-+jito-protos = { path = "jito-protos", version = "=1.18.7" }
++jito-protos = { path = "jito-protos", version = "=1.18.8" }
 +jito-tip-distribution = { path = "jito-programs/mev-programs/programs/tip-distribution", features = ["no-entrypoint"] }
 +jito-tip-payment = { path = "jito-programs/mev-programs/programs/tip-payment", features = ["no-entrypoint"] }
  json5 = "0.4.1"
  jsonrpc-core = "18.0.0"
  jsonrpc-core-client = "18.0.0"
-@@ -317,6 +329,7 @@ solana-bench-tps = { path = "bench-tps", version = "=1.18.7" }
- solana-bloom = { path = "bloom", version = "=1.18.7" }
- solana-bpf-loader-program = { path = "programs/bpf_loader", version = "=1.18.7" }
- solana-bucket-map = { path = "bucket_map", version = "=1.18.7" }
-+solana-bundle = { path = "bundle", version = "=1.18.7" }
- solana-cargo-registry = { path = "cargo-registry", version = "=1.18.7" }
- solana-clap-utils = { path = "clap-utils", version = "=1.18.7" }
- solana-clap-v3-utils = { path = "clap-v3-utils", version = "=1.18.7" }
-@@ -365,6 +378,7 @@ solana-rpc-client = { path = "rpc-client", version = "=1.18.7", default-features
- solana-rpc-client-api = { path = "rpc-client-api", version = "=1.18.7" }
- solana-rpc-client-nonce-utils = { path = "rpc-client-nonce-utils", version = "=1.18.7" }
- solana-runtime = { path = "runtime", version = "=1.18.7" }
-+solana-runtime-plugin = { path = "runtime-plugin", version = "=1.18.7" }
- solana-runtime-transaction = { path = "runtime-transaction", version = "=1.18.7" }
- solana-sdk = { path = "sdk", version = "=1.18.7" }
- solana-sdk-macro = { path = "sdk/macro", version = "=1.18.7" }
+@@ -317,6 +329,7 @@ solana-bench-tps = { path = "bench-tps", version = "=1.18.8" }
+ solana-bloom = { path = "bloom", version = "=1.18.8" }
+ solana-bpf-loader-program = { path = "programs/bpf_loader", version = "=1.18.8" }
+ solana-bucket-map = { path = "bucket_map", version = "=1.18.8" }
++solana-bundle = { path = "bundle", version = "=1.18.8" }
+ solana-cargo-registry = { path = "cargo-registry", version = "=1.18.8" }
+ solana-clap-utils = { path = "clap-utils", version = "=1.18.8" }
+ solana-clap-v3-utils = { path = "clap-v3-utils", version = "=1.18.8" }
+@@ -365,6 +378,7 @@ solana-rpc-client = { path = "rpc-client", version = "=1.18.8", default-features
+ solana-rpc-client-api = { path = "rpc-client-api", version = "=1.18.8" }
+ solana-rpc-client-nonce-utils = { path = "rpc-client-nonce-utils", version = "=1.18.8" }
+ solana-runtime = { path = "runtime", version = "=1.18.8" }
++solana-runtime-plugin = { path = "runtime-plugin", version = "=1.18.8" }
+ solana-runtime-transaction = { path = "runtime-transaction", version = "=1.18.8" }
+ solana-sdk = { path = "sdk", version = "=1.18.8" }
+ solana-sdk-macro = { path = "sdk/macro", version = "=1.18.8" }
 diff --git a/README.md b/README.md
-index c6183f6ab618..f93147af5451 100644
+index c6183f6ab6..f93147af54 100644
 --- a/README.md
 +++ b/README.md
 @@ -4,12 +4,14 @@
@@ -2620,7 +2620,7 @@ index c6183f6ab618..f93147af5451 100644
 +controls and sanctions law.
 \ No newline at end of file
 diff --git a/RELEASE.md b/RELEASE.md
-index c5aa5d540b11..5c32ff423e2c 100644
+index c5aa5d540b..5c32ff423e 100644
 --- a/RELEASE.md
 +++ b/RELEASE.md
 @@ -107,7 +107,7 @@ Alternatively use the Github UI.
@@ -2663,7 +2663,7 @@ index c5aa5d540b11..5c32ff423e2c 100644
  
  Build artifacts can take up to 60 minutes after creating the tag before
 diff --git a/accounts-db/src/account_overrides.rs b/accounts-db/src/account_overrides.rs
-index ee8e7ec9e21f..d5d328642600 100644
+index ee8e7ec9e2..d5d3286426 100644
 --- a/accounts-db/src/account_overrides.rs
 +++ b/accounts-db/src/account_overrides.rs
 @@ -4,12 +4,16 @@ use {
@@ -2685,7 +2685,7 @@ index ee8e7ec9e21f..d5d328642600 100644
          match account {
              Some(account) => self.accounts.insert(*pubkey, account),
 diff --git a/accounts-db/src/accounts.rs b/accounts-db/src/accounts.rs
-index 0c0058703503..8ddfd4b58d9b 100644
+index 0c00587035..8ddfd4b58d 100644
 --- a/accounts-db/src/accounts.rs
 +++ b/accounts-db/src/accounts.rs
 @@ -530,19 +530,24 @@ impl Accounts {
@@ -2912,13 +2912,13 @@ index 0c0058703503..8ddfd4b58d9b 100644
              loaded.as_mut_slice(),
 diff --git a/anchor b/anchor
 new file mode 160000
-index 000000000000..4f52f41cbeaf
+index 0000000000..4f52f41cbe
 --- /dev/null
 +++ b/anchor
 @@ -0,0 +1 @@
 +Subproject commit 4f52f41cbeafb77d85c7b712516dfbeb5b86dd5f
 diff --git a/banking-bench/src/main.rs b/banking-bench/src/main.rs
-index 041df5354f9e..150cc0fb9b02 100644
+index 041df5354f..150cc0fb9b 100644
 --- a/banking-bench/src/main.rs
 +++ b/banking-bench/src/main.rs
 @@ -9,6 +9,7 @@ use {
@@ -2965,7 +2965,7 @@ index 041df5354f9e..150cc0fb9b02 100644
  
      // This is so that the signal_receiver does not go out of scope after the closure.
 diff --git a/banks-server/Cargo.toml b/banks-server/Cargo.toml
-index 1404d88b5cde..94f2531cec4b 100644
+index 1404d88b5c..94f2531cec 100644
 --- a/banks-server/Cargo.toml
 +++ b/banks-server/Cargo.toml
 @@ -16,6 +16,7 @@ futures = { workspace = true }
@@ -2977,7 +2977,7 @@ index 1404d88b5cde..94f2531cec4b 100644
  solana-sdk = { workspace = true }
  solana-send-transaction-service = { workspace = true }
 diff --git a/banks-server/src/banks_server.rs b/banks-server/src/banks_server.rs
-index 1fcdce1ad436..29209c99c4d2 100644
+index 1fcdce1ad4..29209c99c4 100644
 --- a/banks-server/src/banks_server.rs
 +++ b/banks-server/src/banks_server.rs
 @@ -9,6 +9,7 @@ use {
@@ -3008,7 +3008,7 @@ index 1fcdce1ad436..29209c99c4d2 100644
                  receiver,
 diff --git a/bootstrap b/bootstrap
 new file mode 100755
-index 000000000000..d9b1eed6f439
+index 0000000000..d9b1eed6f4
 --- /dev/null
 +++ b/bootstrap
 @@ -0,0 +1,26 @@
@@ -3040,7 +3040,7 @@ index 000000000000..d9b1eed6f439
 +  --trust-block-engine-packets
 diff --git a/bundle/Cargo.toml b/bundle/Cargo.toml
 new file mode 100644
-index 000000000000..7280b7ee6789
+index 0000000000..7280b7ee67
 --- /dev/null
 +++ b/bundle/Cargo.toml
 @@ -0,0 +1,36 @@
@@ -3082,10 +3082,10 @@ index 000000000000..7280b7ee6789
 +name = "solana_bundle"
 diff --git a/bundle/src/bundle_execution.rs b/bundle/src/bundle_execution.rs
 new file mode 100644
-index 000000000000..2c421759603a
+index 0000000000..9e7262649e
 --- /dev/null
 +++ b/bundle/src/bundle_execution.rs
-@@ -0,0 +1,1187 @@
+@@ -0,0 +1,1188 @@
 +use {
 +    itertools::izip,
 +    log::*,
@@ -3435,6 +3435,7 @@ index 000000000000..2c421759603a
 +                &mut metrics.execute_timings,
 +                Some(account_overrides),
 +                *log_messages_bytes_limit,
++                true
 +            ));
 +        debug!(
 +            "bundle id: {} loaded_transactions: {:?}",
@@ -4275,7 +4276,7 @@ index 000000000000..2c421759603a
 +}
 diff --git a/bundle/src/lib.rs b/bundle/src/lib.rs
 new file mode 100644
-index 000000000000..a93e0d3d178a
+index 0000000000..a93e0d3d17
 --- /dev/null
 +++ b/bundle/src/lib.rs
 @@ -0,0 +1,60 @@
@@ -4340,7 +4341,7 @@ index 000000000000..a93e0d3d178a
 +    TipError(#[from] TipError),
 +}
 diff --git a/ci/buildkite-pipeline-in-disk.sh b/ci/buildkite-pipeline-in-disk.sh
-index ad12e1fc000a..2bed53ac0853 100755
+index ad12e1fc00..2bed53ac08 100755
 --- a/ci/buildkite-pipeline-in-disk.sh
 +++ b/ci/buildkite-pipeline-in-disk.sh
 @@ -289,7 +289,7 @@ if [[ -n $BUILDKITE_TAG ]]; then
@@ -4362,7 +4363,7 @@ index ad12e1fc000a..2bed53ac0853 100755
    if [[ $GITHUB_USER = "dependabot[bot]" ]]; then
      command_step dependabot "ci/dependabot-pr.sh" 5
 diff --git a/ci/buildkite-pipeline.sh b/ci/buildkite-pipeline.sh
-index fb6b6f90b502..0969f00e0446 100755
+index fb6b6f90b5..0969f00e04 100755
 --- a/ci/buildkite-pipeline.sh
 +++ b/ci/buildkite-pipeline.sh
 @@ -315,7 +315,7 @@ if [[ -n $BUILDKITE_TAG ]]; then
@@ -4384,7 +4385,7 @@ index fb6b6f90b502..0969f00e0446 100755
    if [[ $GITHUB_USER = "dependabot[bot]" ]]; then
      command_step dependabot "ci/dependabot-pr.sh" 5
 diff --git a/ci/buildkite-secondary.yml b/ci/buildkite-secondary.yml
-index c8bf7b4fd9fd..48aa4d95f45b 100644
+index c8bf7b4fd9..48aa4d95f4 100644
 --- a/ci/buildkite-secondary.yml
 +++ b/ci/buildkite-secondary.yml
 @@ -18,34 +18,34 @@ steps:
@@ -4454,7 +4455,7 @@ index c8bf7b4fd9fd..48aa4d95f45b 100644
 +#        permit_on_passed: true
 +#    timeout_in_minutes: 60
 diff --git a/ci/buildkite-solana-private.sh b/ci/buildkite-solana-private.sh
-index eeb087d323ee..d864135ae14e 100755
+index eeb087d323..d864135ae1 100755
 --- a/ci/buildkite-solana-private.sh
 +++ b/ci/buildkite-solana-private.sh
 @@ -269,7 +269,7 @@ pull_or_push_steps() {
@@ -4476,7 +4477,7 @@ index eeb087d323ee..d864135ae14e 100755
    if [[ $GITHUB_USER = "dependabot[bot]" ]]; then
      command_step dependabot "ci/dependabot-pr.sh" 5
 diff --git a/ci/channel-info.sh b/ci/channel-info.sh
-index c82806454d01..101583307f55 100755
+index c82806454d..101583307f 100755
 --- a/ci/channel-info.sh
 +++ b/ci/channel-info.sh
 @@ -11,7 +11,7 @@ here="$(dirname "$0")"
@@ -4489,7 +4490,7 @@ index c82806454d01..101583307f55 100755
  # Fetch all vX.Y.Z tags
  #
 diff --git a/ci/check-crates.sh b/ci/check-crates.sh
-index 655504ea11d8..d6a9ad9c397d 100755
+index 655504ea11..d6a9ad9c39 100755
 --- a/ci/check-crates.sh
 +++ b/ci/check-crates.sh
 @@ -31,6 +31,9 @@ printf "%s\n" "${files[@]}"
@@ -4503,7 +4504,7 @@ index 655504ea11d8..d6a9ad9c397d 100755
  
    if [[ $package_publish = 'false' ]]; then
 diff --git a/ci/publish-installer.sh b/ci/publish-installer.sh
-index 4b5345ae0d26..71d8ef6985e4 100755
+index 4b5345ae0d..71d8ef6985 100755
 --- a/ci/publish-installer.sh
 +++ b/ci/publish-installer.sh
 @@ -26,14 +26,14 @@ fi
@@ -4527,7 +4528,7 @@ index 4b5345ae0d26..71d8ef6985e4 100755
 -ci/format-url.sh https://release.solana.com/"$CHANNEL_OR_TAG"/install
 +ci/format-url.sh https://release.jito.wtf/"$CHANNEL_OR_TAG"/install
 diff --git a/ci/publish-tarball.sh b/ci/publish-tarball.sh
-index ff72bb7da2d0..ea132a73e1eb 100755
+index ff72bb7da2..ea132a73e1 100755
 --- a/ci/publish-tarball.sh
 +++ b/ci/publish-tarball.sh
 @@ -119,16 +119,16 @@ for file in "${TARBALL_BASENAME}"-$TARGET.tar.bz2 "${TARBALL_BASENAME}"-$TARGET.
@@ -4551,7 +4552,7 @@ index ff72bb7da2d0..ea132a73e1eb 100755
      cp -v "$file" travis-s3-upload/"$CHANNEL_OR_TAG"/
  
 diff --git a/ci/test-coverage.sh b/ci/test-coverage.sh
-index 44231cd338a1..60e57c6331d0 100755
+index 44231cd338..60e57c6331 100755
 --- a/ci/test-coverage.sh
 +++ b/ci/test-coverage.sh
 @@ -32,5 +32,5 @@ else
@@ -4562,7 +4563,7 @@ index 44231cd338a1..60e57c6331d0 100755
 +    "CodeCov report: https://codecov.io/github/jito-foundation/jito-solana/commit/${CI_COMMIT:0:9}"
  fi
 diff --git a/ci/upload-github-release-asset.sh b/ci/upload-github-release-asset.sh
-index ca2ae2a8f604..fb4de1af9e94 100755
+index ca2ae2a8f6..fb4de1af9e 100755
 --- a/ci/upload-github-release-asset.sh
 +++ b/ci/upload-github-release-asset.sh
 @@ -26,7 +26,7 @@ fi
@@ -4575,7 +4576,7 @@ index ca2ae2a8f604..fb4de1af9e94 100755
  #  echo Error: CI_REPO_SLUG not defined
  #  exit 1
 diff --git a/core/Cargo.toml b/core/Cargo.toml
-index bc1bd4549f67..9c9fc4517382 100644
+index bc1bd4549f..9c9fc45173 100644
 --- a/core/Cargo.toml
 +++ b/core/Cargo.toml
 @@ -14,6 +14,7 @@ edition = { workspace = true }
@@ -4652,7 +4653,7 @@ index bc1bd4549f67..9c9fc4517382 100644
  [features]
  dev-context-only-utils = []
 diff --git a/core/benches/banking_stage.rs b/core/benches/banking_stage.rs
-index 242d3b0ed6b5..7f8ddc5151a2 100644
+index 242d3b0ed6..7f8ddc5151 100644
 --- a/core/benches/banking_stage.rs
 +++ b/core/benches/banking_stage.rs
 @@ -22,6 +22,7 @@ use {
@@ -4715,7 +4716,7 @@ index 242d3b0ed6b5..7f8ddc5151a2 100644
  
      let chunk_len = verified.len() / CHUNKS;
 diff --git a/core/benches/consumer.rs b/core/benches/consumer.rs
-index f056fdd0d49a..1b8952f4c6f2 100644
+index f056fdd0d4..1b8952f4c6 100644
 --- a/core/benches/consumer.rs
 +++ b/core/benches/consumer.rs
 @@ -7,16 +7,16 @@ use {
@@ -4782,7 +4783,7 @@ index f056fdd0d49a..1b8952f4c6f2 100644
  fn setup(apply_cost_tracker_during_replay: bool) -> BenchFrame {
 diff --git a/core/benches/proto_to_packet.rs b/core/benches/proto_to_packet.rs
 new file mode 100644
-index 000000000000..87f85f9c7fef
+index 0000000000..87f85f9c7f
 --- /dev/null
 +++ b/core/benches/proto_to_packet.rs
 @@ -0,0 +1,56 @@
@@ -4843,7 +4844,7 @@ index 000000000000..87f85f9c7fef
 +    });
 +}
 diff --git a/core/src/admin_rpc_post_init.rs b/core/src/admin_rpc_post_init.rs
-index 364509a63b98..425a4375c156 100644
+index 364509a63b..425a4375c1 100644
 --- a/core/src/admin_rpc_post_init.rs
 +++ b/core/src/admin_rpc_post_init.rs
 @@ -1,6 +1,7 @@
@@ -4874,7 +4875,7 @@ index 364509a63b98..425a4375c156 100644
 +    pub shred_receiver_address: Arc<RwLock<Option<SocketAddr>>>,
  }
 diff --git a/core/src/banking_stage.rs b/core/src/banking_stage.rs
-index 158614b32d79..7bd9e1dd998a 100644
+index 158614b32d..7bd9e1dd99 100644
 --- a/core/src/banking_stage.rs
 +++ b/core/src/banking_stage.rs
 @@ -25,6 +25,7 @@ use {
@@ -5165,7 +5166,7 @@ index 158614b32d79..7bd9e1dd998a 100644
  
              let keypairs = (0..100).map(|_| Keypair::new()).collect_vec();
 diff --git a/core/src/banking_stage/committer.rs b/core/src/banking_stage/committer.rs
-index ab8f3a9ed57b..0f73cf87a7d3 100644
+index ab8f3a9ed5..0f73cf87a7 100644
 --- a/core/src/banking_stage/committer.rs
 +++ b/core/src/banking_stage/committer.rs
 @@ -15,12 +15,10 @@ use {
@@ -5208,7 +5209,7 @@ index ab8f3a9ed57b..0f73cf87a7d3 100644
              let batch_transaction_indexes: Vec<_> = tx_results
                  .execution_results
 diff --git a/core/src/banking_stage/consume_worker.rs b/core/src/banking_stage/consume_worker.rs
-index d3a53aa42e91..b111a6a106f2 100644
+index d3a53aa42e..b111a6a106 100644
 --- a/core/src/banking_stage/consume_worker.rs
 +++ b/core/src/banking_stage/consume_worker.rs
 @@ -614,11 +614,14 @@ impl ConsumeWorkerTransactionErrorMetrics {
@@ -5256,7 +5257,7 @@ index d3a53aa42e91..b111a6a106f2 100644
          let (consume_sender, consume_receiver) = unbounded();
          let (consumed_sender, consumed_receiver) = unbounded();
 diff --git a/core/src/banking_stage/consumer.rs b/core/src/banking_stage/consumer.rs
-index 093ee533aa45..a181b62a94a0 100644
+index 093ee533aa..a181b62a94 100644
 --- a/core/src/banking_stage/consumer.rs
 +++ b/core/src/banking_stage/consumer.rs
 @@ -1,6 +1,6 @@
@@ -5688,7 +5689,7 @@ index 093ee533aa45..a181b62a94a0 100644
          assert_eq!(expected_units, units);
          assert_eq!(expected_us, us);
 diff --git a/core/src/banking_stage/latest_unprocessed_votes.rs b/core/src/banking_stage/latest_unprocessed_votes.rs
-index a62e5bf9b3e4..012159288689 100644
+index a62e5bf9b3..0121592886 100644
 --- a/core/src/banking_stage/latest_unprocessed_votes.rs
 +++ b/core/src/banking_stage/latest_unprocessed_votes.rs
 @@ -136,7 +136,7 @@ pub(crate) fn weighted_random_order_by_stake<'a>(
@@ -5701,7 +5702,7 @@ index a62e5bf9b3e4..012159288689 100644
      pub(crate) num_dropped_tpu: usize,
  }
 diff --git a/core/src/banking_stage/qos_service.rs b/core/src/banking_stage/qos_service.rs
-index abac9c70f854..70e1ca169944 100644
+index abac9c70f8..70e1ca1699 100644
 --- a/core/src/banking_stage/qos_service.rs
 +++ b/core/src/banking_stage/qos_service.rs
 @@ -5,7 +5,9 @@
@@ -5823,7 +5824,7 @@ index abac9c70f854..70e1ca169944 100644
                  total_txs_cost,
                  bank.read_cost_tracker().unwrap().block_cost()
 diff --git a/core/src/banking_stage/unprocessed_transaction_storage.rs b/core/src/banking_stage/unprocessed_transaction_storage.rs
-index f8d99c77900c..1deeb714b31b 100644
+index f8d99c7790..1deeb714b3 100644
 --- a/core/src/banking_stage/unprocessed_transaction_storage.rs
 +++ b/core/src/banking_stage/unprocessed_transaction_storage.rs
 @@ -15,18 +15,29 @@ use {
@@ -6430,7 +6431,7 @@ index f8d99c77900c..1deeb714b31b 100644
  mod tests {
      use {
 diff --git a/core/src/banking_trace.rs b/core/src/banking_trace.rs
-index ba76b794ba29..bedfe117dc15 100644
+index ba76b794ba..bedfe117dc 100644
 --- a/core/src/banking_trace.rs
 +++ b/core/src/banking_trace.rs
 @@ -315,6 +315,7 @@ impl BankingTracer {
@@ -6443,7 +6444,7 @@ index ba76b794ba29..bedfe117dc15 100644
      sender: Sender<BankingPacketBatch>,
 diff --git a/core/src/bundle_stage.rs b/core/src/bundle_stage.rs
 new file mode 100644
-index 000000000000..3a4103831b43
+index 0000000000..3a4103831b
 --- /dev/null
 +++ b/core/src/bundle_stage.rs
 @@ -0,0 +1,436 @@
@@ -6885,7 +6886,7 @@ index 000000000000..3a4103831b43
 +}
 diff --git a/core/src/bundle_stage/bundle_account_locker.rs b/core/src/bundle_stage/bundle_account_locker.rs
 new file mode 100644
-index 000000000000..2e714bbca7d9
+index 0000000000..2e714bbca7
 --- /dev/null
 +++ b/core/src/bundle_stage/bundle_account_locker.rs
 @@ -0,0 +1,326 @@
@@ -7217,7 +7218,7 @@ index 000000000000..2e714bbca7d9
 +}
 diff --git a/core/src/bundle_stage/bundle_consumer.rs b/core/src/bundle_stage/bundle_consumer.rs
 new file mode 100644
-index 000000000000..e31d14285d63
+index 0000000000..e31d14285d
 --- /dev/null
 +++ b/core/src/bundle_stage/bundle_consumer.rs
 @@ -0,0 +1,1601 @@
@@ -8824,7 +8825,7 @@ index 000000000000..e31d14285d63
 +}
 diff --git a/core/src/bundle_stage/bundle_packet_deserializer.rs b/core/src/bundle_stage/bundle_packet_deserializer.rs
 new file mode 100644
-index 000000000000..1c997d9e578e
+index 0000000000..1c997d9e57
 --- /dev/null
 +++ b/core/src/bundle_stage/bundle_packet_deserializer.rs
 @@ -0,0 +1,282 @@
@@ -9112,7 +9113,7 @@ index 000000000000..1c997d9e578e
 +}
 diff --git a/core/src/bundle_stage/bundle_packet_receiver.rs b/core/src/bundle_stage/bundle_packet_receiver.rs
 new file mode 100644
-index 000000000000..90ae7d3ba207
+index 0000000000..90ae7d3ba2
 --- /dev/null
 +++ b/core/src/bundle_stage/bundle_packet_receiver.rs
 @@ -0,0 +1,830 @@
@@ -9948,7 +9949,7 @@ index 000000000000..90ae7d3ba207
 +}
 diff --git a/core/src/bundle_stage/bundle_reserved_space_manager.rs b/core/src/bundle_stage/bundle_reserved_space_manager.rs
 new file mode 100644
-index 000000000000..24cca76aa18d
+index 0000000000..24cca76aa1
 --- /dev/null
 +++ b/core/src/bundle_stage/bundle_reserved_space_manager.rs
 @@ -0,0 +1,237 @@
@@ -10191,7 +10192,7 @@ index 000000000000..24cca76aa18d
 +}
 diff --git a/core/src/bundle_stage/bundle_stage_leader_metrics.rs b/core/src/bundle_stage/bundle_stage_leader_metrics.rs
 new file mode 100644
-index 000000000000..52c1aa071455
+index 0000000000..52c1aa0714
 --- /dev/null
 +++ b/core/src/bundle_stage/bundle_stage_leader_metrics.rs
 @@ -0,0 +1,502 @@
@@ -10699,7 +10700,7 @@ index 000000000000..52c1aa071455
 +}
 diff --git a/core/src/bundle_stage/committer.rs b/core/src/bundle_stage/committer.rs
 new file mode 100644
-index 000000000000..5bdf0c0b5a26
+index 0000000000..5bdf0c0b5a
 --- /dev/null
 +++ b/core/src/bundle_stage/committer.rs
 @@ -0,0 +1,218 @@
@@ -10923,7 +10924,7 @@ index 000000000000..5bdf0c0b5a26
 +}
 diff --git a/core/src/bundle_stage/result.rs b/core/src/bundle_stage/result.rs
 new file mode 100644
-index 000000000000..3370251791f6
+index 0000000000..3370251791
 --- /dev/null
 +++ b/core/src/bundle_stage/result.rs
 @@ -0,0 +1,41 @@
@@ -10970,7 +10971,7 @@ index 000000000000..3370251791f6
 +}
 diff --git a/core/src/consensus_cache_updater.rs b/core/src/consensus_cache_updater.rs
 new file mode 100644
-index 000000000000..e1dc137ba0ed
+index 0000000000..e1dc137ba0
 --- /dev/null
 +++ b/core/src/consensus_cache_updater.rs
 @@ -0,0 +1,52 @@
@@ -11028,7 +11029,7 @@ index 000000000000..e1dc137ba0ed
 +}
 diff --git a/core/src/immutable_deserialized_bundle.rs b/core/src/immutable_deserialized_bundle.rs
 new file mode 100644
-index 000000000000..4cf1a1035b83
+index 0000000000..4cf1a1035b
 --- /dev/null
 +++ b/core/src/immutable_deserialized_bundle.rs
 @@ -0,0 +1,485 @@
@@ -11518,7 +11519,7 @@ index 000000000000..4cf1a1035b83
 +    }
 +}
 diff --git a/core/src/lib.rs b/core/src/lib.rs
-index 44e7a8ab89aa..b072b1e7917a 100644
+index 44e7a8ab89..b072b1e791 100644
 --- a/core/src/lib.rs
 +++ b/core/src/lib.rs
 @@ -12,20 +12,25 @@ pub mod accounts_hash_verifier;
@@ -11599,7 +11600,7 @@ index 44e7a8ab89aa..b072b1e7917a 100644
 +}
 diff --git a/core/src/packet_bundle.rs b/core/src/packet_bundle.rs
 new file mode 100644
-index 000000000000..2158f374145a
+index 0000000000..2158f37414
 --- /dev/null
 +++ b/core/src/packet_bundle.rs
 @@ -0,0 +1,7 @@
@@ -11612,7 +11613,7 @@ index 000000000000..2158f374145a
 +}
 diff --git a/core/src/proxy/auth.rs b/core/src/proxy/auth.rs
 new file mode 100644
-index 000000000000..39821e12ef13
+index 0000000000..39821e12ef
 --- /dev/null
 +++ b/core/src/proxy/auth.rs
 @@ -0,0 +1,185 @@
@@ -11803,7 +11804,7 @@ index 000000000000..39821e12ef13
 +}
 diff --git a/core/src/proxy/block_engine_stage.rs b/core/src/proxy/block_engine_stage.rs
 new file mode 100644
-index 000000000000..5dd8510badc7
+index 0000000000..5dd8510bad
 --- /dev/null
 +++ b/core/src/proxy/block_engine_stage.rs
 @@ -0,0 +1,542 @@
@@ -12351,7 +12352,7 @@ index 000000000000..5dd8510badc7
 +}
 diff --git a/core/src/proxy/fetch_stage_manager.rs b/core/src/proxy/fetch_stage_manager.rs
 new file mode 100644
-index 000000000000..38471fc512e0
+index 0000000000..38471fc512
 --- /dev/null
 +++ b/core/src/proxy/fetch_stage_manager.rs
 @@ -0,0 +1,170 @@
@@ -12527,7 +12528,7 @@ index 000000000000..38471fc512e0
 +}
 diff --git a/core/src/proxy/mod.rs b/core/src/proxy/mod.rs
 new file mode 100644
-index 000000000000..86d48482aaa8
+index 0000000000..86d48482aa
 --- /dev/null
 +++ b/core/src/proxy/mod.rs
 @@ -0,0 +1,100 @@
@@ -12633,7 +12634,7 @@ index 000000000000..86d48482aaa8
 +}
 diff --git a/core/src/proxy/relayer_stage.rs b/core/src/proxy/relayer_stage.rs
 new file mode 100644
-index 000000000000..e640bd755481
+index 0000000000..e640bd7554
 --- /dev/null
 +++ b/core/src/proxy/relayer_stage.rs
 @@ -0,0 +1,500 @@
@@ -13139,7 +13140,7 @@ index 000000000000..e640bd755481
 +}
 diff --git a/core/src/tip_manager.rs b/core/src/tip_manager.rs
 new file mode 100644
-index 000000000000..724abbbe0224
+index 0000000000..724abbbe02
 --- /dev/null
 +++ b/core/src/tip_manager.rs
 @@ -0,0 +1,583 @@
@@ -13727,7 +13728,7 @@ index 000000000000..724abbbe0224
 +    }
 +}
 diff --git a/core/src/tpu.rs b/core/src/tpu.rs
-index 0456a33a8d91..22c85c3f8c1c 100644
+index 0456a33a8d..22c85c3f8c 100644
 --- a/core/src/tpu.rs
 +++ b/core/src/tpu.rs
 @@ -6,14 +6,21 @@ use {
@@ -13959,7 +13960,7 @@ index 0456a33a8d91..22c85c3f8c1c 100644
          let broadcast_result = self.broadcast_stage.join();
          for result in results {
 diff --git a/core/src/tpu_entry_notifier.rs b/core/src/tpu_entry_notifier.rs
-index 22994455e888..e226b0ef1fab 100644
+index 22994455e8..e226b0ef1f 100644
 --- a/core/src/tpu_entry_notifier.rs
 +++ b/core/src/tpu_entry_notifier.rs
 @@ -61,43 +61,57 @@ impl TpuEntryNotifier {
@@ -14047,7 +14048,7 @@ index 22994455e888..e226b0ef1fab 100644
      }
  
 diff --git a/core/src/tvu.rs b/core/src/tvu.rs
-index d498ab405d39..fc6e361c3502 100644
+index d498ab405d..fc6e361c35 100644
 --- a/core/src/tvu.rs
 +++ b/core/src/tvu.rs
 @@ -143,6 +143,7 @@ impl Tvu {
@@ -14075,7 +14076,7 @@ index d498ab405d39..fc6e361c3502 100644
          .expect("assume success");
          exit.store(true, Ordering::Relaxed);
 diff --git a/core/src/validator.rs b/core/src/validator.rs
-index 3fd24d10177c..0642cb633073 100644
+index 3fd24d1017..0642cb6330 100644
 --- a/core/src/validator.rs
 +++ b/core/src/validator.rs
 @@ -15,6 +15,7 @@ use {
@@ -14232,7 +14233,7 @@ index 3fd24d10177c..0642cb633073 100644
                  .expect("assume successful validator start")
              })
 diff --git a/core/tests/epoch_accounts_hash.rs b/core/tests/epoch_accounts_hash.rs
-index 6a62ccb5a986..e8352e5c3210 100755
+index 6a62ccb5a9..e8352e5c32 100755
 --- a/core/tests/epoch_accounts_hash.rs
 +++ b/core/tests/epoch_accounts_hash.rs
 @@ -435,6 +435,7 @@ fn test_snapshots_have_expected_epoch_accounts_hash() {
@@ -14252,7 +14253,7 @@ index 6a62ccb5a986..e8352e5c3210 100755
              {
                  trace!("waiting for full snapshot...");
 diff --git a/core/tests/snapshots.rs b/core/tests/snapshots.rs
-index 83af4558dfc1..44e399a686f8 100644
+index 83af4558df..44e399a686 100644
 --- a/core/tests/snapshots.rs
 +++ b/core/tests/snapshots.rs
 @@ -561,6 +561,7 @@ fn test_concurrent_snapshot_packaging(
@@ -14280,7 +14281,7 @@ index 83af4558dfc1..44e399a686f8 100644
              {
                  assert!(
 diff --git a/cost-model/src/cost_tracker.rs b/cost-model/src/cost_tracker.rs
-index 002cf1476ad2..f7f2522328cb 100644
+index 002cf1476a..f7f2522328 100644
 --- a/cost-model/src/cost_tracker.rs
 +++ b/cost-model/src/cost_tracker.rs
 @@ -100,6 +100,10 @@ impl CostTracker {
@@ -14307,7 +14308,7 @@ index 002cf1476ad2..f7f2522328cb 100644
      }
 diff --git a/deploy_programs b/deploy_programs
 new file mode 100755
-index 000000000000..cbdf837e924b
+index 0000000000..cbdf837e92
 --- /dev/null
 +++ b/deploy_programs
 @@ -0,0 +1,17 @@
@@ -14330,7 +14331,7 @@ index 000000000000..cbdf837e924b
 +RUST_INFO=trace ./target/release/solana deploy --keypair $WALLET_LOCATION -ul ./jito-programs/tip-payment/target/deploy/tip_payment.so  ./jito-programs/tip-payment/dev/dev_tip_payment.json
 diff --git a/dev/Dockerfile b/dev/Dockerfile
 new file mode 100644
-index 000000000000..bab9a1c02fa4
+index 0000000000..bab9a1c02f
 --- /dev/null
 +++ b/dev/Dockerfile
 @@ -0,0 +1,48 @@
@@ -14383,7 +14384,7 @@ index 000000000000..bab9a1c02fa4
 +      RUSTFLAGS='-g -C force-frame-pointers=yes' ./cargo stable build --release && cp target/release/solana* ./docker-output; \
 +    fi
 diff --git a/docs/src/cli/install.md b/docs/src/cli/install.md
-index 3667c733e3f4..3aee8b4727c7 100644
+index 3667c733e3..3aee8b4727 100644
 --- a/docs/src/cli/install.md
 +++ b/docs/src/cli/install.md
 @@ -20,11 +20,11 @@ on your preferred workflow:
@@ -14455,7 +14456,7 @@ index 3667c733e3f4..3aee8b4727c7 100644
  binaries with:
  
 diff --git a/docs/src/clusters/benchmark.md b/docs/src/clusters/benchmark.md
-index d913f9e5f163..09af5ca3a1aa 100644
+index d913f9e5f1..09af5ca3a1 100644
 --- a/docs/src/clusters/benchmark.md
 +++ b/docs/src/clusters/benchmark.md
 @@ -6,7 +6,7 @@ The Solana git repository contains all the scripts you might need to spin up you
@@ -14468,7 +14469,7 @@ index d913f9e5f163..09af5ca3a1aa 100644
  Now checkout the code from github:
  
 diff --git a/docs/src/implemented-proposals/installer.md b/docs/src/implemented-proposals/installer.md
-index a3ad797171c5..48f490a75c91 100644
+index a3ad797171..48f490a75c 100644
 --- a/docs/src/implemented-proposals/installer.md
 +++ b/docs/src/implemented-proposals/installer.md
 @@ -13,7 +13,7 @@ This document proposes an easy to use software install and updater that can be u
@@ -14481,7 +14482,7 @@ index a3ad797171c5..48f490a75c91 100644
  
  This script will check github for the latest tagged release and download and run the `solana-install-init` binary from there.
 diff --git a/entry/src/entry.rs b/entry/src/entry.rs
-index af3fdca9518e..aa23d02b75b4 100644
+index af3fdca951..aa23d02b75 100644
 --- a/entry/src/entry.rs
 +++ b/entry/src/entry.rs
 @@ -231,7 +231,7 @@ pub fn hash_transactions(transactions: &[VersionedTransaction]) -> Hash {
@@ -14494,7 +14495,7 @@ index af3fdca9518e..aa23d02b75b4 100644
          *root_hash
      } else {
 diff --git a/entry/src/poh.rs b/entry/src/poh.rs
-index 31dd1abbb6af..d54a81222cb7 100644
+index 31dd1abbb6..d54a81222c 100644
 --- a/entry/src/poh.rs
 +++ b/entry/src/poh.rs
 @@ -72,19 +72,30 @@ impl Poh {
@@ -14539,7 +14540,7 @@ index 31dd1abbb6af..d54a81222cb7 100644
      pub fn tick(&mut self) -> Option<PohEntry> {
 diff --git a/f b/f
 new file mode 100755
-index 000000000000..e5fe63550880
+index 0000000000..e5fe635508
 --- /dev/null
 +++ b/f
 @@ -0,0 +1,30 @@
@@ -14574,7 +14575,7 @@ index 000000000000..e5fe63550880
 +docker container cp temp:/solana/docker-output $SCRIPT_DIR/
 +docker rm temp
 diff --git a/fetch-spl.sh b/fetch-spl.sh
-index bb8e84ebb2f6..35bcefa2f88e 100755
+index bb8e84ebb2..35bcefa2f8 100755
 --- a/fetch-spl.sh
 +++ b/fetch-spl.sh
 @@ -13,8 +13,24 @@ fetch_program() {
@@ -14651,7 +14652,7 @@ index bb8e84ebb2f6..35bcefa2f88e 100755
  echo "solana-genesis command-line arguments (spl-genesis-args.sh):"
  cat spl-genesis-args.sh
 diff --git a/gossip/src/cluster_info.rs b/gossip/src/cluster_info.rs
-index 56b75010f93f..0474c556ad58 100644
+index 56b75010f9..0474c556ad 100644
 --- a/gossip/src/cluster_info.rs
 +++ b/gossip/src/cluster_info.rs
 @@ -539,6 +539,10 @@ impl ClusterInfo {
@@ -14666,7 +14667,7 @@ index 56b75010f93f..0474c556ad58 100644
          let nodes = {
              let entrypoint_gossip_addrs = self
 diff --git a/install/solana-install-init.sh b/install/solana-install-init.sh
-index db36dc61e2ff..0c228a8b5909 100755
+index db36dc61e2..0c228a8b59 100755
 --- a/install/solana-install-init.sh
 +++ b/install/solana-install-init.sh
 @@ -16,9 +16,9 @@
@@ -14682,7 +14683,7 @@ index db36dc61e2ff..0c228a8b5909 100755
  set -e
  
 diff --git a/install/src/command.rs b/install/src/command.rs
-index d7b92c17690b..9870a27f7e12 100644
+index d7b92c1769..9870a27f7e 100644
 --- a/install/src/command.rs
 +++ b/install/src/command.rs
 @@ -572,7 +572,7 @@ pub fn init(
@@ -14723,14 +14724,14 @@ index d7b92c17690b..9870a27f7e12 100644
                  ("page", &format!("{page}")),
 diff --git a/jito-programs b/jito-programs
 new file mode 160000
-index 000000000000..4a23d81bd621
+index 0000000000..4a23d81bd6
 --- /dev/null
 +++ b/jito-programs
 @@ -0,0 +1 @@
 +Subproject commit 4a23d81bd621084d3b8596b35e0457b954a74f98
 diff --git a/jito-protos/Cargo.toml b/jito-protos/Cargo.toml
 new file mode 100644
-index 000000000000..f9f0b5baa312
+index 0000000000..f9f0b5baa3
 --- /dev/null
 +++ b/jito-protos/Cargo.toml
 @@ -0,0 +1,19 @@
@@ -14755,7 +14756,7 @@ index 000000000000..f9f0b5baa312
 +protobuf-src = { workspace = true }
 diff --git a/jito-protos/build.rs b/jito-protos/build.rs
 new file mode 100644
-index 000000000000..30ece1620a5e
+index 0000000000..30ece1620a
 --- /dev/null
 +++ b/jito-protos/build.rs
 @@ -0,0 +1,38 @@
@@ -14799,14 +14800,14 @@ index 000000000000..30ece1620a5e
 +}
 diff --git a/jito-protos/protos b/jito-protos/protos
 new file mode 160000
-index 000000000000..05d210980f34
+index 0000000000..05d210980f
 --- /dev/null
 +++ b/jito-protos/protos
 @@ -0,0 +1 @@
 +Subproject commit 05d210980f34a7c974d7ed1a4dbcb2ce1fca00b3
 diff --git a/jito-protos/src/lib.rs b/jito-protos/src/lib.rs
 new file mode 100644
-index 000000000000..cf630c53d280
+index 0000000000..cf630c53d2
 --- /dev/null
 +++ b/jito-protos/src/lib.rs
 @@ -0,0 +1,25 @@
@@ -14836,7 +14837,7 @@ index 000000000000..cf630c53d280
 +    }
 +}
 diff --git a/ledger-tool/src/ledger_utils.rs b/ledger-tool/src/ledger_utils.rs
-index 82797146d3a4..86ff4a5c0923 100644
+index 82797146d3..86ff4a5c09 100644
 --- a/ledger-tool/src/ledger_utils.rs
 +++ b/ledger-tool/src/ledger_utils.rs
 @@ -103,6 +103,7 @@ pub fn load_and_process_ledger_or_exit(
@@ -14904,7 +14905,7 @@ index 82797146d3a4..86ff4a5c0923 100644
          .map_err(LoadAndProcessLedgerError::LoadBankForks)?;
      let block_verification_method = value_t!(
 diff --git a/ledger-tool/src/main.rs b/ledger-tool/src/main.rs
-index d4fd8a3b2588..779b2d8d12ba 100644
+index d4fd8a3b25..779b2d8d12 100644
 --- a/ledger-tool/src/main.rs
 +++ b/ledger-tool/src/main.rs
 @@ -1565,6 +1565,7 @@ fn main() {
@@ -14964,10 +14965,10 @@ index d4fd8a3b2588..779b2d8d12ba 100644
                      let bank_forks = bank_forks.read().unwrap();
                      let slot = bank_forks.working_bank().slot();
 diff --git a/ledger-tool/src/program.rs b/ledger-tool/src/program.rs
-index 732c2e8fe3aa..b7420ce3a820 100644
+index 7024cd5baa..0eb2106913 100644
 --- a/ledger-tool/src/program.rs
 +++ b/ledger-tool/src/program.rs
-@@ -89,6 +89,7 @@ fn load_blockstore(ledger_path: &Path, arg_matches: &ArgMatches<'_>) -> Arc<Bank
+@@ -90,6 +90,7 @@ fn load_blockstore(ledger_path: &Path, arg_matches: &ArgMatches<'_>) -> Arc<Bank
          process_options,
          snapshot_archive_path,
          incremental_snapshot_archive_path,
@@ -14976,7 +14977,7 @@ index 732c2e8fe3aa..b7420ce3a820 100644
      let bank = bank_forks.read().unwrap().working_bank();
      bank
 diff --git a/ledger/src/bank_forks_utils.rs b/ledger/src/bank_forks_utils.rs
-index 7d174e9bbb2b..4dc8aab66efb 100644
+index 7d174e9bbb..4dc8aab66e 100644
 --- a/ledger/src/bank_forks_utils.rs
 +++ b/ledger/src/bank_forks_utils.rs
 @@ -22,7 +22,7 @@ use {
@@ -15057,7 +15058,7 @@ index 7d174e9bbb2b..4dc8aab66efb 100644
      incremental_snapshot_archive_info: Option<IncrementalSnapshotArchiveInfo>,
      genesis_config: &GenesisConfig,
 diff --git a/ledger/src/blockstore_processor.rs b/ledger/src/blockstore_processor.rs
-index 4fa5fa6f3aa8..b8e8f4adf272 100644
+index 4fa5fa6f3a..b8e8f4adf2 100644
 --- a/ledger/src/blockstore_processor.rs
 +++ b/ledger/src/blockstore_processor.rs
 @@ -152,7 +152,7 @@ pub fn execute_batch(
@@ -15087,7 +15088,7 @@ index 4fa5fa6f3aa8..b8e8f4adf272 100644
      .unwrap();
  
 diff --git a/ledger/src/token_balances.rs b/ledger/src/token_balances.rs
-index 204bd4335972..8926fb9a04b9 100644
+index 204bd43359..8926fb9a04 100644
 --- a/ledger/src/token_balances.rs
 +++ b/ledger/src/token_balances.rs
 @@ -2,6 +2,7 @@ use {
@@ -15241,7 +15242,7 @@ index 204bd4335972..8926fb9a04b9 100644
              None
          );
 diff --git a/local-cluster/src/local_cluster.rs b/local-cluster/src/local_cluster.rs
-index 9d1b483d85fd..96b6a2de41a0 100644
+index 9d1b483d85..96b6a2de41 100644
 --- a/local-cluster/src/local_cluster.rs
 +++ b/local-cluster/src/local_cluster.rs
 @@ -295,6 +295,7 @@ impl LocalCluster {
@@ -15269,7 +15270,7 @@ index 9d1b483d85fd..96b6a2de41a0 100644
          .expect("assume successful validator start");
          cluster_validator_info.validator = Some(restarted_node);
 diff --git a/local-cluster/src/local_cluster_snapshot_utils.rs b/local-cluster/src/local_cluster_snapshot_utils.rs
-index 259b9e1559ab..2ebd90e86e5b 100644
+index 259b9e1559..2ebd90e86e 100644
 --- a/local-cluster/src/local_cluster_snapshot_utils.rs
 +++ b/local-cluster/src/local_cluster_snapshot_utils.rs
 @@ -90,7 +90,10 @@ impl LocalCluster {
@@ -15293,7 +15294,7 @@ index 259b9e1559ab..2ebd90e86e5b 100644
                          {
                              if incremental_snapshot_archive_info.slot() >= last_slot {
 diff --git a/local-cluster/src/validator_configs.rs b/local-cluster/src/validator_configs.rs
-index 3479422c2f51..732b0bdd051d 100644
+index 3479422c2f..732b0bdd05 100644
 --- a/local-cluster/src/validator_configs.rs
 +++ b/local-cluster/src/validator_configs.rs
 @@ -70,6 +70,11 @@ pub fn safe_clone_config(config: &ValidatorConfig) -> ValidatorConfig {
@@ -15309,7 +15310,7 @@ index 3479422c2f51..732b0bdd051d 100644
  }
  
 diff --git a/local-cluster/tests/local_cluster.rs b/local-cluster/tests/local_cluster.rs
-index c958820e7725..f5f2b4826d9d 100644
+index c958820e77..f5f2b4826d 100644
 --- a/local-cluster/tests/local_cluster.rs
 +++ b/local-cluster/tests/local_cluster.rs
 @@ -872,6 +872,7 @@ fn test_incremental_snapshot_download_with_crossing_full_snapshot_interval_at_st
@@ -15403,7 +15404,7 @@ index c958820e7725..f5f2b4826d9d 100644
                  if other_full_snapshot_slot >= full_snapshot_archive.slot()
                      && other_incremental_snapshot_slot >= Some(incremental_snapshot_archive.slot())
 diff --git a/merkle-tree/src/merkle_tree.rs b/merkle-tree/src/merkle_tree.rs
-index 09285a41e7af..57bceea1ecc0 100644
+index 09285a41e7..57bceea1ec 100644
 --- a/merkle-tree/src/merkle_tree.rs
 +++ b/merkle-tree/src/merkle_tree.rs
 @@ -18,7 +18,7 @@ macro_rules! hash_intermediate {
@@ -15533,7 +15534,7 @@ index 09285a41e7af..57bceea1ecc0 100644
              let hash = hash_leaf!(s);
              let path = mt.find_path(i).unwrap();
 diff --git a/multinode-demo/bootstrap-validator.sh b/multinode-demo/bootstrap-validator.sh
-index 5afc543b2f00..9fe685c04c7f 100755
+index 5afc543b2f..9fe685c04c 100755
 --- a/multinode-demo/bootstrap-validator.sh
 +++ b/multinode-demo/bootstrap-validator.sh
 @@ -103,12 +103,42 @@ while [[ -n $1 ]]; do
@@ -15598,7 +15599,7 @@ index 5afc543b2f00..9fe685c04c7f 100755
  
  pid=
 diff --git a/multinode-demo/validator.sh b/multinode-demo/validator.sh
-index 487154101ac9..1a2d9fbe520a 100755
+index 487154101a..1a2d9fbe52 100755
 --- a/multinode-demo/validator.sh
 +++ b/multinode-demo/validator.sh
 @@ -85,6 +85,24 @@ while [[ -n $1 ]]; do
@@ -15663,7 +15664,7 @@ index 487154101ac9..1a2d9fbe520a 100755
  default_arg --log -
  default_arg --full-rpc-api
 diff --git a/perf/src/sigverify.rs b/perf/src/sigverify.rs
-index 6078961d42db..cbad41c51053 100644
+index 6078961d42..cbad41c510 100644
 --- a/perf/src/sigverify.rs
 +++ b/perf/src/sigverify.rs
 @@ -110,7 +110,7 @@ pub fn init() {
@@ -15676,7 +15677,7 @@ index 6078961d42db..cbad41c51053 100644
      if packet.meta().discard() {
          return false;
 diff --git a/poh/src/poh_recorder.rs b/poh/src/poh_recorder.rs
-index 49c2d4dc3d9a..f2f121e11ff0 100644
+index 49c2d4dc3d..f2f121e11f 100644
 --- a/poh/src/poh_recorder.rs
 +++ b/poh/src/poh_recorder.rs
 @@ -58,9 +58,14 @@ pub enum PohRecorderError {
@@ -15963,7 +15964,7 @@ index 49c2d4dc3d9a..f2f121e11ff0 100644
          assert!(poh_recorder.working_bank.is_none());
  
 diff --git a/poh/src/poh_service.rs b/poh/src/poh_service.rs
-index e69db7f11986..b1f88b5a0b98 100644
+index e69db7f119..b1f88b5a0b 100644
 --- a/poh/src/poh_service.rs
 +++ b/poh/src/poh_service.rs
 @@ -192,11 +192,12 @@ impl PohService {
@@ -16036,7 +16037,7 @@ index e69db7f11986..b1f88b5a0b98 100644
              if entry.is_tick() {
                  num_ticks += 1;
 diff --git a/program-runtime/src/timings.rs b/program-runtime/src/timings.rs
-index 8eeb9c5a005c..74b7eb732f5b 100644
+index 8eeb9c5a00..74b7eb732f 100644
 --- a/program-runtime/src/timings.rs
 +++ b/program-runtime/src/timings.rs
 @@ -8,7 +8,7 @@ use {
@@ -16107,7 +16108,7 @@ index 8eeb9c5a005c..74b7eb732f5b 100644
      pub serialize_us: u64,
      pub create_vm_us: u64,
 diff --git a/program-test/src/programs.rs b/program-test/src/programs.rs
-index 8d9a42790f7a..0cbff5899762 100644
+index 8d9a42790f..0cbff58997 100644
 --- a/program-test/src/programs.rs
 +++ b/program-test/src/programs.rs
 @@ -21,6 +21,13 @@ mod spl_associated_token_account {
@@ -20704,7 +20705,7 @@ literal 0
 HcmV?d00001
 
 diff --git a/programs/sbf/Cargo.lock b/programs/sbf/Cargo.lock
-index f87cab94b09c..1c3ce0f4ec72 100644
+index 72ea8c937e..c514c78eca 100644
 --- a/programs/sbf/Cargo.lock
 +++ b/programs/sbf/Cargo.lock
 @@ -126,6 +126,145 @@ dependencies = [
@@ -21217,7 +21218,7 @@ index f87cab94b09c..1c3ce0f4ec72 100644
 +
 +[[package]]
 +name = "jito-protos"
-+version = "1.18.7"
++version = "1.18.8"
 +dependencies = [
 + "bytes",
 + "prost",
@@ -21580,7 +21581,7 @@ index f87cab94b09c..1c3ce0f4ec72 100644
  
 +[[package]]
 +name = "solana-bundle"
-+version = "1.18.7"
++version = "1.18.8"
 +dependencies = [
 + "anchor-lang",
 + "itertools",
@@ -21600,10 +21601,10 @@ index f87cab94b09c..1c3ce0f4ec72 100644
 +
  [[package]]
  name = "solana-clap-utils"
- version = "1.18.7"
+ version = "1.18.8"
 @@ -4964,9 +5234,10 @@ dependencies = [
  name = "solana-core"
- version = "1.18.7"
+ version = "1.18.8"
  dependencies = [
 + "anchor-lang",
   "base64 0.21.7",
@@ -21657,7 +21658,7 @@ index f87cab94b09c..1c3ce0f4ec72 100644
  ]
  
 @@ -5116,7 +5396,7 @@ name = "solana-frozen-abi"
- version = "1.18.7"
+ version = "1.18.8"
  dependencies = [
   "block-buffer 0.10.4",
 - "bs58",
@@ -21667,7 +21668,7 @@ index f87cab94b09c..1c3ce0f4ec72 100644
   "generic-array 0.14.7",
 @@ -5138,8 +5418,8 @@ dependencies = [
  name = "solana-frozen-abi-macro"
- version = "1.18.7"
+ version = "1.18.8"
  dependencies = [
 - "proc-macro2",
 - "quote",
@@ -21678,7 +21679,7 @@ index f87cab94b09c..1c3ce0f4ec72 100644
  ]
 @@ -5169,7 +5449,7 @@ dependencies = [
  name = "solana-geyser-plugin-manager"
- version = "1.18.7"
+ version = "1.18.8"
  dependencies = [
 - "bs58",
 + "bs58 0.4.0",
@@ -21694,7 +21695,7 @@ index f87cab94b09c..1c3ce0f4ec72 100644
   "bv",
   "bytemuck",
   "cc",
-@@ -5607,7 +5887,7 @@ version = "1.18.7"
+@@ -5607,7 +5887,7 @@ version = "1.18.8"
  dependencies = [
   "base64 0.21.7",
   "bincode",
@@ -21729,7 +21730,7 @@ index f87cab94b09c..1c3ce0f4ec72 100644
   "log",
   "reqwest",
 @@ -5685,7 +5967,7 @@ name = "solana-rpc-client-api"
- version = "1.18.7"
+ version = "1.18.8"
  dependencies = [
   "base64 0.21.7",
 - "bs58",
@@ -21752,7 +21753,7 @@ index f87cab94b09c..1c3ce0f4ec72 100644
  
 +[[package]]
 +name = "solana-runtime-plugin"
-+version = "1.18.7"
++version = "1.18.8"
 +dependencies = [
 + "crossbeam-channel",
 + "json5",
@@ -21770,10 +21771,10 @@ index f87cab94b09c..1c3ce0f4ec72 100644
 +
  [[package]]
  name = "solana-sbf-programs"
- version = "1.18.7"
+ version = "1.18.8"
 @@ -6212,12 +6514,13 @@ dependencies = [
  name = "solana-sdk"
- version = "1.18.7"
+ version = "1.18.8"
  dependencies = [
 + "anchor-lang",
   "assert_matches",
@@ -21788,7 +21789,7 @@ index f87cab94b09c..1c3ce0f4ec72 100644
   "chrono",
 @@ -6265,9 +6568,9 @@ dependencies = [
  name = "solana-sdk-macro"
- version = "1.18.7"
+ version = "1.18.8"
  dependencies = [
 - "bs58",
 - "proc-macro2",
@@ -21808,7 +21809,7 @@ index f87cab94b09c..1c3ce0f4ec72 100644
   "solana-metrics",
   "solana-runtime",
 @@ -6342,7 +6646,7 @@ name = "solana-storage-proto"
- version = "1.18.7"
+ version = "1.18.8"
  dependencies = [
   "bincode",
 - "bs58",
@@ -22049,9 +22050,9 @@ index f87cab94b09c..1c3ce0f4ec72 100644
  
 +[[package]]
 +name = "unicode-segmentation"
-+version = "1.10.1"
++version = "1.11.0"
 +source = "registry+https://github.com/rust-lang/crates.io-index"
-+checksum = "1dd624098567895118886609431a7c3b8f516e41d30e0643f03d94592a147e36"
++checksum = "d4c87d22b6e3f4a18d4d40ef354e97c90fcb14dd91d7dc0aa9d8a1172ebf7202"
 +
  [[package]]
  name = "unicode-width"
@@ -22159,7 +22160,7 @@ index f87cab94b09c..1c3ce0f4ec72 100644
  ]
  
 diff --git a/programs/sbf/tests/programs.rs b/programs/sbf/tests/programs.rs
-index d67b57641446..53fbfd67f70d 100644
+index 13f05fca3e..47ffb044d1 100644
 --- a/programs/sbf/tests/programs.rs
 +++ b/programs/sbf/tests/programs.rs
 @@ -138,7 +138,7 @@ fn execute_transactions(
@@ -22181,7 +22182,7 @@ index d67b57641446..53fbfd67f70d 100644
      izip!(
          txs.iter(),
 diff --git a/rpc-client-api/Cargo.toml b/rpc-client-api/Cargo.toml
-index 92bc9d49585d..1ebc30454469 100644
+index 92bc9d4958..1ebc304544 100644
 --- a/rpc-client-api/Cargo.toml
 +++ b/rpc-client-api/Cargo.toml
 @@ -19,6 +19,8 @@ serde = { workspace = true }
@@ -22195,7 +22196,7 @@ index 92bc9d49585d..1ebc30454469 100644
  solana-version = { workspace = true }
 diff --git a/rpc-client-api/src/bundles.rs b/rpc-client-api/src/bundles.rs
 new file mode 100644
-index 000000000000..72afc51d91d8
+index 0000000000..72afc51d91
 --- /dev/null
 +++ b/rpc-client-api/src/bundles.rs
 @@ -0,0 +1,166 @@
@@ -22366,7 +22367,7 @@ index 000000000000..72afc51d91d8
 +    pub encoded_transactions: Vec<String>,
 +}
 diff --git a/rpc-client-api/src/config.rs b/rpc-client-api/src/config.rs
-index cecc0b64bdf7..fcc70f57b686 100644
+index cecc0b64bd..fcc70f57b6 100644
 --- a/rpc-client-api/src/config.rs
 +++ b/rpc-client-api/src/config.rs
 @@ -48,7 +48,7 @@ pub struct RpcSimulateTransactionConfig {
@@ -22379,7 +22380,7 @@ index cecc0b64bdf7..fcc70f57b686 100644
  pub struct RpcRequestAirdropConfig {
      pub recent_blockhash: Option<String>, // base-58 encoded blockhash
 diff --git a/rpc-client-api/src/lib.rs b/rpc-client-api/src/lib.rs
-index 6386a433f719..a8c01769a4c7 100644
+index 6386a433f7..a8c01769a4 100644
 --- a/rpc-client-api/src/lib.rs
 +++ b/rpc-client-api/src/lib.rs
 @@ -1,5 +1,6 @@
@@ -22390,7 +22391,7 @@ index 6386a433f719..a8c01769a4c7 100644
  pub mod config;
  pub mod custom_error;
 diff --git a/rpc-client-api/src/request.rs b/rpc-client-api/src/request.rs
-index e9c6ef9b388c..e1e5cfd75696 100644
+index e9c6ef9b38..e1e5cfd756 100644
 --- a/rpc-client-api/src/request.rs
 +++ b/rpc-client-api/src/request.rs
 @@ -113,6 +113,7 @@ pub enum RpcRequest {
@@ -22418,7 +22419,7 @@ index e9c6ef9b388c..e1e5cfd75696 100644
          message: String,
          data: RpcResponseErrorData,
 diff --git a/rpc-client-api/src/response.rs b/rpc-client-api/src/response.rs
-index fa70e89b6b88..afb0a2cea222 100644
+index fa70e89b6b..afb0a2cea2 100644
 --- a/rpc-client-api/src/response.rs
 +++ b/rpc-client-api/src/response.rs
 @@ -36,6 +36,7 @@ impl<T> OptionalContext<T> {
@@ -22459,7 +22460,7 @@ index fa70e89b6b88..afb0a2cea222 100644
  pub struct Response<T> {
      pub context: RpcResponseContext,
 diff --git a/rpc-client/src/http_sender.rs b/rpc-client/src/http_sender.rs
-index 6ef22cc42c84..ac30e3e22a43 100644
+index 6ef22cc42c..ac30e3e22a 100644
 --- a/rpc-client/src/http_sender.rs
 +++ b/rpc-client/src/http_sender.rs
 @@ -11,7 +11,7 @@ use {
@@ -22713,7 +22714,7 @@ index 6ef22cc42c84..ac30e3e22a43 100644
      fn url(&self) -> String {
          self.url.clone()
 diff --git a/rpc-client/src/mock_sender.rs b/rpc-client/src/mock_sender.rs
-index 44ab26359c3f..9eeff1074f04 100644
+index 44ab26359c..9eeff1074f 100644
 --- a/rpc-client/src/mock_sender.rs
 +++ b/rpc-client/src/mock_sender.rs
 @@ -490,4 +490,11 @@ impl RpcSender for MockSender {
@@ -22729,7 +22730,7 @@ index 44ab26359c3f..9eeff1074f04 100644
 +    }
  }
 diff --git a/rpc-client/src/nonblocking/rpc_client.rs b/rpc-client/src/nonblocking/rpc_client.rs
-index 01f9510b68c9..bc79d2fbd184 100644
+index 01f9510b68..bc79d2fbd1 100644
 --- a/rpc-client/src/nonblocking/rpc_client.rs
 +++ b/rpc-client/src/nonblocking/rpc_client.rs
 @@ -33,6 +33,10 @@ use {
@@ -22906,7 +22907,7 @@ index 01f9510b68c9..bc79d2fbd184 100644
          self.sender.get_transport_stats()
      }
 diff --git a/rpc-client/src/rpc_client.rs b/rpc-client/src/rpc_client.rs
-index 0c5f1fdc4ac5..9b1961c21aa2 100644
+index 0c5f1fdc4a..9b1961c21a 100644
 --- a/rpc-client/src/rpc_client.rs
 +++ b/rpc-client/src/rpc_client.rs
 @@ -28,6 +28,7 @@ use {
@@ -22961,7 +22962,7 @@ index 0c5f1fdc4ac5..9b1961c21aa2 100644
      ///
      /// This will find the highest full snapshot slot, and the highest incremental snapshot slot
 diff --git a/rpc-client/src/rpc_sender.rs b/rpc-client/src/rpc_sender.rs
-index 948ac45a461c..6a357b4e6b78 100644
+index 948ac45a46..6a357b4e6b 100644
 --- a/rpc-client/src/rpc_sender.rs
 +++ b/rpc-client/src/rpc_sender.rs
 @@ -31,6 +31,10 @@ pub trait RpcSender {
@@ -22976,7 +22977,7 @@ index 948ac45a461c..6a357b4e6b78 100644
      fn url(&self) -> String;
  }
 diff --git a/rpc-test/Cargo.toml b/rpc-test/Cargo.toml
-index eb69e4c95d8c..ea8d766641e8 100644
+index eb69e4c95d..ea8d766641 100644
 --- a/rpc-test/Cargo.toml
 +++ b/rpc-test/Cargo.toml
 @@ -33,6 +33,7 @@ solana-transaction-status = { workspace = true }
@@ -22988,7 +22989,7 @@ index eb69e4c95d8c..ea8d766641e8 100644
  
  [package.metadata.docs.rs]
 diff --git a/rpc-test/tests/rpc.rs b/rpc-test/tests/rpc.rs
-index d0245608d172..f78b72ba8c17 100644
+index d0245608d1..f78b72ba8c 100644
 --- a/rpc-test/tests/rpc.rs
 +++ b/rpc-test/tests/rpc.rs
 @@ -5,6 +5,7 @@ use {
@@ -23008,7 +23009,7 @@ index d0245608d172..f78b72ba8c17 100644
      solana_logger::setup();
  
 diff --git a/rpc/Cargo.toml b/rpc/Cargo.toml
-index 98d9ee572f68..a3b8e66fc85f 100644
+index 98d9ee572f..a3b8e66fc8 100644
 --- a/rpc/Cargo.toml
 +++ b/rpc/Cargo.toml
 @@ -31,6 +31,7 @@ serde_json = { workspace = true }
@@ -23028,7 +23029,7 @@ index 98d9ee572f68..a3b8e66fc85f 100644
  solana-rpc-client-api = { workspace = true }
  solana-runtime = { workspace = true }
 diff --git a/rpc/src/rpc.rs b/rpc/src/rpc.rs
-index 78869d4ad9a9..e3cb32731c22 100644
+index 78869d4ad9..e3cb32731c 100644
 --- a/rpc/src/rpc.rs
 +++ b/rpc/src/rpc.rs
 @@ -231,6 +231,13 @@ impl JsonRpcRequestProcessor {
@@ -23641,7 +23642,7 @@ index 78869d4ad9a9..e3cb32731c22 100644
              None,
              receiver,
 diff --git a/rpc/src/rpc_service.rs b/rpc/src/rpc_service.rs
-index d8791ab6c3bf..4fb43ed189f3 100644
+index d8791ab6c3..4fb43ed189 100644
 --- a/rpc/src/rpc_service.rs
 +++ b/rpc/src/rpc_service.rs
 @@ -256,6 +256,7 @@ impl RequestMiddleware for RpcRequestMiddleware {
@@ -23683,7 +23684,7 @@ index d8791ab6c3bf..4fb43ed189f3 100644
              receiver,
 diff --git a/runtime-plugin/Cargo.toml b/runtime-plugin/Cargo.toml
 new file mode 100644
-index 000000000000..0a58db36561d
+index 0000000000..0a58db3656
 --- /dev/null
 +++ b/runtime-plugin/Cargo.toml
 @@ -0,0 +1,24 @@
@@ -23713,7 +23714,7 @@ index 000000000000..0a58db36561d
 +thiserror = { workspace = true }
 diff --git a/runtime-plugin/src/lib.rs b/runtime-plugin/src/lib.rs
 new file mode 100644
-index 000000000000..477af43c9bdc
+index 0000000000..477af43c9b
 --- /dev/null
 +++ b/runtime-plugin/src/lib.rs
 @@ -0,0 +1,4 @@
@@ -23723,7 +23724,7 @@ index 000000000000..477af43c9bdc
 +pub mod runtime_plugin_service;
 diff --git a/runtime-plugin/src/runtime_plugin.rs b/runtime-plugin/src/runtime_plugin.rs
 new file mode 100644
-index 000000000000..7dc0b95fa4d4
+index 0000000000..7dc0b95fa4
 --- /dev/null
 +++ b/runtime-plugin/src/runtime_plugin.rs
 @@ -0,0 +1,41 @@
@@ -23770,7 +23771,7 @@ index 000000000000..7dc0b95fa4d4
 +}
 diff --git a/runtime-plugin/src/runtime_plugin_admin_rpc_service.rs b/runtime-plugin/src/runtime_plugin_admin_rpc_service.rs
 new file mode 100644
-index 000000000000..fdc33b06c506
+index 0000000000..fdc33b06c5
 --- /dev/null
 +++ b/runtime-plugin/src/runtime_plugin_admin_rpc_service.rs
 @@ -0,0 +1,326 @@
@@ -24102,7 +24103,7 @@ index 000000000000..fdc33b06c506
 +}
 diff --git a/runtime-plugin/src/runtime_plugin_manager.rs b/runtime-plugin/src/runtime_plugin_manager.rs
 new file mode 100644
-index 000000000000..af1dcf2cde14
+index 0000000000..af1dcf2cde
 --- /dev/null
 +++ b/runtime-plugin/src/runtime_plugin_manager.rs
 @@ -0,0 +1,275 @@
@@ -24383,7 +24384,7 @@ index 000000000000..af1dcf2cde14
 +}
 diff --git a/runtime-plugin/src/runtime_plugin_service.rs b/runtime-plugin/src/runtime_plugin_service.rs
 new file mode 100644
-index 000000000000..5fcb625a26d7
+index 0000000000..5fcb625a26
 --- /dev/null
 +++ b/runtime-plugin/src/runtime_plugin_service.rs
 @@ -0,0 +1,123 @@
@@ -24511,7 +24512,7 @@ index 000000000000..5fcb625a26d7
 +    }
 +}
 diff --git a/runtime/src/bank.rs b/runtime/src/bank.rs
-index b15f3f6229a5..ca9d923095b8 100644
+index 557d24b8f0..388efa74d0 100644
 --- a/runtime/src/bank.rs
 +++ b/runtime/src/bank.rs
 @@ -74,7 +74,7 @@ use {
@@ -24570,7 +24571,7 @@ index b15f3f6229a5..ca9d923095b8 100644
  
      /// staked nodes on epoch boundaries, saved off when a bank.slot() is at
      ///   a leader schedule calculation boundary
-@@ -4220,17 +4244,61 @@ impl Bank {
+@@ -4218,17 +4242,61 @@ impl Bank {
          &'a self,
          transactions: &'b [SanitizedTransaction],
          transaction_results: impl Iterator<Item = Result<()>>,
@@ -24633,7 +24634,7 @@ index b15f3f6229a5..ca9d923095b8 100644
      /// Prepare a transaction batch from a single transaction without locking accounts
      pub fn prepare_unlocked_batch_from_single_tx<'a>(
          &'a self,
-@@ -4558,6 +4626,29 @@ impl Bank {
+@@ -4556,6 +4624,29 @@ impl Bank {
          }
      }
  
@@ -24663,7 +24664,7 @@ index b15f3f6229a5..ca9d923095b8 100644
      fn load_program_accounts(
          &self,
          pubkey: &Pubkey,
-@@ -5649,6 +5740,26 @@ impl Bank {
+@@ -5652,6 +5743,26 @@ impl Bank {
          }
      }
  
@@ -24691,7 +24692,7 @@ index b15f3f6229a5..ca9d923095b8 100644
          &self,
          execution_results: &[TransactionExecutionResult],
 diff --git a/runtime/src/snapshot_bank_utils.rs b/runtime/src/snapshot_bank_utils.rs
-index 5494eb1beb71..31ea22b91a38 100644
+index 5494eb1beb..31ea22b91a 100644
 --- a/runtime/src/snapshot_bank_utils.rs
 +++ b/runtime/src/snapshot_bank_utils.rs
 @@ -227,13 +227,14 @@ pub fn bank_fields_from_snapshot_archives(
@@ -24731,7 +24732,7 @@ index 5494eb1beb71..31ea22b91a38 100644
  
      let (bank, _) = bank_from_snapshot_archives(
 diff --git a/runtime/src/snapshot_utils.rs b/runtime/src/snapshot_utils.rs
-index ff0afc1e779b..ce64c6713c7c 100644
+index ff0afc1e77..ce64c6713c 100644
 --- a/runtime/src/snapshot_utils.rs
 +++ b/runtime/src/snapshot_utils.rs
 @@ -1848,8 +1848,9 @@ pub fn get_incremental_snapshot_archives(
@@ -24820,7 +24821,7 @@ index ff0afc1e779b..ce64c6713c7c 100644
              None
          );
 diff --git a/runtime/src/stake_account.rs b/runtime/src/stake_account.rs
-index 7ee3c96c4440..2dacfd6b6b3c 100644
+index 7ee3c96c44..2dacfd6b6b 100644
 --- a/runtime/src/stake_account.rs
 +++ b/runtime/src/stake_account.rs
 @@ -41,14 +41,14 @@ impl<T> StakeAccount<T> {
@@ -24841,7 +24842,7 @@ index 7ee3c96c4440..2dacfd6b6b3c 100644
          // only wrap a stake-state which is a delegation.
          self.stake_state.delegation().unwrap()
 diff --git a/runtime/src/stakes.rs b/runtime/src/stakes.rs
-index 45192e919d24..c7f4fafe9710 100644
+index 45192e919d..c7f4fafe97 100644
 --- a/runtime/src/stakes.rs
 +++ b/runtime/src/stakes.rs
 @@ -48,17 +48,17 @@ pub enum InvalidCacheEntryReason {
@@ -24893,7 +24894,7 @@ index 45192e919d24..c7f4fafe9710 100644
      }
  
 diff --git a/runtime/src/transaction_batch.rs b/runtime/src/transaction_batch.rs
-index 66711fd5a1ac..f74158c7318d 100644
+index 66711fd5a1..f74158c731 100644
 --- a/runtime/src/transaction_batch.rs
 +++ b/runtime/src/transaction_batch.rs
 @@ -1,6 +1,6 @@
@@ -24934,7 +24935,7 @@ index 66711fd5a1ac..f74158c7318d 100644
  
  // Unlock all locked accounts in destructor.
 diff --git a/rustfmt.toml b/rustfmt.toml
-index e26d07f0d84e..c7ccd487504a 100644
+index e26d07f0d8..c7ccd48750 100644
 --- a/rustfmt.toml
 +++ b/rustfmt.toml
 @@ -1,2 +1,7 @@
@@ -24948,7 +24949,7 @@ index e26d07f0d84e..c7ccd487504a 100644
 \ No newline at end of file
 diff --git a/s b/s
 new file mode 100755
-index 000000000000..308133d22740
+index 0000000000..308133d227
 --- /dev/null
 +++ b/s
 @@ -0,0 +1,15 @@
@@ -24968,7 +24969,7 @@ index 000000000000..308133d22740
 +# sync to build server, ignoring local builds and local/remote dev ledger
 +rsync -avh --delete --exclude target --exclude docker-output "$SCRIPT_DIR" "$HOST":~/
 diff --git a/scripts/increment-cargo-version.sh b/scripts/increment-cargo-version.sh
-index 1cadfc4bdd53..c383f244dd41 100755
+index 1cadfc4bdd..c383f244dd 100755
 --- a/scripts/increment-cargo-version.sh
 +++ b/scripts/increment-cargo-version.sh
 @@ -23,6 +23,8 @@ ignores=(
@@ -24981,7 +24982,7 @@ index 1cadfc4bdd53..c383f244dd41 100755
  
  not_paths=()
 diff --git a/scripts/run.sh b/scripts/run.sh
-index 699bfce3e253..3eedad3585d1 100755
+index 699bfce3e2..3eedad3585 100755
 --- a/scripts/run.sh
 +++ b/scripts/run.sh
 @@ -102,6 +102,10 @@ args=(
@@ -24996,7 +24997,7 @@ index 699bfce3e253..3eedad3585d1 100755
    --full-rpc-api
    --rpc-port 8899
 diff --git a/scripts/solana-install-deploy.sh b/scripts/solana-install-deploy.sh
-index ea77ca34bc9e..0f141a32cbd0 100755
+index ea77ca34bc..0f141a32cb 100755
 --- a/scripts/solana-install-deploy.sh
 +++ b/scripts/solana-install-deploy.sh
 @@ -57,10 +57,10 @@ esac
@@ -25013,7 +25014,7 @@ index ea77ca34bc9e..0f141a32cbd0 100755
  esac
  
 diff --git a/sdk/Cargo.toml b/sdk/Cargo.toml
-index 57bf0738fa41..8dc9676e30ce 100644
+index 57bf0738fa..8dc9676e30 100644
 --- a/sdk/Cargo.toml
 +++ b/sdk/Cargo.toml
 @@ -38,6 +38,7 @@ full = [
@@ -25026,7 +25027,7 @@ index 57bf0738fa41..8dc9676e30ce 100644
  bincode = { workspace = true }
 diff --git a/sdk/src/bundle/mod.rs b/sdk/src/bundle/mod.rs
 new file mode 100644
-index 000000000000..3c02a59f9f56
+index 0000000000..3c02a59f9f
 --- /dev/null
 +++ b/sdk/src/bundle/mod.rs
 @@ -0,0 +1,33 @@
@@ -25064,7 +25065,7 @@ index 000000000000..3c02a59f9f56
 +    format!("{:x}", hasher.finalize())
 +}
 diff --git a/sdk/src/lib.rs b/sdk/src/lib.rs
-index 4bf36a5d2719..77bf0d772d85 100644
+index 4bf36a5d27..77bf0d772d 100644
 --- a/sdk/src/lib.rs
 +++ b/sdk/src/lib.rs
 @@ -60,6 +60,7 @@ pub use solana_program::{
@@ -25076,7 +25077,7 @@ index 4bf36a5d2719..77bf0d772d85 100644
  pub mod commitment_config;
  pub mod compute_budget;
 diff --git a/send-transaction-service/Cargo.toml b/send-transaction-service/Cargo.toml
-index 35e76524d901..e94b4fe8dcc5 100644
+index 35e76524d9..e94b4fe8dc 100644
 --- a/send-transaction-service/Cargo.toml
 +++ b/send-transaction-service/Cargo.toml
 @@ -13,6 +13,7 @@ edition = { workspace = true }
@@ -25096,7 +25097,7 @@ index 35e76524d901..e94b4fe8dcc5 100644
  [package.metadata.docs.rs]
  targets = ["x86_64-unknown-linux-gnu"]
 diff --git a/send-transaction-service/src/send_transaction_service.rs b/send-transaction-service/src/send_transaction_service.rs
-index dd09ccc69698..3ac83c9f5847 100644
+index 7436e31e2c..2fb1bfbbc1 100644
 --- a/send-transaction-service/src/send_transaction_service.rs
 +++ b/send-transaction-service/src/send_transaction_service.rs
 @@ -6,6 +6,7 @@ use {
@@ -25107,7 +25108,7 @@ index dd09ccc69698..3ac83c9f5847 100644
      solana_measure::measure::Measure,
      solana_metrics::datapoint_warn,
      solana_runtime::{bank::Bank, bank_forks::BankForks},
-@@ -328,7 +329,7 @@ const SEND_TRANSACTION_METRICS_REPORT_RATE_MS: u64 = 5000;
+@@ -330,7 +331,7 @@ const SEND_TRANSACTION_METRICS_REPORT_RATE_MS: u64 = 5000;
  
  impl SendTransactionService {
      pub fn new<T: TpuInfo + std::marker::Send + 'static>(
@@ -25116,7 +25117,7 @@ index dd09ccc69698..3ac83c9f5847 100644
          bank_forks: &Arc<RwLock<BankForks>>,
          leader_info: Option<T>,
          receiver: Receiver<TransactionInfo>,
-@@ -343,7 +344,7 @@ impl SendTransactionService {
+@@ -345,7 +346,7 @@ impl SendTransactionService {
              ..Config::default()
          };
          Self::new_with_config(
@@ -25125,7 +25126,7 @@ index dd09ccc69698..3ac83c9f5847 100644
              bank_forks,
              leader_info,
              receiver,
-@@ -354,7 +355,7 @@ impl SendTransactionService {
+@@ -356,7 +357,7 @@ impl SendTransactionService {
      }
  
      pub fn new_with_config<T: TpuInfo + std::marker::Send + 'static>(
@@ -25134,7 +25135,7 @@ index dd09ccc69698..3ac83c9f5847 100644
          bank_forks: &Arc<RwLock<BankForks>>,
          leader_info: Option<T>,
          receiver: Receiver<TransactionInfo>,
-@@ -369,7 +370,7 @@ impl SendTransactionService {
+@@ -371,7 +372,7 @@ impl SendTransactionService {
          let leader_info_provider = Arc::new(Mutex::new(CurrentLeaderInfo::new(leader_info)));
  
          let receive_txn_thread = Self::receive_txn_thread(
@@ -25143,7 +25144,7 @@ index dd09ccc69698..3ac83c9f5847 100644
              receiver,
              leader_info_provider.clone(),
              connection_cache.clone(),
-@@ -380,7 +381,7 @@ impl SendTransactionService {
+@@ -382,7 +383,7 @@ impl SendTransactionService {
          );
  
          let retry_thread = Self::retry_thread(
@@ -25152,7 +25153,7 @@ index dd09ccc69698..3ac83c9f5847 100644
              bank_forks.clone(),
              leader_info_provider,
              connection_cache.clone(),
-@@ -398,7 +399,7 @@ impl SendTransactionService {
+@@ -400,7 +401,7 @@ impl SendTransactionService {
  
      /// Thread responsible for receiving transactions from RPC clients.
      fn receive_txn_thread<T: TpuInfo + std::marker::Send + 'static>(
@@ -25161,7 +25162,7 @@ index dd09ccc69698..3ac83c9f5847 100644
          receiver: Receiver<TransactionInfo>,
          leader_info_provider: Arc<Mutex<CurrentLeaderInfo<T>>>,
          connection_cache: Arc<ConnectionCache>,
-@@ -459,6 +460,10 @@ impl SendTransactionService {
+@@ -461,6 +462,10 @@ impl SendTransactionService {
                      stats
                          .sent_transactions
                          .fetch_add(transactions.len() as u64, Ordering::Relaxed);
@@ -25172,7 +25173,7 @@ index dd09ccc69698..3ac83c9f5847 100644
                      Self::send_transactions_in_batch(
                          &tpu_address,
                          &transactions,
-@@ -505,7 +510,7 @@ impl SendTransactionService {
+@@ -507,7 +512,7 @@ impl SendTransactionService {
  
      /// Thread responsible for retrying transactions
      fn retry_thread<T: TpuInfo + std::marker::Send + 'static>(
@@ -25181,7 +25182,7 @@ index dd09ccc69698..3ac83c9f5847 100644
          bank_forks: Arc<RwLock<BankForks>>,
          leader_info_provider: Arc<Mutex<CurrentLeaderInfo<T>>>,
          connection_cache: Arc<ConnectionCache>,
-@@ -538,7 +543,10 @@ impl SendTransactionService {
+@@ -540,7 +545,10 @@ impl SendTransactionService {
                          let bank_forks = bank_forks.read().unwrap();
                          (bank_forks.root_bank(), bank_forks.working_bank())
                      };
@@ -25193,7 +25194,7 @@ index dd09ccc69698..3ac83c9f5847 100644
                      let _result = Self::process_transactions(
                          &working_bank,
                          &root_bank,
-@@ -811,27 +819,40 @@ mod test {
+@@ -825,27 +833,40 @@ mod test {
          super::*,
          crate::tpu_info::NullTpuInfo,
          crossbeam_channel::{bounded, unbounded},
@@ -25237,7 +25238,7 @@ index dd09ccc69698..3ac83c9f5847 100644
              &bank_forks,
              None,
              receiver,
-@@ -847,7 +868,7 @@ mod test {
+@@ -861,7 +882,7 @@ mod test {
  
      #[test]
      fn validator_exit() {
@@ -25246,7 +25247,7 @@ index dd09ccc69698..3ac83c9f5847 100644
          let bank = Bank::default_for_tests();
          let bank_forks = BankForks::new_rw_arc(bank);
          let (sender, receiver) = bounded(0);
-@@ -865,7 +886,7 @@ mod test {
+@@ -879,7 +900,7 @@ mod test {
          let exit = Arc::new(AtomicBool::new(false));
          let connection_cache = Arc::new(ConnectionCache::new("connection_cache_test"));
          let _send_transaction_service = SendTransactionService::new::<NullTpuInfo>(
@@ -25257,7 +25258,7 @@ index dd09ccc69698..3ac83c9f5847 100644
              receiver,
 diff --git a/start b/start
 new file mode 100755
-index 000000000000..c2f35e272ab7
+index 0000000000..c2f35e272a
 --- /dev/null
 +++ b/start
 @@ -0,0 +1,9 @@
@@ -25272,7 +25273,7 @@ index 000000000000..c2f35e272ab7
 +NDEBUG=1 ./multinode-demo/faucet.sh
 diff --git a/start_multi b/start_multi
 new file mode 100755
-index 000000000000..66de0032dc36
+index 0000000000..66de0032dc
 --- /dev/null
 +++ b/start_multi
 @@ -0,0 +1,30 @@
@@ -25307,7 +25308,7 @@ index 000000000000..66de0032dc36
 +cargo run --bin solana-ledger-tool -- -l config/bootstrap-validator/ create-snapshot 0
 +NDEBUG=1 ./multinode-demo/faucet.sh
 diff --git a/test-validator/src/lib.rs b/test-validator/src/lib.rs
-index f041d80e6148..42ac059e3c2f 100644
+index f041d80e61..42ac059e3c 100644
 --- a/test-validator/src/lib.rs
 +++ b/test-validator/src/lib.rs
 @@ -988,6 +988,7 @@ impl TestValidator {
@@ -25320,7 +25321,7 @@ index f041d80e6148..42ac059e3c2f 100644
          // Needed to avoid panics in `solana-responder-gossip` in tests that create a number of
 diff --git a/tip-distributor/Cargo.toml b/tip-distributor/Cargo.toml
 new file mode 100644
-index 000000000000..76682d220a85
+index 0000000000..76682d220a
 --- /dev/null
 +++ b/tip-distributor/Cargo.toml
 @@ -0,0 +1,61 @@
@@ -25387,7 +25388,7 @@ index 000000000000..76682d220a85
 +path = "src/bin/claim-mev-tips.rs"
 diff --git a/tip-distributor/README.md b/tip-distributor/README.md
 new file mode 100644
-index 000000000000..fec682879adb
+index 0000000000..fec682879a
 --- /dev/null
 +++ b/tip-distributor/README.md
 @@ -0,0 +1,52 @@
@@ -25445,7 +25446,7 @@ index 000000000000..fec682879adb
 +Voila!
 diff --git a/tip-distributor/src/bin/claim-mev-tips.rs b/tip-distributor/src/bin/claim-mev-tips.rs
 new file mode 100644
-index 000000000000..dd57db923156
+index 0000000000..dd57db9231
 --- /dev/null
 +++ b/tip-distributor/src/bin/claim-mev-tips.rs
 @@ -0,0 +1,190 @@
@@ -25641,7 +25642,7 @@ index 000000000000..dd57db923156
 +}
 diff --git a/tip-distributor/src/bin/merkle-root-generator.rs b/tip-distributor/src/bin/merkle-root-generator.rs
 new file mode 100644
-index 000000000000..9f2d0f9a4e66
+index 0000000000..9f2d0f9a4e
 --- /dev/null
 +++ b/tip-distributor/src/bin/merkle-root-generator.rs
 @@ -0,0 +1,34 @@
@@ -25681,7 +25682,7 @@ index 000000000000..9f2d0f9a4e66
 +}
 diff --git a/tip-distributor/src/bin/merkle-root-uploader.rs b/tip-distributor/src/bin/merkle-root-uploader.rs
 new file mode 100644
-index 000000000000..9000ce66d01c
+index 0000000000..9000ce66d0
 --- /dev/null
 +++ b/tip-distributor/src/bin/merkle-root-uploader.rs
 @@ -0,0 +1,54 @@
@@ -25741,7 +25742,7 @@ index 000000000000..9000ce66d01c
 +}
 diff --git a/tip-distributor/src/bin/stake-meta-generator.rs b/tip-distributor/src/bin/stake-meta-generator.rs
 new file mode 100644
-index 000000000000..be7993be021e
+index 0000000000..be7993be02
 --- /dev/null
 +++ b/tip-distributor/src/bin/stake-meta-generator.rs
 @@ -0,0 +1,67 @@
@@ -25814,7 +25815,7 @@ index 000000000000..be7993be021e
 +}
 diff --git a/tip-distributor/src/claim_mev_workflow.rs b/tip-distributor/src/claim_mev_workflow.rs
 new file mode 100644
-index 000000000000..929b64fe3bb9
+index 0000000000..929b64fe3b
 --- /dev/null
 +++ b/tip-distributor/src/claim_mev_workflow.rs
 @@ -0,0 +1,398 @@
@@ -26218,7 +26219,7 @@ index 000000000000..929b64fe3bb9
 +}
 diff --git a/tip-distributor/src/lib.rs b/tip-distributor/src/lib.rs
 new file mode 100644
-index 000000000000..8ee6b50f5d1d
+index 0000000000..8ee6b50f5d
 --- /dev/null
 +++ b/tip-distributor/src/lib.rs
 @@ -0,0 +1,1062 @@
@@ -27286,7 +27287,7 @@ index 000000000000..8ee6b50f5d1d
 +}
 diff --git a/tip-distributor/src/merkle_root_generator_workflow.rs b/tip-distributor/src/merkle_root_generator_workflow.rs
 new file mode 100644
-index 000000000000..bee3da016b54
+index 0000000000..bee3da016b
 --- /dev/null
 +++ b/tip-distributor/src/merkle_root_generator_workflow.rs
 @@ -0,0 +1,54 @@
@@ -27346,7 +27347,7 @@ index 000000000000..bee3da016b54
 +}
 diff --git a/tip-distributor/src/merkle_root_upload_workflow.rs b/tip-distributor/src/merkle_root_upload_workflow.rs
 new file mode 100644
-index 000000000000..e40465581f62
+index 0000000000..e40465581f
 --- /dev/null
 +++ b/tip-distributor/src/merkle_root_upload_workflow.rs
 @@ -0,0 +1,138 @@
@@ -27490,7 +27491,7 @@ index 000000000000..e40465581f62
 +}
 diff --git a/tip-distributor/src/reclaim_rent_workflow.rs b/tip-distributor/src/reclaim_rent_workflow.rs
 new file mode 100644
-index 000000000000..fc48c89d61bf
+index 0000000000..fc48c89d61
 --- /dev/null
 +++ b/tip-distributor/src/reclaim_rent_workflow.rs
 @@ -0,0 +1,310 @@
@@ -27806,7 +27807,7 @@ index 000000000000..fc48c89d61bf
 +}
 diff --git a/tip-distributor/src/stake_meta_generator_workflow.rs b/tip-distributor/src/stake_meta_generator_workflow.rs
 new file mode 100644
-index 000000000000..c16b612c6b07
+index 0000000000..c16b612c6b
 --- /dev/null
 +++ b/tip-distributor/src/stake_meta_generator_workflow.rs
 @@ -0,0 +1,974 @@
@@ -28785,7 +28786,7 @@ index 000000000000..c16b612c6b07
 +    }
 +}
 diff --git a/transaction-status/src/lib.rs b/transaction-status/src/lib.rs
-index 0eb13d36819c..bd8bfa23dac2 100644
+index 0eb13d3681..bd8bfa23da 100644
 --- a/transaction-status/src/lib.rs
 +++ b/transaction-status/src/lib.rs
 @@ -26,7 +26,7 @@ use {
@@ -28812,7 +28813,7 @@ index 0eb13d36819c..bd8bfa23dac2 100644
  pub struct TransactionTokenBalance {
      pub account_index: u8,
 diff --git a/turbine/benches/cluster_info.rs b/turbine/benches/cluster_info.rs
-index 1f15137175ac..fffca1126ff0 100644
+index 1f15137175..fffca1126f 100644
 --- a/turbine/benches/cluster_info.rs
 +++ b/turbine/benches/cluster_info.rs
 @@ -76,6 +76,7 @@ fn broadcast_shreds_bench(bencher: &mut Bencher) {
@@ -28824,7 +28825,7 @@ index 1f15137175ac..fffca1126ff0 100644
          .unwrap();
      });
 diff --git a/turbine/benches/retransmit_stage.rs b/turbine/benches/retransmit_stage.rs
-index c5490d5670e6..56c672c7c8fe 100644
+index c5490d5670..56c672c7c8 100644
 --- a/turbine/benches/retransmit_stage.rs
 +++ b/turbine/benches/retransmit_stage.rs
 @@ -33,7 +33,7 @@ use {
@@ -28845,7 +28846,7 @@ index c5490d5670e6..56c672c7c8fe 100644
  
      let mut index = 0;
 diff --git a/turbine/src/broadcast_stage.rs b/turbine/src/broadcast_stage.rs
-index 7538754539ff..c4b89255a65c 100644
+index 7538754539..c4b89255a6 100644
 --- a/turbine/src/broadcast_stage.rs
 +++ b/turbine/src/broadcast_stage.rs
 @@ -116,6 +116,7 @@ impl BroadcastStageType {
@@ -29000,7 +29001,7 @@ index 7538754539ff..c4b89255a65c 100644
              }
          }
 diff --git a/turbine/src/broadcast_stage/broadcast_duplicates_run.rs b/turbine/src/broadcast_stage/broadcast_duplicates_run.rs
-index adca69ed4938..3dcf3a4c90ce 100644
+index adca69ed49..3dcf3a4c90 100644
 --- a/turbine/src/broadcast_stage/broadcast_duplicates_run.rs
 +++ b/turbine/src/broadcast_stage/broadcast_duplicates_run.rs
 @@ -300,6 +300,7 @@ impl BroadcastRun for BroadcastDuplicatesRun {
@@ -29012,7 +29013,7 @@ index adca69ed4938..3dcf3a4c90ce 100644
          let (shreds, _) = receiver.recv()?;
          if shreds.is_empty() {
 diff --git a/turbine/src/broadcast_stage/broadcast_fake_shreds_run.rs b/turbine/src/broadcast_stage/broadcast_fake_shreds_run.rs
-index b82ca324b618..649e8d03832c 100644
+index b82ca324b6..649e8d0383 100644
 --- a/turbine/src/broadcast_stage/broadcast_fake_shreds_run.rs
 +++ b/turbine/src/broadcast_stage/broadcast_fake_shreds_run.rs
 @@ -150,6 +150,7 @@ impl BroadcastRun for BroadcastFakeShredsRun {
@@ -29024,7 +29025,7 @@ index b82ca324b618..649e8d03832c 100644
          for (data_shreds, batch_info) in receiver {
              let fake = batch_info.is_some();
 diff --git a/turbine/src/broadcast_stage/broadcast_utils.rs b/turbine/src/broadcast_stage/broadcast_utils.rs
-index be231581e7fb..a51bb639f429 100644
+index be231581e7..a51bb639f4 100644
 --- a/turbine/src/broadcast_stage/broadcast_utils.rs
 +++ b/turbine/src/broadcast_stage/broadcast_utils.rs
 @@ -40,13 +40,23 @@ pub(super) fn recv_slot_entries(receiver: &Receiver<WorkingBankEntry>) -> Result
@@ -29131,7 +29132,7 @@ index be231581e7fb..a51bb639f429 100644
                  }
              })
 diff --git a/turbine/src/broadcast_stage/fail_entry_verification_broadcast_run.rs b/turbine/src/broadcast_stage/fail_entry_verification_broadcast_run.rs
-index e9ed6a1a6eee..c0fa09ce7d3f 100644
+index e9ed6a1a6e..c0fa09ce7d 100644
 --- a/turbine/src/broadcast_stage/fail_entry_verification_broadcast_run.rs
 +++ b/turbine/src/broadcast_stage/fail_entry_verification_broadcast_run.rs
 @@ -3,7 +3,7 @@ use {
@@ -29160,7 +29161,7 @@ index e9ed6a1a6eee..c0fa09ce7d3f 100644
      }
      fn record(&mut self, receiver: &RecordReceiver, blockstore: &Blockstore) -> Result<()> {
 diff --git a/turbine/src/broadcast_stage/standard_broadcast_run.rs b/turbine/src/broadcast_stage/standard_broadcast_run.rs
-index 6378c0df40a8..cc852cb1626f 100644
+index 6378c0df40..cc852cb162 100644
 --- a/turbine/src/broadcast_stage/standard_broadcast_run.rs
 +++ b/turbine/src/broadcast_stage/standard_broadcast_run.rs
 @@ -19,7 +19,7 @@ use {
@@ -29232,7 +29233,7 @@ index 6378c0df40a8..cc852cb1626f 100644
      }
      fn record(&mut self, receiver: &RecordReceiver, blockstore: &Blockstore) -> Result<()> {
 diff --git a/turbine/src/retransmit_stage.rs b/turbine/src/retransmit_stage.rs
-index c4c7a751ab24..78c5a9ce86a5 100644
+index c4c7a751ab..78c5a9ce86 100644
 --- a/turbine/src/retransmit_stage.rs
 +++ b/turbine/src/retransmit_stage.rs
 @@ -179,6 +179,7 @@ fn retransmit(
@@ -29322,7 +29323,7 @@ index c4c7a751ab24..78c5a9ce86a5 100644
  
          Self {
 diff --git a/validator/Cargo.toml b/validator/Cargo.toml
-index 6c7f691c27b5..6cfeb266ad30 100644
+index 6c7f691c27..6cfeb266ad 100644
 --- a/validator/Cargo.toml
 +++ b/validator/Cargo.toml
 @@ -54,6 +54,7 @@ solana-rpc = { workspace = true }
@@ -29342,7 +29343,7 @@ index 6c7f691c27b5..6cfeb266ad30 100644
  [dev-dependencies]
  solana-account-decoder = { workspace = true }
 diff --git a/validator/src/admin_rpc_service.rs b/validator/src/admin_rpc_service.rs
-index a9fe1c4e39f4..01b01ac9b69f 100644
+index a9fe1c4e39..01b01ac9b6 100644
 --- a/validator/src/admin_rpc_service.rs
 +++ b/validator/src/admin_rpc_service.rs
 @@ -13,6 +13,10 @@ use {
@@ -29512,7 +29513,7 @@ index a9fe1c4e39f4..01b01ac9b69f 100644
                  staked_nodes_overrides: Arc::new(RwLock::new(HashMap::new())),
                  rpc_to_plugin_manager_sender: None,
 diff --git a/validator/src/bootstrap.rs b/validator/src/bootstrap.rs
-index 88a45fdad506..26c2999c7fca 100644
+index 88a45fdad5..26c2999c7f 100644
 --- a/validator/src/bootstrap.rs
 +++ b/validator/src/bootstrap.rs
 @@ -814,12 +814,13 @@ fn get_highest_local_snapshot_hash(
@@ -29531,7 +29532,7 @@ index 88a45fdad506..26c2999c7fca 100644
                  .map(|incremental_snapshot_info| {
                      (
 diff --git a/validator/src/cli.rs b/validator/src/cli.rs
-index 08a7288843d8..a457cfbccbde 100644
+index 99949fec79..9188061322 100644
 --- a/validator/src/cli.rs
 +++ b/validator/src/cli.rs
 @@ -60,6 +60,10 @@ const MAX_SNAPSHOT_DOWNLOAD_ABORT: u32 = 5;
@@ -29633,7 +29634,7 @@ index 08a7288843d8..a457cfbccbde 100644
          .arg(
              Arg::with_name("identity")
                  .short("i")
-@@ -1105,6 +1190,14 @@ pub fn app<'a>(version: &'a str, default_args: &'a DefaultArgs) -> App<'a, 'a> {
+@@ -1121,6 +1206,14 @@ pub fn app<'a>(version: &'a str, default_args: &'a DefaultArgs) -> App<'a, 'a> {
                  .multiple(true)
                  .help("Specify the configuration file for the Geyser plugin."),
          )
@@ -29648,7 +29649,7 @@ index 08a7288843d8..a457cfbccbde 100644
          .arg(
              Arg::with_name("snapshot_archive_format")
                  .long("snapshot-archive-format")
-@@ -1411,6 +1504,68 @@ pub fn app<'a>(version: &'a str, default_args: &'a DefaultArgs) -> App<'a, 'a> {
+@@ -1427,6 +1520,68 @@ pub fn app<'a>(version: &'a str, default_args: &'a DefaultArgs) -> App<'a, 'a> {
          )
          .args(&get_deprecated_arguments())
          .after_help("The default subcommand is run")
@@ -29717,7 +29718,7 @@ index 08a7288843d8..a457cfbccbde 100644
          .subcommand(
              SubCommand::with_name("exit")
                  .about("Send an exit request to the validator")
-@@ -1577,6 +1732,48 @@ pub fn app<'a>(version: &'a str, default_args: &'a DefaultArgs) -> App<'a, 'a> {
+@@ -1593,6 +1748,48 @@ pub fn app<'a>(version: &'a str, default_args: &'a DefaultArgs) -> App<'a, 'a> {
              SubCommand::with_name("run")
                  .about("Run the validator")
          )
@@ -29766,7 +29767,7 @@ index 08a7288843d8..a457cfbccbde 100644
          .subcommand(
              SubCommand::with_name("plugin")
                  .about("Manage and view geyser plugins")
-@@ -2527,6 +2724,14 @@ pub fn test_app<'a>(version: &'a str, default_args: &'a DefaultTestArgs) -> App<
+@@ -2543,6 +2740,14 @@ pub fn test_app<'a>(version: &'a str, default_args: &'a DefaultTestArgs) -> App<
                  .multiple(true)
                  .help("Specify the configuration file for the Geyser plugin."),
          )
@@ -29782,7 +29783,7 @@ index 08a7288843d8..a457cfbccbde 100644
              Arg::with_name("deactivate_feature")
                  .long("deactivate-feature")
 diff --git a/validator/src/dashboard.rs b/validator/src/dashboard.rs
-index 365f02065ebc..7529b85d6d01 100644
+index 365f02065e..7529b85d6d 100644
 --- a/validator/src/dashboard.rs
 +++ b/validator/src/dashboard.rs
 @@ -273,6 +273,7 @@ fn get_validator_stats(
@@ -29794,7 +29795,7 @@ index 365f02065ebc..7529b85d6d01 100644
                  message: _,
                  data:
 diff --git a/validator/src/main.rs b/validator/src/main.rs
-index c0ea702da973..454d3a177c36 100644
+index acc77c16cb..a9a0570920 100644
 --- a/validator/src/main.rs
 +++ b/validator/src/main.rs
 @@ -1,10 +1,12 @@
@@ -29994,8 +29995,8 @@ index c0ea702da973..454d3a177c36 100644
          ("contact-info", Some(subcommand_matches)) => {
              let output_mode = subcommand_matches.value_of("output");
              let admin_client = admin_rpc_service::connect(&ledger_path);
-@@ -1283,6 +1431,44 @@ pub fn main() {
-     }
+@@ -1304,6 +1452,44 @@ pub fn main() {
+ 
      let full_api = matches.is_present("full_rpc_api");
  
 +    let voting_disabled = matches.is_present("no_voting") || restricted_repair_only_mode;
@@ -30039,7 +30040,7 @@ index c0ea702da973..454d3a177c36 100644
      let mut validator_config = ValidatorConfig {
          require_tower: matches.is_present("require_tower"),
          tower_storage,
-@@ -1415,6 +1601,14 @@ pub fn main() {
+@@ -1433,6 +1619,14 @@ pub fn main() {
              log_messages_bytes_limit: value_of(&matches, "log_messages_bytes_limit"),
              ..RuntimeConfig::default()
          },
@@ -30054,7 +30055,7 @@ index c0ea702da973..454d3a177c36 100644
          staked_nodes_overrides: staked_nodes_overrides.clone(),
          replay_slots_concurrently: matches.is_present("replay_slots_concurrently"),
          use_snapshot_archives_at_startup: value_t_or_exit!(
-@@ -1422,6 +1616,8 @@ pub fn main() {
+@@ -1440,6 +1634,8 @@ pub fn main() {
              use_snapshot_archives_at_startup::cli::NAME,
              UseSnapshotArchivesAtStartup
          ),
@@ -30063,7 +30064,7 @@ index c0ea702da973..454d3a177c36 100644
          ..ValidatorConfig::default()
      };
  
-@@ -1727,6 +1923,31 @@ pub fn main() {
+@@ -1745,6 +1941,31 @@ pub fn main() {
          },
      );
  
@@ -30095,7 +30096,7 @@ index c0ea702da973..454d3a177c36 100644
      let gossip_host: IpAddr = matches
          .value_of("gossip_host")
          .map(|gossip_host| {
-@@ -1899,6 +2120,7 @@ pub fn main() {
+@@ -1917,6 +2138,7 @@ pub fn main() {
          tpu_connection_pool_size,
          tpu_enable_udp,
          admin_service_post_init,
@@ -30103,7 +30104,7 @@ index c0ea702da973..454d3a177c36 100644
      )
      .unwrap_or_else(|e| {
          error!("Failed to start validator: {:?}", e);
-@@ -1964,3 +2186,47 @@ fn process_account_indexes(matches: &ArgMatches) -> AccountSecondaryIndexes {
+@@ -1982,3 +2204,47 @@ fn process_account_indexes(matches: &ArgMatches) -> AccountSecondaryIndexes {
          indexes: account_indexes,
      }
  }
@@ -30152,7 +30153,7 @@ index c0ea702da973..454d3a177c36 100644
 +    }
 +}
 diff --git a/version/src/lib.rs b/version/src/lib.rs
-index edeca08c9602..68ce039318bb 100644
+index edeca08c96..68ce039318 100644
 --- a/version/src/lib.rs
 +++ b/version/src/lib.rs
 @@ -63,7 +63,7 @@ impl Default for Version {
@@ -30164,6 +30165,3 @@ index edeca08c9602..68ce039318bb 100644
          }
      }
  }
--- 
-2.44.0
-
