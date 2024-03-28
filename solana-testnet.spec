@@ -329,18 +329,12 @@ sed 's,__SUFFIX__,%{solana_suffix},g' \
 %install
 mkdir -p %{buildroot}/opt/solana/%{solana_suffix}/bin/deps
 mkdir -p %{buildroot}/opt/solana/%{solana_suffix}/bin/perf-libs
-mkdir -p %{buildroot}/opt/solana/%{solana_suffix}/libexec
 mkdir -p %{buildroot}/%{_unitdir}
 mkdir -p %{buildroot}%{solana_home}
 mkdir -p %{buildroot}%{solana_log}
 mkdir -p %{buildroot}%{solana_etc}
 mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 mkdir -p %{buildroot}%{_sysconfdir}/logrotate.d
-
-ln -s ../bin/deps \
-        %{buildroot}/opt/solana/%{solana_suffix}/libexec/deps
-ln -s ../bin/perf-libs \
-        %{buildroot}/opt/solana/%{solana_suffix}/libexec/perf-libs
 
 mv activate \
         %{buildroot}/opt/solana/%{solana_suffix}/
@@ -354,11 +348,6 @@ mv solana-watchtower \
         %{buildroot}%{_sysconfdir}/sysconfig/solana-watchtower-%{solana_suffix}
 mv solana-validator.logrotate \
         %{buildroot}%{_sysconfdir}/logrotate.d/solana-validator-%{solana_suffix}
-
-ln -s ../libexec/solana-ledger-tool \
-        %{buildroot}/opt/solana/%{solana_suffix}/bin/
-ln -s ../libexec/solana-validator \
-        %{buildroot}/opt/solana/%{solana_suffix}/bin/
 
 %ifarch x86_64
 # Use binaries optimized for newer CPUs for running validator and local benchmarks.
@@ -391,10 +380,6 @@ rm ./_release/solana-cargo-registry
 
 mv ./_release/*.so \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/deps/
-mv ./_release/solana-validator \
-        %{buildroot}/opt/solana/%{solana_suffix}/libexec/
-mv ./_release/solana-ledger-tool \
-        %{buildroot}/opt/solana/%{solana_suffix}/libexec/
 mv ./_release/* \
         %{buildroot}/opt/solana/%{solana_suffix}/bin/
 
@@ -407,10 +392,7 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 %dir /opt/solana/%{solana_suffix}/bin
 %dir /opt/solana/%{solana_suffix}/bin/deps
 %dir /opt/solana/%{solana_suffix}/bin/perf-libs
-%dir /opt/solana/%{solana_suffix}/libexec
 /opt/solana/%{solana_suffix}/activate
-/opt/solana/%{solana_suffix}/libexec/deps
-/opt/solana/%{solana_suffix}/libexec/perf-libs
 
 
 %files cli
@@ -429,7 +411,6 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 %dir /opt/solana
 %dir /opt/solana/%{solana_suffix}
 %dir /opt/solana/%{solana_suffix}/bin
-%dir /opt/solana/%{solana_suffix}/libexec
 /opt/solana/%{solana_suffix}/bin/solana-keygen
 /opt/solana/%{solana_suffix}/bin/solana-zk-keygen
 /opt/solana/%{solana_suffix}/bin/solana-log-analyzer
@@ -442,7 +423,6 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 /opt/solana/%{solana_suffix}/bin/solana-merkle-root-generator
 /opt/solana/%{solana_suffix}/bin/solana-merkle-root-uploader
 /opt/solana/%{solana_suffix}/bin/solana-stake-meta-generator
-/opt/solana/%{solana_suffix}/libexec/solana-ledger-tool
 
 
 %files deps
@@ -457,12 +437,10 @@ mv solana.bash-completion %{buildroot}/opt/solana/%{solana_suffix}/bin/solana.ba
 %dir /opt/solana
 %dir /opt/solana/%{solana_suffix}
 %dir /opt/solana/%{solana_suffix}/bin
-%dir /opt/solana/%{solana_suffix}/libexec
 /opt/solana/%{solana_suffix}/bin/solana-faucet
 /opt/solana/%{solana_suffix}/bin/solana-ip-address-server
 /opt/solana/%{solana_suffix}/bin/solana-validator
 /opt/solana/%{solana_suffix}/bin/solana-watchtower
-/opt/solana/%{solana_suffix}/libexec/solana-validator
 
 %{_unitdir}/solana-validator-%{solana_suffix}.service
 %{_unitdir}/solana-watchtower-%{solana_suffix}.service
