@@ -1,8 +1,7 @@
-From 8f71abb3c157533891fb19fb113944057ee97b8a Mon Sep 17 00:00:00 2001
+From c16494d6f6fe9109b2b56496260295810be1fd4f Mon Sep 17 00:00:00 2001
 From: segfaultdoctor <17258903+segfaultdoc@users.noreply.github.com>
 Date: Tue, 27 Feb 2024 15:19:16 -0500
-Subject: [PATCH 2/3] Backports #595: correctly initialize account overrides
- (#596)
+Subject: [PATCH] Backports #595: correctly initialize account overrides (#596)
 
 ---
  Cargo.lock                     |  4 ++--
@@ -12,7 +11,7 @@ Subject: [PATCH 2/3] Backports #595: correctly initialize account overrides
  4 files changed, 24 insertions(+), 8 deletions(-)
 
 diff --git a/Cargo.lock b/Cargo.lock
-index d08ed049cb77..69ffa42d61b7 100644
+index d08ed049cb..69ffa42d61 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -3459,9 +3459,9 @@ dependencies = [
@@ -28,7 +27,7 @@ index d08ed049cb77..69ffa42d61b7 100644
   "libc",
   "wasi 0.11.0+wasi-snapshot-preview1",
 diff --git a/bundle/src/bundle_execution.rs b/bundle/src/bundle_execution.rs
-index 9e7262649e37..5c6a6b7b5945 100644
+index 9e7262649e..5c6a6b7b59 100644
 --- a/bundle/src/bundle_execution.rs
 +++ b/bundle/src/bundle_execution.rs
 @@ -81,9 +81,9 @@ pub enum LoadAndExecuteBundleError {
@@ -66,7 +65,7 @@ index 9e7262649e37..5c6a6b7b5945 100644
      let mut chunk_start = 0;
      let start_time = Instant::now();
 diff --git a/programs/sbf/Cargo.lock b/programs/sbf/Cargo.lock
-index 014166599c31..70508f9ce993 100644
+index 014166599c..70508f9ce9 100644
 --- a/programs/sbf/Cargo.lock
 +++ b/programs/sbf/Cargo.lock
 @@ -3050,9 +3050,9 @@ dependencies = [
@@ -82,7 +81,7 @@ index 014166599c31..70508f9ce993 100644
   "libc",
   "wasi 0.11.0+wasi-snapshot-preview1",
 diff --git a/runtime/src/bank.rs b/runtime/src/bank.rs
-index 10871bcef1bf..cf021d33c111 100644
+index 10871bcef1..cf021d33c1 100644
 --- a/runtime/src/bank.rs
 +++ b/runtime/src/bank.rs
 @@ -4412,7 +4412,11 @@ impl Bank {
@@ -98,6 +97,3 @@ index 10871bcef1bf..cf021d33c111 100644
          let mut account_overrides = AccountOverrides::default();
          let slot_history_id = sysvar::slot_history::id();
          if account_keys.iter().any(|pubkey| *pubkey == slot_history_id) {
--- 
-2.44.0
-
