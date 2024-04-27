@@ -64,6 +64,7 @@ Patch1001: jito01.patch
 Patch1002: jito02.patch
 Patch1003: jito03.patch
 Patch1004: jito04.patch
+Patch1005: jito05.patch
 
 Patch2002: 0002-Manually-vendor-the-patched-crossbeam.patch
 Patch2003: 0003-Manually-vendor-the-patched-tokio.patch
@@ -205,6 +206,7 @@ git am %{PATCH1001}
 git am %{PATCH1002}
 git am %{PATCH1003}
 git am %{PATCH1004}
+git am %{PATCH1005}
 
 # Extract vendored sources after applying Jito patch because it contains
 # git modules.
