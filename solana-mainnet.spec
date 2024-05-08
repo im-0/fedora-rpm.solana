@@ -25,8 +25,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      2
-# git 507d6540c061334b9fc7cd341c16f8f7042c8444
-Version:    1.17.32
+# git 7a02ef7139538f4079f065ce19531b9a5d4acfaa
+Version:    1.17.33
 Release:    100jito%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -61,10 +61,6 @@ Source300:  https://static.rust-lang.org/dist/rust-%{rust_version}-x86_64-unknow
 Source301:  https://static.rust-lang.org/dist/rust-%{rust_version}-aarch64-unknown-linux-gnu.tar.gz
 
 Patch1001: jito01.patch
-Patch1002: jito02.patch
-Patch1003: jito03.patch
-Patch1004: jito04.patch
-Patch1005: jito05.patch
 
 Patch2002: 0002-Manually-vendor-the-patched-crossbeam.patch
 Patch2003: 0003-Manually-vendor-the-patched-tokio.patch
@@ -203,10 +199,6 @@ git init
 git add .
 git commit -m "import"
 git am %{PATCH1001}
-git am %{PATCH1002}
-git am %{PATCH1003}
-git am %{PATCH1004}
-git am %{PATCH1005}
 
 # Extract vendored sources after applying Jito patch because it contains
 # git modules.
@@ -496,6 +488,9 @@ exit 0
 
 
 %changelog
+* Thu May 09 2024 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.17.33-100jito
+- Update to 1.17.33
+
 * Sat Apr 27 2024 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.17.32-100jito
 - Update to 1.17.32
 
