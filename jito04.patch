@@ -1,16 +1,17 @@
-From 422aa2e48e12be50dbeffe5853c47f73b1912ec9 Mon Sep 17 00:00:00 2001
+From bfefd77bf39974e035398077024f820fc157c35d Mon Sep 17 00:00:00 2001
 From: buffalu <85544055+buffalu@users.noreply.github.com>
 Date: Sat, 13 Apr 2024 10:05:04 -0500
-Subject: [PATCH 4/4] Buffer bundles that exceed processing time and make the
+Subject: [PATCH] Buffer bundles that exceed processing time and make the
  allowed processing time longer (#610)
 
 ---
  .../unprocessed_transaction_storage.rs        | 26 ++++++++++++++-----
  core/src/bundle_stage.rs                      |  2 +-
- 2 files changed, 21 insertions(+), 7 deletions(-)
+ core/src/bundle_stage/bundle_consumer.rs      |  4 ---
+ 3 files changed, 21 insertions(+), 11 deletions(-)
 
 diff --git a/core/src/banking_stage/unprocessed_transaction_storage.rs b/core/src/banking_stage/unprocessed_transaction_storage.rs
-index 1deeb714b31b..c47d3956a55e 100644
+index 1deeb714b3..c47d3956a5 100644
 --- a/core/src/banking_stage/unprocessed_transaction_storage.rs
 +++ b/core/src/banking_stage/unprocessed_transaction_storage.rs
 @@ -22,7 +22,7 @@ use {
@@ -61,7 +62,7 @@ index 1deeb714b31b..c47d3956a55e 100644
                          debug!("bundle={} tip error: {}", sanitized_bundle.bundle_id, e);
                          // Tip errors are _typically_ due to misconfiguration (except for poh record error, bank processing error, exceeds cost model)
 diff --git a/core/src/bundle_stage.rs b/core/src/bundle_stage.rs
-index 3a4103831b43..de8dad38c7f8 100644
+index 3a4103831b..de8dad38c7 100644
 --- a/core/src/bundle_stage.rs
 +++ b/core/src/bundle_stage.rs
 @@ -45,7 +45,7 @@ mod bundle_reserved_space_manager;
@@ -73,6 +74,25 @@ index 3a4103831b43..de8dad38c7f8 100644
  const SLOT_BOUNDARY_CHECK_PERIOD: Duration = Duration::from_millis(10);
  
  // Stats emitted periodically
--- 
-2.44.0
-
+diff --git a/core/src/bundle_stage/bundle_consumer.rs b/core/src/bundle_stage/bundle_consumer.rs
+index e31d14285d..2192a00e84 100644
+--- a/core/src/bundle_stage/bundle_consumer.rs
++++ b/core/src/bundle_stage/bundle_consumer.rs
+@@ -900,7 +900,6 @@ mod tests {
+             bank.clone(),
+             Some((4, 4)),
+             bank.ticks_per_slot(),
+-            &Pubkey::default(),
+             blockstore,
+             &leader_schedule_cache,
+             &poh_config,
+@@ -1042,9 +1041,6 @@ mod tests {
+         } = create_test_fixture(1_000_000);
+         let recorder = poh_recorder.read().unwrap().new_recorder();
+ 
+-        let status = poh_recorder.read().unwrap().reached_leader_slot();
+-        info!("status: {:?}", status);
+-
+         let (replay_vote_sender, _replay_vote_receiver) = unbounded();
+         let committer = Committer::new(
+             None,
