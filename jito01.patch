@@ -1,4 +1,4 @@
-From 1497989e2537ea71517fcb753bf708b66ed40877 Mon Sep 17 00:00:00 2001
+From 20ba2d37263f7813a2c681e16fd430a8237ba684 Mon Sep 17 00:00:00 2001
 From: Lucas B <lucas@jito.wtf>
 Date: Thu, 25 Aug 2022 17:18:46 -0500
 Subject: [PATCH] jito patch only reroute if relayer connected (#123) feat: add
@@ -255,6 +255,12 @@ Update CI (#584)
 - More release fixes
 
 Fix release process
+
+Backports #595: correctly initialize account overrides (#596)
+
+Fix: Ensure set contact info to UDP port instead of QUIC (Backport #601 to v1.18) (#602)
+
+Buffer bundles that exceed processing time and make the allowed processing time longer (#610)
 ---
  .dockerignore                                 |    9 +
  .github/dependabot.yml                        |   23 +-
@@ -269,7 +275,7 @@ Fix release process
  .github/workflows/release-artifacts.yml       |    1 +
  .gitignore                                    |    5 +
  .gitmodules                                   |    9 +
- Cargo.lock                                    |  793 ++++++--
+ Cargo.lock                                    |  797 ++++++--
  Cargo.toml                                    |   16 +-
  README.md                                     |   16 +-
  RELEASE.md                                    |   12 +-
@@ -281,7 +287,7 @@ Fix release process
  banks-server/src/banks_server.rs              |    5 +-
  bootstrap                                     |   26 +
  bundle/Cargo.toml                             |   36 +
- bundle/src/bundle_execution.rs                | 1188 ++++++++++++
+ bundle/src/bundle_execution.rs                | 1200 +++++++++++++
  bundle/src/lib.rs                             |   60 +
  ci/buildkite-pipeline-in-disk.sh              |    4 +-
  ci/buildkite-pipeline.sh                      |    4 +-
@@ -304,11 +310,11 @@ Fix release process
  core/src/banking_stage/consumer.rs            |  196 +-
  .../banking_stage/latest_unprocessed_votes.rs |    2 +-
  core/src/banking_stage/qos_service.rs         |   48 +-
- .../unprocessed_transaction_storage.rs        |  438 ++++-
+ .../unprocessed_transaction_storage.rs        |  452 ++++-
  core/src/banking_trace.rs                     |    1 +
  core/src/bundle_stage.rs                      |  436 +++++
  .../src/bundle_stage/bundle_account_locker.rs |  326 ++++
- core/src/bundle_stage/bundle_consumer.rs      | 1601 +++++++++++++++++
+ core/src/bundle_stage/bundle_consumer.rs      | 1597 +++++++++++++++++
  .../bundle_packet_deserializer.rs             |  282 +++
  .../bundle_stage/bundle_packet_receiver.rs    |  830 +++++++++
  .../bundle_reserved_space_manager.rs          |  237 +++
@@ -322,8 +328,8 @@ Fix release process
  core/src/proxy/auth.rs                        |  185 ++
  core/src/proxy/block_engine_stage.rs          |  542 ++++++
  core/src/proxy/fetch_stage_manager.rs         |  170 ++
- core/src/proxy/mod.rs                         |  100 +
- core/src/proxy/relayer_stage.rs               |  500 +++++
+ core/src/proxy/mod.rs                         |  100 ++
+ core/src/proxy/relayer_stage.rs               |  500 ++++++
  core/src/tip_manager.rs                       |  583 ++++++
  core/src/tpu.rs                               |  110 +-
  core/src/tpu_entry_notifier.rs                |   66 +-
@@ -369,7 +375,7 @@ Fix release process
  program-test/src/programs.rs                  |   17 +
  .../programs/jito_tip_distribution-0.1.4.so   |  Bin 0 -> 423080 bytes
  .../src/programs/jito_tip_payment-0.1.4.so    |  Bin 0 -> 430592 bytes
- programs/sbf/Cargo.lock                       |  646 +++++--
+ programs/sbf/Cargo.lock                       |  650 +++++--
  programs/sbf/tests/programs.rs                |    4 +-
  rpc-client-api/Cargo.toml                     |    2 +
  rpc-client-api/src/bundles.rs                 |  166 ++
@@ -393,7 +399,7 @@ Fix release process
  .../src/runtime_plugin_admin_rpc_service.rs   |  326 ++++
  runtime-plugin/src/runtime_plugin_manager.rs  |  275 +++
  runtime-plugin/src/runtime_plugin_service.rs  |  123 ++
- runtime/src/bank.rs                           |  117 +-
+ runtime/src/bank.rs                           |  123 +-
  runtime/src/snapshot_bank_utils.rs            |   14 +-
  runtime/src/snapshot_utils.rs                 |   22 +-
  runtime/src/stake_account.rs                  |    4 +-
@@ -441,7 +447,7 @@ Fix release process
  validator/src/dashboard.rs                    |    1 +
  validator/src/main.rs                         |  268 ++-
  version/src/lib.rs                            |    2 +-
- 185 files changed, 17648 insertions(+), 885 deletions(-)
+ 185 files changed, 17679 insertions(+), 890 deletions(-)
  create mode 100644 .dockerignore
  create mode 100644 .gitmodules
  create mode 160000 anchor
@@ -746,7 +752,7 @@ index 0000000000..e31fc7fccd
 +	path = jito-protos/protos
 +	url = https://github.com/jito-labs/mev-protos.git
 diff --git a/Cargo.lock b/Cargo.lock
-index 504f6c0505..8889d32531 100644
+index 75e3182231..c48f9460c6 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -125,6 +125,145 @@ dependencies = [
@@ -1443,6 +1449,18 @@ index 504f6c0505..8889d32531 100644
   "syn 1.0.109",
  ]
  
+@@ -3186,9 +3459,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "mio"
+-version = "0.8.8"
++version = "0.8.11"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "927a765cd3fc26206e66b296465fa9d3e5ab003e651c1b3c060e7956d96b19d2"
++checksum = "a4a650543ca06a924e8b371db273b2756685faae30f8487da1b56505a8f78b0c"
+ dependencies = [
+  "libc",
+  "wasi 0.11.0+wasi-snapshot-preview1",
 @@ -3217,8 +3490,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "22ce75669015c4f47b289fd4d4f56e894e4c96003ffdf3ac51313126f94c6cbb"
  dependencies = [
@@ -2497,7 +2515,7 @@ index 504f6c0505..8889d32531 100644
  ]
  
 diff --git a/Cargo.toml b/Cargo.toml
-index 8aebe3d60d..9a1d250c4e 100644
+index d6f7086211..bab477793c 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
 @@ -18,6 +18,7 @@ members = [
@@ -3082,10 +3100,10 @@ index 0000000000..7280b7ee67
 +name = "solana_bundle"
 diff --git a/bundle/src/bundle_execution.rs b/bundle/src/bundle_execution.rs
 new file mode 100644
-index 0000000000..9e7262649e
+index 0000000000..5c6a6b7b59
 --- /dev/null
 +++ b/bundle/src/bundle_execution.rs
-@@ -0,0 +1,1188 @@
+@@ -0,0 +1,1200 @@
 +use {
 +    itertools::izip,
 +    log::*,
@@ -3169,9 +3187,9 @@ index 0000000000..9e7262649e
 +    ProcessingTimeExceeded(Duration),
 +
 +    #[error(
-+        "A transaction in the bundle encountered a lock error: [signature={:?}, transaction_error={:?}]",
-+        signature,
-+        transaction_error
++    "A transaction in the bundle encountered a lock error: [signature={:?}, transaction_error={:?}]",
++    signature,
++    transaction_error
 +    )]
 +    LockError {
 +        signature: Signature,
@@ -3339,8 +3357,20 @@ index 0000000000..9e7262649e
 +            metrics: BundleExecutionMetrics::default(),
 +        };
 +    }
++
 +    let mut binding = AccountOverrides::default();
 +    let account_overrides = account_overrides.unwrap_or(&mut binding);
++    if is_simulation {
++        bundle
++            .transactions
++            .iter()
++            .map(|tx| tx.message().account_keys())
++            .for_each(|account_keys| {
++                account_overrides.upsert_account_overrides(
++                    bank.get_account_overrides_for_simulation(&account_keys),
++                );
++            });
++    }
 +
 +    let mut chunk_start = 0;
 +    let start_time = Instant::now();
@@ -5824,7 +5854,7 @@ index abac9c70f8..70e1ca1699 100644
                  total_txs_cost,
                  bank.read_cost_tracker().unwrap().block_cost()
 diff --git a/core/src/banking_stage/unprocessed_transaction_storage.rs b/core/src/banking_stage/unprocessed_transaction_storage.rs
-index f8d99c7790..1deeb714b3 100644
+index f8d99c7790..c47d3956a5 100644
 --- a/core/src/banking_stage/unprocessed_transaction_storage.rs
 +++ b/core/src/banking_stage/unprocessed_transaction_storage.rs
 @@ -15,18 +15,29 @@ use {
@@ -5838,7 +5868,7 @@ index f8d99c7790..1deeb714b3 100644
      itertools::Itertools,
      min_max_heap::MinMaxHeap,
      solana_accounts_db::transaction_error_metrics::TransactionErrorMetrics,
-+    solana_bundle::BundleExecutionError,
++    solana_bundle::{bundle_execution::LoadAndExecuteBundleError, BundleExecutionError},
      solana_measure::{measure, measure_us},
      solana_runtime::bank::Bank,
      solana_sdk::{
@@ -6120,7 +6150,7 @@ index f8d99c7790..1deeb714b3 100644
              };
          let mut scanner = create_consume_multi_iterator(
              &all_packets_to_process,
-@@ -962,6 +1085,309 @@ impl ThreadLocalUnprocessedPackets {
+@@ -962,6 +1085,323 @@ impl ThreadLocalUnprocessedPackets {
      }
  }
  
@@ -6310,17 +6340,31 @@ index f8d99c7790..1deeb714b3 100644
 +                        rebuffered_bundles.push(deserialized_bundle);
 +                        is_slot_over = true;
 +                    }
++                    Err(BundleExecutionError::ExceedsCostModel) => {
++                        // cost model buffered bundles contain most recent bundles at the front of the queue
++                        debug!(
++                            "bundle={} exceeds cost model, rebuffering",
++                            sanitized_bundle.bundle_id
++                        );
++                        self.push_back_cost_model_buffered_bundles(vec![deserialized_bundle]);
++                    }
++                    Err(BundleExecutionError::TransactionFailure(
++                        LoadAndExecuteBundleError::ProcessingTimeExceeded(_),
++                    )) => {
++                        // these are treated the same as exceeds cost model and are rebuferred to be completed
++                        // at the beginning of the next slot
++                        debug!(
++                            "bundle={} processing time exceeded, rebuffering",
++                            sanitized_bundle.bundle_id
++                        );
++                        self.push_back_cost_model_buffered_bundles(vec![deserialized_bundle]);
++                    }
 +                    Err(BundleExecutionError::TransactionFailure(e)) => {
 +                        debug!(
 +                            "bundle={} execution error: {:?}",
 +                            sanitized_bundle.bundle_id, e
 +                        );
 +                        // do nothing
-+                    }
-+                    Err(BundleExecutionError::ExceedsCostModel) => {
-+                        // cost model buffered bundles contain most recent bundles at the front of the queue
-+                        debug!("bundle={} exceeds cost model", sanitized_bundle.bundle_id);
-+                        self.push_back_cost_model_buffered_bundles(vec![deserialized_bundle]);
 +                    }
 +                    Err(BundleExecutionError::TipError(e)) => {
 +                        debug!("bundle={} tip error: {}", sanitized_bundle.bundle_id, e);
@@ -6444,7 +6488,7 @@ index ba76b794ba..bedfe117dc 100644
      sender: Sender<BankingPacketBatch>,
 diff --git a/core/src/bundle_stage.rs b/core/src/bundle_stage.rs
 new file mode 100644
-index 0000000000..3a4103831b
+index 0000000000..de8dad38c7
 --- /dev/null
 +++ b/core/src/bundle_stage.rs
 @@ -0,0 +1,436 @@
@@ -6495,7 +6539,7 @@ index 0000000000..3a4103831b
 +pub(crate) mod bundle_stage_leader_metrics;
 +mod committer;
 +
-+const MAX_BUNDLE_RETRY_DURATION: Duration = Duration::from_millis(10);
++const MAX_BUNDLE_RETRY_DURATION: Duration = Duration::from_millis(40);
 +const SLOT_BOUNDARY_CHECK_PERIOD: Duration = Duration::from_millis(10);
 +
 +// Stats emitted periodically
@@ -7218,10 +7262,10 @@ index 0000000000..2e714bbca7
 +}
 diff --git a/core/src/bundle_stage/bundle_consumer.rs b/core/src/bundle_stage/bundle_consumer.rs
 new file mode 100644
-index 0000000000..e31d14285d
+index 0000000000..2192a00e84
 --- /dev/null
 +++ b/core/src/bundle_stage/bundle_consumer.rs
-@@ -0,0 +1,1601 @@
+@@ -0,0 +1,1597 @@
 +use {
 +    crate::{
 +        banking_stage::{
@@ -8124,7 +8168,6 @@ index 0000000000..e31d14285d
 +            bank.clone(),
 +            Some((4, 4)),
 +            bank.ticks_per_slot(),
-+            &Pubkey::default(),
 +            blockstore,
 +            &leader_schedule_cache,
 +            &poh_config,
@@ -8265,9 +8308,6 @@ index 0000000000..e31d14285d
 +            entry_receiver,
 +        } = create_test_fixture(1_000_000);
 +        let recorder = poh_recorder.read().unwrap().new_recorder();
-+
-+        let status = poh_recorder.read().unwrap().reached_leader_slot();
-+        info!("status: {:?}", status);
 +
 +        let (replay_vote_sender, _replay_vote_receiver) = unbounded();
 +        let committer = Committer::new(
@@ -12352,7 +12392,7 @@ index 0000000000..5dd8510bad
 +}
 diff --git a/core/src/proxy/fetch_stage_manager.rs b/core/src/proxy/fetch_stage_manager.rs
 new file mode 100644
-index 0000000000..38471fc512
+index 0000000000..0d26c001a7
 --- /dev/null
 +++ b/core/src/proxy/fetch_stage_manager.rs
 @@ -0,0 +1,170 @@
@@ -12466,10 +12506,10 @@ index 0000000000..38471fc512
 +                            fetch_connected = true;
 +                            pending_disconnect = false;
 +
-+                            // unwrap safe here bc contact_info.tpu(Protocol::QUIC) and contact_info.tpu_forwards(Protocol::QUIC)
-+                            // are checked on startup
-+                            if let Err(e) = Self::set_tpu_addresses(&cluster_info, my_fallback_contact_info.tpu(Protocol::QUIC).unwrap(), my_fallback_contact_info.tpu_forwards(Protocol::QUIC).unwrap()) {
-+                                error!("error setting tpu or tpu_fwd to ({:?}, {:?}), error: {:?}", my_fallback_contact_info.tpu(Protocol::QUIC).unwrap(), my_fallback_contact_info.tpu_forwards(Protocol::QUIC).unwrap(), e);
++                            // yes, using UDP here is extremely confusing for the validator
++                            // since the entire network is running QUIC. However, it's correct.
++                            if let Err(e) = Self::set_tpu_addresses(&cluster_info, my_fallback_contact_info.tpu(Protocol::UDP).unwrap(), my_fallback_contact_info.tpu_forwards(Protocol::UDP).unwrap()) {
++                                error!("error setting tpu or tpu_fwd to ({:?}, {:?}), error: {:?}", my_fallback_contact_info.tpu(Protocol::UDP).unwrap(), my_fallback_contact_info.tpu_forwards(Protocol::UDP).unwrap(), e);
 +                            }
 +                            heartbeats_received = 0;
 +                        }
@@ -20705,7 +20745,7 @@ literal 0
 HcmV?d00001
 
 diff --git a/programs/sbf/Cargo.lock b/programs/sbf/Cargo.lock
-index 6c0a27ce40..52e83b917c 100644
+index e554622ead..05938d690c 100644
 --- a/programs/sbf/Cargo.lock
 +++ b/programs/sbf/Cargo.lock
 @@ -126,6 +126,145 @@ dependencies = [
@@ -21262,6 +21302,18 @@ index 6c0a27ce40..52e83b917c 100644
   "syn 1.0.109",
  ]
  
+@@ -2842,9 +3050,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "mio"
+-version = "0.8.8"
++version = "0.8.11"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "927a765cd3fc26206e66b296465fa9d3e5ab003e651c1b3c060e7956d96b19d2"
++checksum = "a4a650543ca06a924e8b371db273b2756685faae30f8487da1b56505a8f78b0c"
+ dependencies = [
+  "libc",
+  "wasi 0.11.0+wasi-snapshot-preview1",
 @@ -2882,8 +3090,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "22ce75669015c4f47b289fd4d4f56e894e4c96003ffdf3ac51313126f94c6cbb"
  dependencies = [
@@ -24512,7 +24564,7 @@ index 0000000000..5fcb625a26
 +    }
 +}
 diff --git a/runtime/src/bank.rs b/runtime/src/bank.rs
-index d1410e821d..10871bcef1 100644
+index bc018b722b..79ff93ba70 100644
 --- a/runtime/src/bank.rs
 +++ b/runtime/src/bank.rs
 @@ -74,7 +74,7 @@ use {
@@ -24562,7 +24614,7 @@ index d1410e821d..10871bcef1 100644
  pub struct TransactionSimulationResult {
      pub result: Result<()>,
      pub logs: TransactionLogMessages,
-@@ -764,7 +788,7 @@ pub struct Bank {
+@@ -765,7 +789,7 @@ pub struct Bank {
      inflation: Arc<RwLock<Inflation>>,
  
      /// cache of vote_account and stake_account state for this fork
@@ -24571,7 +24623,7 @@ index d1410e821d..10871bcef1 100644
  
      /// staked nodes on epoch boundaries, saved off when a bank.slot() is at
      ///   a leader schedule calculation boundary
-@@ -4220,17 +4244,61 @@ impl Bank {
+@@ -4221,17 +4245,61 @@ impl Bank {
          &'a self,
          transactions: &'b [SanitizedTransaction],
          transaction_results: impl Iterator<Item = Result<()>>,
@@ -24634,7 +24686,20 @@ index d1410e821d..10871bcef1 100644
      /// Prepare a transaction batch from a single transaction without locking accounts
      pub fn prepare_unlocked_batch_from_single_tx<'a>(
          &'a self,
-@@ -4558,6 +4626,29 @@ impl Bank {
+@@ -4345,7 +4413,11 @@ impl Bank {
+         }
+     }
+ 
+-    fn get_account_overrides_for_simulation(&self, account_keys: &AccountKeys) -> AccountOverrides {
++    // NOTE: Do not revert this back to private during rebases.
++    pub fn get_account_overrides_for_simulation(
++        &self,
++        account_keys: &AccountKeys,
++    ) -> AccountOverrides {
+         let mut account_overrides = AccountOverrides::default();
+         let slot_history_id = sysvar::slot_history::id();
+         if account_keys.iter().any(|pubkey| *pubkey == slot_history_id) {
+@@ -4559,6 +4631,29 @@ impl Bank {
          }
      }
  
@@ -24664,7 +24729,7 @@ index d1410e821d..10871bcef1 100644
      fn load_program_accounts(&self, pubkey: &Pubkey) -> Option<ProgramAccountLoadResult> {
          let program_account = self.get_account_with_fixed_root(pubkey)?;
  
-@@ -5648,6 +5739,26 @@ impl Bank {
+@@ -5635,6 +5730,26 @@ impl Bank {
          }
      }
  
