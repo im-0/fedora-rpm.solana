@@ -1,4 +1,4 @@
-From a39466babbbaf3aa7a4f96fee147f7bfb94513ef Mon Sep 17 00:00:00 2001
+From 496fa8a512bc5c66c499f63c779ccba983e34d48 Mon Sep 17 00:00:00 2001
 From: Lucas B <lucas@jito.wtf>
 Date: Thu, 25 Aug 2022 17:18:46 -0500
 Subject: [PATCH] jito patch only reroute if relayer connected (#123) feat: add
@@ -304,7 +304,7 @@ Buffer bundles that exceed processing time and make the allowed processing time 
  core/benches/consumer.rs                      |   28 +-
  core/benches/proto_to_packet.rs               |   56 +
  core/src/admin_rpc_post_init.rs               |    8 +-
- core/src/banking_stage.rs                     |   85 +-
+ core/src/banking_stage.rs                     |   87 +-
  core/src/banking_stage/committer.rs           |   17 +-
  core/src/banking_stage/consume_worker.rs      |   23 +-
  core/src/banking_stage/consumer.rs            |  196 +-
@@ -316,7 +316,7 @@ Buffer bundles that exceed processing time and make the allowed processing time 
  .../src/bundle_stage/bundle_account_locker.rs |  326 ++++
  core/src/bundle_stage/bundle_consumer.rs      | 1597 +++++++++++++++++
  .../bundle_packet_deserializer.rs             |  282 +++
- .../bundle_stage/bundle_packet_receiver.rs    |  830 +++++++++
+ .../bundle_stage/bundle_packet_receiver.rs    |  834 +++++++++
  .../bundle_reserved_space_manager.rs          |  237 +++
  .../bundle_stage_leader_metrics.rs            |  502 ++++++
  core/src/bundle_stage/committer.rs            |  218 +++
@@ -447,7 +447,7 @@ Buffer bundles that exceed processing time and make the allowed processing time 
  validator/src/dashboard.rs                    |    1 +
  validator/src/main.rs                         |  268 ++-
  version/src/lib.rs                            |    2 +-
- 185 files changed, 17679 insertions(+), 890 deletions(-)
+ 185 files changed, 17684 insertions(+), 891 deletions(-)
  create mode 100644 .dockerignore
  create mode 100644 .gitmodules
  create mode 160000 anchor
@@ -752,7 +752,7 @@ index 000000000000..e31fc7fccd92
 +	path = jito-protos/protos
 +	url = https://github.com/jito-labs/mev-protos.git
 diff --git a/Cargo.lock b/Cargo.lock
-index 88714615f48d..9d4610ddd639 100644
+index 88714615f48d..6b28600ec789 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -125,6 +125,145 @@ dependencies = [
@@ -2515,7 +2515,7 @@ index 88714615f48d..9d4610ddd639 100644
  ]
  
 diff --git a/Cargo.toml b/Cargo.toml
-index 5bf10b9717b6..da938bcc1f0e 100644
+index 5bf10b9717b6..f10e45061dd8 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
 @@ -18,6 +18,7 @@ members = [
@@ -4905,7 +4905,7 @@ index 364509a63b98..425a4375c156 100644
 +    pub shred_receiver_address: Arc<RwLock<Option<SocketAddr>>>,
  }
 diff --git a/core/src/banking_stage.rs b/core/src/banking_stage.rs
-index 82acf209f173..44e930ea4327 100644
+index 82acf209f173..abd0465f9568 100644
 --- a/core/src/banking_stage.rs
 +++ b/core/src/banking_stage.rs
 @@ -25,6 +25,7 @@ use {
@@ -4931,7 +4931,7 @@ index 82acf209f173..44e930ea4327 100644
          sync::{
              atomic::{AtomicU64, AtomicUsize, Ordering},
              Arc, RwLock,
-@@ -59,13 +62,13 @@ pub mod unprocessed_packet_batches;
+@@ -59,15 +62,15 @@ pub mod unprocessed_packet_batches;
  pub mod unprocessed_transaction_storage;
  
  mod consume_worker;
@@ -4946,8 +4946,11 @@ index 82acf209f173..44e930ea4327 100644
 -mod leader_slot_timing_metrics;
 +pub(crate) mod leader_slot_timing_metrics;
  mod multi_iterator_scanner;
- mod packet_deserializer;
+-mod packet_deserializer;
++pub(crate) mod packet_deserializer;
  mod packet_filter;
+ mod packet_receiver;
+ mod read_write_account_set;
 @@ -337,6 +340,8 @@ impl BankingStage {
          connection_cache: Arc<ConnectionCache>,
          bank_forks: Arc<RwLock<BankForks>>,
@@ -9153,13 +9156,14 @@ index 000000000000..1c997d9e578e
 +}
 diff --git a/core/src/bundle_stage/bundle_packet_receiver.rs b/core/src/bundle_stage/bundle_packet_receiver.rs
 new file mode 100644
-index 000000000000..90ae7d3ba207
+index 000000000000..459012132605
 --- /dev/null
 +++ b/core/src/bundle_stage/bundle_packet_receiver.rs
-@@ -0,0 +1,830 @@
+@@ -0,0 +1,834 @@
 +use {
 +    super::BundleStageLoopMetrics,
 +    crate::{
++        banking_stage::packet_deserializer::PacketReceiverStats,
 +        banking_stage::unprocessed_transaction_storage::UnprocessedTransactionStorage,
 +        bundle_stage::{
 +            bundle_packet_deserializer::{BundlePacketDeserializer, ReceiveBundleResults},
@@ -9269,7 +9273,10 @@ index 000000000000..90ae7d3ba207
 +        bundle_stage_stats.increment_num_packets_received(packet_count as u64);
 +        bundle_stage_leader_metrics
 +            .leader_slot_metrics_tracker()
-+            .increment_total_new_valid_packets(packet_count as u64);
++            .increment_received_packet_counts(PacketReceiverStats {
++                passed_sigverify_count: packet_count as u64,
++                ..Default::default()
++            });
 +
 +        debug!(
 +            "@{:?} bundles: {} txs: {} id: {}",
@@ -20432,7 +20439,7 @@ literal 0
 HcmV?d00001
 
 diff --git a/programs/sbf/Cargo.lock b/programs/sbf/Cargo.lock
-index cd593332289b..b7b60aa81145 100644
+index cd593332289b..fa4cad29a252 100644
 --- a/programs/sbf/Cargo.lock
 +++ b/programs/sbf/Cargo.lock
 @@ -126,6 +126,145 @@ dependencies = [
