@@ -1,0 +1,27 @@
+From bb6ea70241c8224877506f8971a200d0513506e7 Mon Sep 17 00:00:00 2001
+From: Ivan Mironov <mironov.ivan@gmail.com>
+Date: Wed, 31 Jan 2024 18:30:46 +0100
+Subject: [PATCH 4/5] Manually vendor the patched aes-gcm-siv
+
+Cargo does not support this: https://github.com/rust-lang/cargo/issues/9172
+---
+ Cargo.toml | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/Cargo.toml b/Cargo.toml
+index 9739f6902d52..2fb6fce1e9fb 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -508,8 +508,7 @@ solana-zk-token-sdk = { path = "zk-token-sdk" }
+ # https://github.com/RustCrypto/AEADs/compare/aes-gcm-siv-v0.10.3..6105d7a5591aefa646a95d12b5e8d3f55a9214ef
+ #
+ [patch.crates-io.aes-gcm-siv]
+-git = "https://github.com/RustCrypto/AEADs"
+-rev = "6105d7a5591aefa646a95d12b5e8d3f55a9214ef"
++path = "./AEADs/aes-gcm-siv"
+ 
+ # Our dependency tree has `curve25519-dalek` v3.2.1.  They have removed the
+ # constraint in the next major release. The commit that removes the `zeroize`
+-- 
+2.43.0
+

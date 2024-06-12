@@ -1,0 +1,27 @@
+From 74fb9e7b08080952d4d26991f12fa327cfbc8e22 Mon Sep 17 00:00:00 2001
+From: Ivan Mironov <mironov.ivan@gmail.com>
+Date: Wed, 31 Jan 2024 18:32:19 +0100
+Subject: [PATCH 5/5] Manually vendor the patched curve25519-dalek
+
+Cargo does not support this: https://github.com/rust-lang/cargo/issues/9172
+---
+ Cargo.toml | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/Cargo.toml b/Cargo.toml
+index 2fb6fce1e9fb..db5a2eeecaca 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -540,8 +540,7 @@ path = "./AEADs/aes-gcm-siv"
+ # https://github.com/dalek-cryptography/curve25519-dalek/compare/3.2.1...solana-labs:curve25519-dalek:3.2.1-unpin-zeroize
+ #
+ [patch.crates-io.curve25519-dalek]
+-git = "https://github.com/solana-labs/curve25519-dalek.git"
+-rev = "b500cdc2a920cd5bff9e2dd974d7b97349d61464"
++path = "./curve25519-dalek"
+ 
+ # Solana RPC nodes experience stalls when running with `tokio` containing this
+ # commit:
+-- 
+2.43.0
+
