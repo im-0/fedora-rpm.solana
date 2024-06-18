@@ -27,8 +27,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      2
-# git bfacaf616fa4a1c57e2a337fcc864c92c25815a0
-Version:    1.18.16
+# git b685182af8691bd45a68b093304396e2cb74efbf
+Version:    1.18.17
 Release:    1jito%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -45,11 +45,11 @@ Source1:    solana-%{version}.cargo-vendor.tar.xz
 
 # Crossbeam patched by Solana developers.
 # `cargo vendor` does not support this properly: https://github.com/rust-lang/cargo/issues/9172.
-Source2:    https://github.com/solana-labs/crossbeam/archive/%{solana_crossbeam_commit}/solana-crossbeam-%{solana_crossbeam_commit}.tar.gz
+Source2:    https://github.com/anza-xyz/crossbeam/archive/%{solana_crossbeam_commit}/solana-crossbeam-%{solana_crossbeam_commit}.tar.gz
 
 # Tokio patched by Solana developers.
 # `cargo vendor` does not support this properly: https://github.com/rust-lang/cargo/issues/9172.
-Source3:    https://github.com/solana-labs/solana-tokio/archive/%{solana_tokio_commit}/solana-tokio-%{solana_tokio_commit}.tar.gz
+Source3:    https://github.com/anza-xyz/solana-tokio/archive/%{solana_tokio_commit}/solana-tokio-%{solana_tokio_commit}.tar.gz
 
 # aes-gcm-siv patched by Solana developers.
 # `cargo vendor` does not support this properly: https://github.com/rust-lang/cargo/issues/9172.
@@ -57,7 +57,7 @@ Source4:    https://github.com/RustCrypto/AEADs/archive/%{solana_aes_gcm_siv_com
 
 # curve25519-dalek patched by Solana developers.
 # `cargo vendor` does not support this properly: https://github.com/rust-lang/cargo/issues/9172.
-Source5:    https://github.com/solana-labs/curve25519-dalek/archive/%{solana_curve25519_dalek_commit}/curve25519-dalek-%{solana_curve25519_dalek_commit}.tar.gz
+Source5:    https://github.com/anza-xyz/curve25519-dalek/archive/%{solana_curve25519_dalek_commit}/curve25519-dalek-%{solana_curve25519_dalek_commit}.tar.gz
 
 Source102:  config.toml
 Source103:  activate
@@ -512,6 +512,9 @@ exit 0
 
 
 %changelog
+* Tue Jun 18 2024 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.18.17-1jito
+- Update to 1.18.17
+
 * Sun Jun 09 2024 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.18.16-1jito
 - Update to 1.18.16
 

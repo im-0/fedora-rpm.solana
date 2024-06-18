@@ -16,7 +16,7 @@ index 2fb6fce1e9fb..db5a2eeecaca 100644
  # https://github.com/dalek-cryptography/curve25519-dalek/compare/3.2.1...solana-labs:curve25519-dalek:3.2.1-unpin-zeroize
  #
  [patch.crates-io.curve25519-dalek]
--git = "https://github.com/solana-labs/curve25519-dalek.git"
+-git = "https://github.com/anza-xyz/curve25519-dalek.git"
 -rev = "b500cdc2a920cd5bff9e2dd974d7b97349d61464"
 +path = "./curve25519-dalek"
  
