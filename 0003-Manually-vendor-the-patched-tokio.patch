@@ -12,11 +12,11 @@ diff --git a/Cargo.toml b/Cargo.toml
 index 678062baafb3..9739f6902d52 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
-@@ -559,5 +559,4 @@ rev = "b500cdc2a920cd5bff9e2dd974d7b97349d61464"
+@@ -559,5 +559,4 @@ rev = "0382b672560493840f453f2a0e24c4a129abd3a4"
  # https://github.com/tokio-rs/tokio/compare/tokio-1.29.1...solana-labs:solana-tokio:tokio-1.29.1-revert-4eed411
  #
  [patch.crates-io.tokio]
--git = "https://github.com/solana-labs/solana-tokio.git"
+-git = "https://github.com/anza-xyz/solana-tokio.git"
 -rev = "7cf47705faacf7bf0e43e4131a5377b3291fce21"
 +path = "./solana-tokio/tokio"
 -- 

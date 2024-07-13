@@ -2,7 +2,7 @@
 %global solana_crossbeam_commit fd279d707025f0e60951e429bf778b4813d1b6bf
 %global solana_tokio_commit 7cf47705faacf7bf0e43e4131a5377b3291fce21
 %global solana_aes_gcm_siv_commit 6105d7a5591aefa646a95d12b5e8d3f55a9214ef
-%global solana_curve25519_dalek_commit b500cdc2a920cd5bff9e2dd974d7b97349d61464
+%global solana_curve25519_dalek_commit 0382b672560493840f453f2a0e24c4a129abd3a4
 
 %global solana_user   solana-%{solana_suffix}
 %global solana_group  solana-%{solana_suffix}
@@ -27,8 +27,8 @@
 
 Name:       solana-%{solana_suffix}
 Epoch:      2
-# git 767d24e5c10123c079e656cdcf9aeb8a5dae17db
-Version:    1.18.15
+# git 830471368b87e85e4ca2f95ad8637627805b902b
+Version:    1.18.18
 Release:    100jito%{?dist}
 Summary:    Solana blockchain software (%{solana_suffix} version)
 
@@ -512,6 +512,9 @@ exit 0
 
 
 %changelog
+* Sun Jul 14 2024 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.18.18-100jito
+- Update to 1.18.18
+
 * Wed Jun 12 2024 Ivan Mironov <mironov.ivan@gmail.com> - 2:1.18.15-100jito
 - Update to 1.18.15
 
