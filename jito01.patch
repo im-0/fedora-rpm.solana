@@ -1,4 +1,4 @@
-From 31e2b12020b3ab00a1814dd0c8eb6ece00208087 Mon Sep 17 00:00:00 2001
+From 2953352a1764a51b921914250eb07180f6fcff6b Mon Sep 17 00:00:00 2001
 From: Lucas B <lucas@jito.wtf>
 Date: Thu, 25 Aug 2022 17:18:46 -0500
 Subject: [PATCH] jito patch only reroute if relayer connected (#123) feat: add
@@ -277,7 +277,7 @@ update jito-programs submodule
  .github/workflows/release-artifacts.yml       |    1 +
  .gitignore                                    |    5 +
  .gitmodules                                   |    9 +
- Cargo.lock                                    |  797 ++++++--
+ Cargo.lock                                    |  793 ++++++--
  Cargo.toml                                    |   16 +-
  README.md                                     |   16 +-
  RELEASE.md                                    |   12 +-
@@ -377,7 +377,7 @@ update jito-programs submodule
  program-test/src/programs.rs                  |   17 +
  .../programs/jito_tip_distribution-0.1.4.so   |  Bin 0 -> 423080 bytes
  .../src/programs/jito_tip_payment-0.1.4.so    |  Bin 0 -> 430592 bytes
- programs/sbf/Cargo.lock                       |  650 +++++--
+ programs/sbf/Cargo.lock                       |  646 +++++--
  programs/sbf/tests/programs.rs                |    4 +-
  rpc-client-api/Cargo.toml                     |    2 +
  rpc-client-api/src/bundles.rs                 |  166 ++
@@ -449,7 +449,7 @@ update jito-programs submodule
  validator/src/dashboard.rs                    |    1 +
  validator/src/main.rs                         |  268 ++-
  version/src/lib.rs                            |    2 +-
- 185 files changed, 17676 insertions(+), 890 deletions(-)
+ 185 files changed, 17672 insertions(+), 886 deletions(-)
  create mode 100644 .dockerignore
  create mode 100644 .gitmodules
  create mode 160000 anchor
@@ -754,7 +754,7 @@ index 0000000000..e31fc7fccd
 +	path = jito-protos/protos
 +	url = https://github.com/jito-labs/mev-protos.git
 diff --git a/Cargo.lock b/Cargo.lock
-index 68b3234123..014efb77c8 100644
+index 353f58ff04..478aa80ee1 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -125,6 +125,145 @@ dependencies = [
@@ -930,18 +930,18 @@ index 68b3234123..014efb77c8 100644
  
 +[[package]]
 +name = "anstyle-parse"
-+version = "0.2.3"
++version = "0.2.5"
 +source = "registry+https://github.com/rust-lang/crates.io-index"
-+checksum = "c75ac65da39e5fe5ab759307499ddad880d724eed2f6ce5b5e8a26f4f387928c"
++checksum = "eb47de1e80c2b463c735db5b217a0ddc39d612e7ac9e2e96a5aed1f57616c1cb"
 +dependencies = [
 + "utf8parse",
 +]
 +
 +[[package]]
 +name = "anstyle-query"
-+version = "1.0.2"
++version = "1.1.1"
 +source = "registry+https://github.com/rust-lang/crates.io-index"
-+checksum = "e28923312444cdd728e4738b3f9c9cac739500909bb3d3c94b43551b16517648"
++checksum = "6d36fc52c7f6c869915e99412912f22093507da8d9e942ceaf66fe4b7c14422a"
 +dependencies = [
 + "windows-sys 0.52.0",
 +]
@@ -1217,9 +1217,9 @@ index 68b3234123..014efb77c8 100644
  
 +[[package]]
 +name = "colorchoice"
-+version = "1.0.0"
++version = "1.0.2"
 +source = "registry+https://github.com/rust-lang/crates.io-index"
-+checksum = "acbf1af155f9b9ef647e42cdc158db4b64a1b61f743629225fde6f3e0be2a7c7"
++checksum = "d3fd119d74b830634cea2a0f58bbd0d54540518a14397557951e79340abc28c0"
 +
  [[package]]
  name = "combine"
@@ -1407,7 +1407,7 @@ index 68b3234123..014efb77c8 100644
 +
 +[[package]]
 +name = "jito-protos"
-+version = "1.18.18"
++version = "1.18.20"
 +dependencies = [
 + "bytes",
 + "prost",
@@ -1451,18 +1451,6 @@ index 68b3234123..014efb77c8 100644
   "syn 1.0.109",
  ]
  
-@@ -3186,9 +3459,9 @@ dependencies = [
- 
- [[package]]
- name = "mio"
--version = "0.8.8"
-+version = "0.8.11"
- source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "927a765cd3fc26206e66b296465fa9d3e5ab003e651c1b3c060e7956d96b19d2"
-+checksum = "a4a650543ca06a924e8b371db273b2756685faae30f8487da1b56505a8f78b0c"
- dependencies = [
-  "libc",
-  "wasi 0.11.0+wasi-snapshot-preview1",
 @@ -3217,8 +3490,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "22ce75669015c4f47b289fd4d4f56e894e4c96003ffdf3ac51313126f94c6cbb"
  dependencies = [
@@ -1804,7 +1792,7 @@ index 68b3234123..014efb77c8 100644
  
 +[[package]]
 +name = "solana-bundle"
-+version = "1.18.18"
++version = "1.18.20"
 +dependencies = [
 + "anchor-lang",
 + "assert_matches",
@@ -1825,8 +1813,8 @@ index 68b3234123..014efb77c8 100644
 +
  [[package]]
  name = "solana-cargo-build-bpf"
- version = "1.18.18"
-@@ -5687,7 +6023,7 @@ version = "1.18.18"
+ version = "1.18.20"
+@@ -5687,7 +6023,7 @@ version = "1.18.20"
  dependencies = [
   "assert_matches",
   "bincode",
@@ -1837,7 +1825,7 @@ index 68b3234123..014efb77c8 100644
   "const_format",
 @@ -5888,10 +6224,11 @@ dependencies = [
  name = "solana-core"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
 + "anchor-lang",
   "assert_matches",
@@ -1897,7 +1885,7 @@ index 68b3234123..014efb77c8 100644
   "trees",
  ]
  
-@@ -6098,7 +6445,7 @@ version = "1.18.18"
+@@ -6098,7 +6445,7 @@ version = "1.18.20"
  dependencies = [
   "bitflags 2.4.2",
   "block-buffer 0.10.4",
@@ -1908,7 +1896,7 @@ index 68b3234123..014efb77c8 100644
   "generic-array 0.14.7",
 @@ -6121,8 +6468,8 @@ dependencies = [
  name = "solana-frozen-abi-macro"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
 - "proc-macro2",
 - "quote",
@@ -1919,7 +1907,7 @@ index 68b3234123..014efb77c8 100644
  ]
 @@ -6177,7 +6524,7 @@ dependencies = [
  name = "solana-geyser-plugin-manager"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
 - "bs58",
 + "bs58 0.4.0",
@@ -1928,7 +1916,7 @@ index 68b3234123..014efb77c8 100644
   "jsonrpc-core",
 @@ -6288,7 +6635,7 @@ dependencies = [
  name = "solana-keygen"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
 - "bs58",
 + "bs58 0.4.0",
@@ -1945,7 +1933,7 @@ index 68b3234123..014efb77c8 100644
   "chrono",
   "chrono-humanize",
 @@ -6375,7 +6722,7 @@ name = "solana-ledger-tool"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
   "assert_cmd",
 - "bs58",
@@ -1962,7 +1950,7 @@ index 68b3234123..014efb77c8 100644
   "bv",
   "bytemuck",
   "cc",
-@@ -6859,7 +7206,7 @@ version = "1.18.18"
+@@ -6859,7 +7206,7 @@ version = "1.18.20"
  dependencies = [
   "base64 0.21.7",
   "bincode",
@@ -1997,7 +1985,7 @@ index 68b3234123..014efb77c8 100644
   "futures 0.3.30",
   "indicatif",
 @@ -6946,7 +7295,7 @@ name = "solana-rpc-client-api"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
   "base64 0.21.7",
 - "bs58",
@@ -2015,7 +2003,7 @@ index 68b3234123..014efb77c8 100644
   "solana-transaction-status",
   "solana-version",
 @@ -6983,13 +7334,14 @@ name = "solana-rpc-test"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
   "bincode",
 - "bs58",
@@ -2036,7 +2024,7 @@ index 68b3234123..014efb77c8 100644
  
 +[[package]]
 +name = "solana-runtime-plugin"
-+version = "1.18.18"
++version = "1.18.20"
 +dependencies = [
 + "crossbeam-channel",
 + "json5",
@@ -2054,10 +2042,10 @@ index 68b3234123..014efb77c8 100644
 +
  [[package]]
  name = "solana-runtime-transaction"
- version = "1.18.18"
+ version = "1.18.20"
 @@ -7106,13 +7476,14 @@ dependencies = [
  name = "solana-sdk"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
 + "anchor-lang",
   "anyhow",
@@ -2073,7 +2061,7 @@ index 68b3234123..014efb77c8 100644
   "chrono",
 @@ -7165,9 +7536,9 @@ dependencies = [
  name = "solana-sdk-macro"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
 - "bs58",
 - "proc-macro2",
@@ -2099,7 +2087,7 @@ index 68b3234123..014efb77c8 100644
  ]
  
 @@ -7263,7 +7636,7 @@ name = "solana-storage-proto"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
   "bincode",
 - "bs58",
@@ -2113,7 +2101,7 @@ index 68b3234123..014efb77c8 100644
  
 +[[package]]
 +name = "solana-tip-distributor"
-+version = "1.18.18"
++version = "1.18.20"
 +dependencies = [
 + "anchor-lang",
 + "clap 4.3.21",
@@ -2151,7 +2139,7 @@ index 68b3234123..014efb77c8 100644
 +
  [[package]]
  name = "solana-tokens"
- version = "1.18.18"
+ version = "1.18.20"
 @@ -7467,7 +7878,7 @@ dependencies = [
   "base64 0.21.7",
   "bincode",
@@ -2179,7 +2167,7 @@ index 68b3234123..014efb77c8 100644
  [[package]]
 @@ -7724,7 +8137,7 @@ dependencies = [
  name = "solana-zk-keygen"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
 - "bs58",
 + "bs58 0.4.0",
@@ -2394,9 +2382,9 @@ index 68b3234123..014efb77c8 100644
  
 +[[package]]
 +name = "unicode-segmentation"
-+version = "1.10.1"
++version = "1.11.0"
 +source = "registry+https://github.com/rust-lang/crates.io-index"
-+checksum = "1dd624098567895118886609431a7c3b8f516e41d30e0643f03d94592a147e36"
++checksum = "d4c87d22b6e3f4a18d4d40ef354e97c90fcb14dd91d7dc0aa9d8a1172ebf7202"
 +
  [[package]]
  name = "unicode-width"
@@ -2419,9 +2407,9 @@ index 68b3234123..014efb77c8 100644
  
 +[[package]]
 +name = "utf8parse"
-+version = "0.2.1"
++version = "0.2.2"
 +source = "registry+https://github.com/rust-lang/crates.io-index"
-+checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
++checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 +
  [[package]]
  name = "valuable"
@@ -2517,7 +2505,7 @@ index 68b3234123..014efb77c8 100644
  ]
  
 diff --git a/Cargo.toml b/Cargo.toml
-index aeffef516a..19c55ab289 100644
+index bdb4a829cd..d4cdf7cbd8 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
 @@ -18,6 +18,7 @@ members = [
@@ -2577,28 +2565,28 @@ index aeffef516a..19c55ab289 100644
      "unprefixed_malloc_on_supported_platforms",
  ] }
  js-sys = "0.3.67"
-+jito-protos = { path = "jito-protos", version = "=1.18.18" }
++jito-protos = { path = "jito-protos", version = "=1.18.20" }
 +jito-tip-distribution = { path = "jito-programs/mev-programs/programs/tip-distribution", features = ["no-entrypoint"] }
 +jito-tip-payment = { path = "jito-programs/mev-programs/programs/tip-payment", features = ["no-entrypoint"] }
  json5 = "0.4.1"
  jsonrpc-core = "18.0.0"
  jsonrpc-core-client = "18.0.0"
-@@ -317,6 +329,7 @@ solana-bench-tps = { path = "bench-tps", version = "=1.18.18" }
- solana-bloom = { path = "bloom", version = "=1.18.18" }
- solana-bpf-loader-program = { path = "programs/bpf_loader", version = "=1.18.18" }
- solana-bucket-map = { path = "bucket_map", version = "=1.18.18" }
-+solana-bundle = { path = "bundle", version = "=1.18.18" }
- solana-cargo-registry = { path = "cargo-registry", version = "=1.18.18" }
- solana-clap-utils = { path = "clap-utils", version = "=1.18.18" }
- solana-clap-v3-utils = { path = "clap-v3-utils", version = "=1.18.18" }
-@@ -365,6 +378,7 @@ solana-rpc-client = { path = "rpc-client", version = "=1.18.18", default-feature
- solana-rpc-client-api = { path = "rpc-client-api", version = "=1.18.18" }
- solana-rpc-client-nonce-utils = { path = "rpc-client-nonce-utils", version = "=1.18.18" }
- solana-runtime = { path = "runtime", version = "=1.18.18" }
-+solana-runtime-plugin = { path = "runtime-plugin", version = "=1.18.18" }
- solana-runtime-transaction = { path = "runtime-transaction", version = "=1.18.18" }
- solana-sdk = { path = "sdk", version = "=1.18.18" }
- solana-sdk-macro = { path = "sdk/macro", version = "=1.18.18" }
+@@ -317,6 +329,7 @@ solana-bench-tps = { path = "bench-tps", version = "=1.18.20" }
+ solana-bloom = { path = "bloom", version = "=1.18.20" }
+ solana-bpf-loader-program = { path = "programs/bpf_loader", version = "=1.18.20" }
+ solana-bucket-map = { path = "bucket_map", version = "=1.18.20" }
++solana-bundle = { path = "bundle", version = "=1.18.20" }
+ solana-cargo-registry = { path = "cargo-registry", version = "=1.18.20" }
+ solana-clap-utils = { path = "clap-utils", version = "=1.18.20" }
+ solana-clap-v3-utils = { path = "clap-v3-utils", version = "=1.18.20" }
+@@ -365,6 +378,7 @@ solana-rpc-client = { path = "rpc-client", version = "=1.18.20", default-feature
+ solana-rpc-client-api = { path = "rpc-client-api", version = "=1.18.20" }
+ solana-rpc-client-nonce-utils = { path = "rpc-client-nonce-utils", version = "=1.18.20" }
+ solana-runtime = { path = "runtime", version = "=1.18.20" }
++solana-runtime-plugin = { path = "runtime-plugin", version = "=1.18.20" }
+ solana-runtime-transaction = { path = "runtime-transaction", version = "=1.18.20" }
+ solana-sdk = { path = "sdk", version = "=1.18.20" }
+ solana-sdk-macro = { path = "sdk/macro", version = "=1.18.20" }
 diff --git a/README.md b/README.md
 index c6183f6ab6..f93147af54 100644
 --- a/README.md
@@ -14722,7 +14710,7 @@ index db36dc61e2..0c228a8b59 100755
  set -e
  
 diff --git a/install/src/command.rs b/install/src/command.rs
-index d7b92c1769..9870a27f7e 100644
+index 096dbd52ba..380ff8e104 100644
 --- a/install/src/command.rs
 +++ b/install/src/command.rs
 @@ -572,7 +572,7 @@ pub fn init(
@@ -14743,16 +14731,7 @@ index d7b92c1769..9870a27f7e 100644
          release_channel,
          crate::build_env::TARGET
      )
-@@ -588,7 +588,7 @@ fn release_channel_download_url(release_channel: &str) -> String {
- 
- fn release_channel_version_url(release_channel: &str) -> String {
-     format!(
--        "https://release.solana.com/{}/solana-release-{}.yml",
-+        "https://release.jito.wtf/{}/solana-release-{}.yml",
-         release_channel,
-         crate::build_env::TARGET
-     )
-@@ -905,7 +905,7 @@ fn check_for_newer_github_release(
+@@ -897,7 +897,7 @@ fn check_for_newer_github_release(
  
      while page == 1 || releases.len() == PER_PAGE {
          let url = reqwest::Url::parse_with_params(
@@ -14761,6 +14740,15 @@ index d7b92c1769..9870a27f7e 100644
              &[
                  ("per_page", &format!("{PER_PAGE}")),
                  ("page", &format!("{page}")),
+@@ -1022,7 +1022,7 @@ pub fn init_or_update(config_file: &str, is_init: bool, check_only: bool) -> Res
+                 return Err(
+                     "solana-install no longer supports installing by channel. Please specify \
+                         a release version as vX.Y.Z."
+-                        .to_string()
++                        .to_string(),
+                 )
+             }
+         }
 diff --git a/jito-programs b/jito-programs
 new file mode 160000
 index 0000000000..d2b9c58189
@@ -20744,7 +20732,7 @@ literal 0
 HcmV?d00001
 
 diff --git a/programs/sbf/Cargo.lock b/programs/sbf/Cargo.lock
-index 9d52e8f0b4..47631d4d5a 100644
+index 13fc62162c..255a2a082e 100644
 --- a/programs/sbf/Cargo.lock
 +++ b/programs/sbf/Cargo.lock
 @@ -126,6 +126,145 @@ dependencies = [
@@ -21257,7 +21245,7 @@ index 9d52e8f0b4..47631d4d5a 100644
 +
 +[[package]]
 +name = "jito-protos"
-+version = "1.18.18"
++version = "1.18.20"
 +dependencies = [
 + "bytes",
 + "prost",
@@ -21301,18 +21289,6 @@ index 9d52e8f0b4..47631d4d5a 100644
   "syn 1.0.109",
  ]
  
-@@ -2842,9 +3050,9 @@ dependencies = [
- 
- [[package]]
- name = "mio"
--version = "0.8.8"
-+version = "0.8.11"
- source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "927a765cd3fc26206e66b296465fa9d3e5ab003e651c1b3c060e7956d96b19d2"
-+checksum = "a4a650543ca06a924e8b371db273b2756685faae30f8487da1b56505a8f78b0c"
- dependencies = [
-  "libc",
-  "wasi 0.11.0+wasi-snapshot-preview1",
 @@ -2882,8 +3090,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "22ce75669015c4f47b289fd4d4f56e894e4c96003ffdf3ac51313126f94c6cbb"
  dependencies = [
@@ -21632,7 +21608,7 @@ index 9d52e8f0b4..47631d4d5a 100644
  
 +[[package]]
 +name = "solana-bundle"
-+version = "1.18.18"
++version = "1.18.20"
 +dependencies = [
 + "anchor-lang",
 + "itertools",
@@ -21652,10 +21628,10 @@ index 9d52e8f0b4..47631d4d5a 100644
 +
  [[package]]
  name = "solana-clap-utils"
- version = "1.18.18"
+ version = "1.18.20"
 @@ -4964,9 +5234,10 @@ dependencies = [
  name = "solana-core"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
 + "anchor-lang",
   "base64 0.21.7",
@@ -21709,7 +21685,7 @@ index 9d52e8f0b4..47631d4d5a 100644
  ]
  
 @@ -5116,7 +5396,7 @@ name = "solana-frozen-abi"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
   "block-buffer 0.10.4",
 - "bs58",
@@ -21719,7 +21695,7 @@ index 9d52e8f0b4..47631d4d5a 100644
   "generic-array 0.14.7",
 @@ -5138,8 +5418,8 @@ dependencies = [
  name = "solana-frozen-abi-macro"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
 - "proc-macro2",
 - "quote",
@@ -21730,7 +21706,7 @@ index 9d52e8f0b4..47631d4d5a 100644
  ]
 @@ -5169,7 +5449,7 @@ dependencies = [
  name = "solana-geyser-plugin-manager"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
 - "bs58",
 + "bs58 0.4.0",
@@ -21746,7 +21722,7 @@ index 9d52e8f0b4..47631d4d5a 100644
   "bv",
   "bytemuck",
   "cc",
-@@ -5607,7 +5887,7 @@ version = "1.18.18"
+@@ -5607,7 +5887,7 @@ version = "1.18.20"
  dependencies = [
   "base64 0.21.7",
   "bincode",
@@ -21781,7 +21757,7 @@ index 9d52e8f0b4..47631d4d5a 100644
   "log",
   "reqwest",
 @@ -5685,7 +5967,7 @@ name = "solana-rpc-client-api"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
   "base64 0.21.7",
 - "bs58",
@@ -21804,7 +21780,7 @@ index 9d52e8f0b4..47631d4d5a 100644
  
 +[[package]]
 +name = "solana-runtime-plugin"
-+version = "1.18.18"
++version = "1.18.20"
 +dependencies = [
 + "crossbeam-channel",
 + "json5",
@@ -21822,10 +21798,10 @@ index 9d52e8f0b4..47631d4d5a 100644
 +
  [[package]]
  name = "solana-sbf-programs"
- version = "1.18.18"
+ version = "1.18.20"
 @@ -6212,12 +6514,13 @@ dependencies = [
  name = "solana-sdk"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
 + "anchor-lang",
   "assert_matches",
@@ -21840,7 +21816,7 @@ index 9d52e8f0b4..47631d4d5a 100644
   "chrono",
 @@ -6265,9 +6568,9 @@ dependencies = [
  name = "solana-sdk-macro"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
 - "bs58",
 - "proc-macro2",
@@ -21860,7 +21836,7 @@ index 9d52e8f0b4..47631d4d5a 100644
   "solana-metrics",
   "solana-runtime",
 @@ -6342,7 +6646,7 @@ name = "solana-storage-proto"
- version = "1.18.18"
+ version = "1.18.20"
  dependencies = [
   "bincode",
 - "bs58",
@@ -22442,7 +22418,7 @@ index 6386a433f7..a8c01769a4 100644
  pub mod config;
  pub mod custom_error;
 diff --git a/rpc-client-api/src/request.rs b/rpc-client-api/src/request.rs
-index 78e25ac829..bac3aa5b29 100644
+index c10b6f4b40..21c1e7212d 100644
 --- a/rpc-client-api/src/request.rs
 +++ b/rpc-client-api/src/request.rs
 @@ -117,6 +117,7 @@ pub enum RpcRequest {
@@ -22781,7 +22757,7 @@ index 44ab26359c..9eeff1074f 100644
 +    }
  }
 diff --git a/rpc-client/src/nonblocking/rpc_client.rs b/rpc-client/src/nonblocking/rpc_client.rs
-index 29a9d8a2ed..bf13808b47 100644
+index 30c11c6394..46ff246365 100644
 --- a/rpc-client/src/nonblocking/rpc_client.rs
 +++ b/rpc-client/src/nonblocking/rpc_client.rs
 @@ -33,6 +33,10 @@ use {
@@ -22958,7 +22934,7 @@ index 29a9d8a2ed..bf13808b47 100644
          self.sender.get_transport_stats()
      }
 diff --git a/rpc-client/src/rpc_client.rs b/rpc-client/src/rpc_client.rs
-index 04359578b6..9e2a27b6de 100644
+index bf5848f6e7..0e5d8d2c01 100644
 --- a/rpc-client/src/rpc_client.rs
 +++ b/rpc-client/src/rpc_client.rs
 @@ -28,6 +28,7 @@ use {
