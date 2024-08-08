@@ -1,4 +1,4 @@
-From 2953352a1764a51b921914250eb07180f6fcff6b Mon Sep 17 00:00:00 2001
+From 0229d7c85e333ecf038e497dbd37e1d9effcec98 Mon Sep 17 00:00:00 2001
 From: Lucas B <lucas@jito.wtf>
 Date: Thu, 25 Aug 2022 17:18:46 -0500
 Subject: [PATCH] jito patch only reroute if relayer connected (#123) feat: add
@@ -264,6 +264,8 @@ Buffer bundles that exceed processing time and make the allowed processing time 
 
 update jito-programs submodule
 ---
+ .buildkite/scripts/build-stable.sh            |    2 +-
+ .buildkite/scripts/build-stable.test.sh       |    2 +-
  .dockerignore                                 |    9 +
  .github/dependabot.yml                        |   23 +-
  .github/workflows/cargo.yml                   |    4 +
@@ -297,6 +299,7 @@ update jito-programs submodule
  ci/buildkite-solana-private.sh                |    4 +-
  ci/channel-info.sh                            |    2 +-
  ci/check-crates.sh                            |    3 +
+ ci/common/limit-threads.sh                    |    4 +-
  ci/publish-installer.sh                       |   10 +-
  ci/publish-tarball.sh                         |    6 +-
  ci/test-coverage.sh                           |    2 +-
@@ -449,7 +452,7 @@ update jito-programs submodule
  validator/src/dashboard.rs                    |    1 +
  validator/src/main.rs                         |  268 ++-
  version/src/lib.rs                            |    2 +-
- 185 files changed, 17672 insertions(+), 886 deletions(-)
+ 188 files changed, 17676 insertions(+), 890 deletions(-)
  create mode 100644 .dockerignore
  create mode 100644 .gitmodules
  create mode 160000 anchor
@@ -510,6 +513,32 @@ update jito-programs submodule
  create mode 100644 tip-distributor/src/reclaim_rent_workflow.rs
  create mode 100644 tip-distributor/src/stake_meta_generator_workflow.rs
 
+diff --git a/.buildkite/scripts/build-stable.sh b/.buildkite/scripts/build-stable.sh
+index e1d774e166..1959eb347f 100755
+--- a/.buildkite/scripts/build-stable.sh
++++ b/.buildkite/scripts/build-stable.sh
+@@ -13,7 +13,7 @@ partitions=$(
+ {
+   "name": "partitions",
+   "command": ". ci/rust-version.sh; ci/docker-run.sh \$\$rust_stable_docker_image ci/stable/run-partition.sh",
+-  "timeout_in_minutes": 30,
++  "timeout_in_minutes": 40,
+   "agent": "$agent",
+   "parallelism": 2,
+   "retry": 3
+diff --git a/.buildkite/scripts/build-stable.test.sh b/.buildkite/scripts/build-stable.test.sh
+index 1f9bb4f84e..0df2094586 100755
+--- a/.buildkite/scripts/build-stable.test.sh
++++ b/.buildkite/scripts/build-stable.test.sh
+@@ -12,7 +12,7 @@ want=$(
+     steps:
+       - name: "partitions"
+         command: ". ci/rust-version.sh; ci/docker-run.sh $$rust_stable_docker_image ci/stable/run-partition.sh"
+-        timeout_in_minutes: 30
++        timeout_in_minutes: 40
+         agents:
+           queue: "solana"
+         parallelism: 3
 diff --git a/.dockerignore b/.dockerignore
 new file mode 100644
 index 0000000000..99262ca894
@@ -754,7 +783,7 @@ index 0000000000..e31fc7fccd
 +	path = jito-protos/protos
 +	url = https://github.com/jito-labs/mev-protos.git
 diff --git a/Cargo.lock b/Cargo.lock
-index 353f58ff04..478aa80ee1 100644
+index fba58935b5..d2838ed70d 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -125,6 +125,145 @@ dependencies = [
@@ -2505,7 +2534,7 @@ index 353f58ff04..478aa80ee1 100644
  ]
  
 diff --git a/Cargo.toml b/Cargo.toml
-index bdb4a829cd..d4cdf7cbd8 100644
+index 38d9ebcd85..f2ac0a63b3 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
 @@ -18,6 +18,7 @@ members = [
@@ -4523,6 +4552,22 @@ index 655504ea11..d6a9ad9c39 100755
    echo "=== $crate_name ($file) ==="
  
    if [[ $package_publish = 'false' ]]; then
+diff --git a/ci/common/limit-threads.sh b/ci/common/limit-threads.sh
+index c6843b2ce5..5868d41cd9 100755
+--- a/ci/common/limit-threads.sh
++++ b/ci/common/limit-threads.sh
+@@ -2,9 +2,9 @@
+ 
+ set -e
+ 
+-# limit jobs to 4gb/thread
++# limit jobs to 10gb/thread
+ if [[ -f "/proc/meminfo" ]]; then
+-  JOBS=$(grep MemTotal /proc/meminfo | awk '{printf "%.0f", ($2 / (4 * 1024 * 1024))}')
++  JOBS=$(grep MemTotal /proc/meminfo | awk '{printf "%.0f", ($2 / (10 * 1024 * 1024))}')
+ else
+   JOBS=$(sysctl hw.memsize | awk '{printf "%.0f", ($2 / (4 * 1024**3))}')
+ fi
 diff --git a/ci/publish-installer.sh b/ci/publish-installer.sh
 index 4b5345ae0d..71d8ef6985 100755
 --- a/ci/publish-installer.sh
@@ -14864,7 +14909,7 @@ index 0000000000..cf630c53d2
 +    }
 +}
 diff --git a/ledger-tool/src/ledger_utils.rs b/ledger-tool/src/ledger_utils.rs
-index 82797146d3..86ff4a5c09 100644
+index eaf2f2277c..a8af9e1348 100644
 --- a/ledger-tool/src/ledger_utils.rs
 +++ b/ledger-tool/src/ledger_utils.rs
 @@ -103,6 +103,7 @@ pub fn load_and_process_ledger_or_exit(
@@ -20732,7 +20777,7 @@ literal 0
 HcmV?d00001
 
 diff --git a/programs/sbf/Cargo.lock b/programs/sbf/Cargo.lock
-index 13fc62162c..255a2a082e 100644
+index dc67d0fc68..12cb8984c8 100644
 --- a/programs/sbf/Cargo.lock
 +++ b/programs/sbf/Cargo.lock
 @@ -126,6 +126,145 @@ dependencies = [
