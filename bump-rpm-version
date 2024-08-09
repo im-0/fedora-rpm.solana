@@ -570,7 +570,8 @@ def _vendor(conf: _Config, patches: _Patches, skip_patches: set[str]) -> None:
                     stdin=subprocess.DEVNULL,
                     cwd=tmp_src_root)
 
-            if b'GIT binary patch' in patch_bytes:
+            if (b'GIT binary patch' in patch_bytes) \
+                    or (b'Subproject commit' in patch_bytes):
                 if not os.path.exists(os.path.join(tmp_src_root, '.git')):
                     cmd = ['git', 'init', '-q']
                     subprocess.run(
@@ -578,17 +579,17 @@ def _vendor(conf: _Config, patches: _Patches, skip_patches: set[str]) -> None:
                         cwd=tmp_src_root,
                         check=True)
 
-                cmd = ['git', 'add', '.']
-                subprocess.run(
-                    cmd,
-                    cwd=tmp_src_root,
-                    check=True)
+                    cmd = ['git', 'add', '.']
+                    subprocess.run(
+                        cmd,
+                        cwd=tmp_src_root,
+                        check=True)
 
-                cmd = ['git', 'commit', '-m', 'import']
-                subprocess.run(
-                    cmd,
-                    cwd=tmp_src_root,
-                    check=True)
+                    cmd = ['git', 'commit', '-m', 'import']
+                    subprocess.run(
+                        cmd,
+                        cwd=tmp_src_root,
+                        check=True)
 
                 cmd = ['git', 'am']
             else:
