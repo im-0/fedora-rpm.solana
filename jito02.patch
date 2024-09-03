@@ -1,4 +1,4 @@
-From 4f160076408597db41cfa68316c9d9229d2f50ef Mon Sep 17 00:00:00 2001
+From 0fc988f2fbde98b6690062844f71b2a9f9366a8e Mon Sep 17 00:00:00 2001
 From: buffalu <85544055+buffalu@users.noreply.github.com>
 Date: Wed, 7 Aug 2024 19:31:41 -0400
 Subject: [PATCH] Add packet flag for from staked sender (v1.18) (#649)
@@ -8,8 +8,7 @@ Co-authored-by: Jed <4679729+jedleggett@users.noreply.github.com>
  .buildkite/scripts/build-stable.test.sh | 2 +-
  core/benches/proto_to_packet.rs         | 1 +
  core/src/lib.rs                         | 6 ++++++
- jito-protos/protos                      | 2 +-
- 4 files changed, 9 insertions(+), 2 deletions(-)
+ 3 files changed, 8 insertions(+), 1 deletion(-)
 
 diff --git a/.buildkite/scripts/build-stable.test.sh b/.buildkite/scripts/build-stable.test.sh
 index 0df2094586..5393bcc5c4 100755
@@ -53,10 +52,3 @@ index b072b1e791..70c52d85ca 100644
          }
      }
      packet
-diff --git a/jito-protos/protos b/jito-protos/protos
-index 05d210980f..b74a23ff23 160000
---- a/jito-protos/protos
-+++ b/jito-protos/protos
-@@ -1 +1 @@
--Subproject commit 05d210980f34a7c974d7ed1a4dbcb2ce1fca00b3
-+Subproject commit b74a23ff236c0c223b1bc56daf7c5065bb585428
