@@ -72,6 +72,7 @@ Source301:  https://static.rust-lang.org/dist/rust-%{rust_version}-aarch64-unkno
 
 Patch1001: jito01.patch
 Patch1002: jito02.patch
+Patch1003: jito03.patch
 
 Patch2002: 0002-Manually-vendor-the-patched-crossbeam.patch
 Patch2003: 0003-Manually-vendor-the-patched-tokio.patch
@@ -216,6 +217,7 @@ git add .
 git commit -m "import"
 git am %{PATCH1001}
 git am %{PATCH1002}
+git am %{PATCH1003}
 
 # Extract vendored sources after applying Jito patch because it contains
 # git modules.
