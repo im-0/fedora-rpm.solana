@@ -1,4 +1,4 @@
-From ab89c0556ce665d1259d70ecda02fbedc22d739e Mon Sep 17 00:00:00 2001
+From 254d96d5ffb1a8435a8ca74dc6a7509fee61458e Mon Sep 17 00:00:00 2001
 From: buffalu <85544055+buffalu@users.noreply.github.com>
 Date: Sun, 6 Oct 2024 08:26:26 -0500
 Subject: [PATCH] Loosen tip requirement [v1.18] (#684)
